@@ -1,0 +1,12 @@
+{
+  "name": "elemix",
+  "version": "0.0.0",
+  "license": "MIT",
+  "scripts": {},
+  "private": true,
+  "dependencies": {},
+  "devDependencies": {
+    "@nx/js": "16.9.1",
+    "nx": "16.9.1"
+  }
+}
