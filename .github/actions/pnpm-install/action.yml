@@ -13,8 +13,6 @@ runs:
       name: Install pnpm
       with:
         version: 8
-        run_install: |
-          - recursive: true
 
     - name: Get pnpm store directory
       shell: bash
