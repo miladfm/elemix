@@ -42,11 +42,7 @@ export function parseIndividualTransforms(transform: string): TransformObject {
 
   // Translate
   if (transformFunctionMatches.includes('translate')) {
-    const match = processTransformFunction(
-      'translate',
-      transform,
-      /translate\((-?\d+(?:\.\d+)?)px?(?:,\s*(-?\d+(?:\.\d+)?)px?)?\)/
-    );
+    const match = processTransformFunction('translate', transform, /translate\((-?\d+(?:\.\d+)?)px?(?:,\s*(-?\d+(?:\.\d+)?)px?)?\)/);
     transformObject.translateX = match.x;
     transformObject.translateY = isNaN(match.y) ? transformObject.translateY : match.y;
   }
@@ -60,11 +56,7 @@ export function parseIndividualTransforms(transform: string): TransformObject {
 
   // Skew
   if (transformFunctionMatches.includes('skew')) {
-    const match = processTransformFunction(
-      'skew',
-      transform,
-      /skew\((-?\d+(?:\.\d+)?)deg(?:,\s*(-?\d+(?:\.\d+)?)deg)?\)/
-    );
+    const match = processTransformFunction('skew', transform, /skew\((-?\d+(?:\.\d+)?)deg(?:,\s*(-?\d+(?:\.\d+)?)deg)?\)/);
     transformObject.skewX = match.x;
     transformObject.skewY = isNaN(match.y) ? transformObject.skewY : match.y;
   }
@@ -73,13 +65,11 @@ export function parseIndividualTransforms(transform: string): TransformObject {
 }
 
 /**
- * Private function to validate the transform functions.
- * Only 'translate', 'scale', 'skew' are valid.
+ * No unit tests; implicitly tested via public functions that use this private helper.
  */
+
 function validateTransformFunctionMatches(transformFunctionMatches: string[]) {
-  const hasValidTransformFunction = transformFunctionMatches.every((match) =>
-    ['translate', 'scale', 'skew'].includes(match)
-  );
+  const hasValidTransformFunction = transformFunctionMatches.every((match) => ['translate', 'scale', 'skew'].includes(match));
 
   if (!hasValidTransformFunction || transformFunctionMatches.length === 0) {
     throw new Error('Failed to parse individual transforms');
@@ -87,8 +77,9 @@ function validateTransformFunctionMatches(transformFunctionMatches: string[]) {
 }
 
 /**
- * Private function to get the transform function values.
+ * No unit tests; implicitly tested via public functions that use this private helper.
  */
+
 function processTransformFunction(name: 'translate' | 'scale' | 'skew', transform: string, regex: RegExp) {
   const match = transform.match(regex);
 

@@ -1,4 +1,4 @@
-import { Dom } from './dom';
+import { Dom } from '../../lib/dom/dom';
 
 describe('Dom Class - HTMLElement', () => {
   // Initialize a DOM element
@@ -16,40 +16,44 @@ describe('Dom Class - HTMLElement', () => {
     document.body.removeChild(element);
   });
 
-  it('should construct Dom instance from HTMLElement', () => {
+  it('should initialize correctly when passed a valid HTMLElement', () => {
     const domInstance = new Dom(element);
-    expect(domInstance.target).toEqual(element);
+    expect(domInstance.nativeElement).toEqual(element);
   });
 
-  it('should throw error if no target is found', () => {
+  it('should throw an error when no target is found', () => {
     expect(() => new Dom('non-existent', document)).toThrow('No element was found');
   });
 
-  it('should set styles immediately', () => {
+  it('should update the DOM styles immediately when setStyleImmediately is called', () => {
     const domInstance = new Dom(element);
     domInstance.setStyleImmediately('opacity', '0.5');
     expect(element.style.opacity).toBe('0.5');
   });
 
-  it('should get width and height', () => {
+  it('should return the width of the HTMLElement when width is called', () => {
     const domInstance = new Dom(element);
     expect(domInstance.width).toBe(200);
+  });
+
+  it('should return the height of the HTMLElement when height is called', () => {
+    const domInstance = new Dom(element);
     expect(domInstance.height).toBe(300);
   });
 
-  it('should get dimension', () => {
+  it('should return the dimensions of the HTMLElement when dimension is called', () => {
     const domInstance = new Dom(element);
     expect(domInstance.dimension).toEqual({ width: 200, height: 300 });
   });
 
-  it('should querySelector', () => {
+  it('should return the child HTMLElement when querySelector is called', () => {
     const childElem = document.createElement('span');
     element.appendChild(childElem);
     const domInstance = new Dom(element);
     expect(domInstance.querySelector('span')).toEqual(childElem);
   });
 
-  test('should append the element to a parent', () => {
+  it('should append the element to a parent when appendTo is called', () => {
     const parent = document.createElement('div');
     const child = document.createElement('div');
     const domParent = new Dom(parent);
@@ -59,7 +63,7 @@ describe('Dom Class - HTMLElement', () => {
     expect(parent.children).toContain(child);
   });
 
-  test('should append a child element', () => {
+  it('should append an element as a child when appendChild is called', () => {
     const parent = document.createElement('div');
     const child = document.createElement('div');
     const domParent = new Dom(parent);
@@ -69,7 +73,7 @@ describe('Dom Class - HTMLElement', () => {
     expect(parent.children).toContain(child);
   });
 
-  test('should add a class to the element', () => {
+  it('should add the provided class to the element when addClass is called', () => {
     const elem = document.createElement('div');
     const domInstance = new Dom(elem);
     domInstance.addClass('new-class');
@@ -77,7 +81,7 @@ describe('Dom Class - HTMLElement', () => {
     expect(elem.classList).toContain('new-class');
   });
 
-  test('should remove a class from the element', () => {
+  it('should remove the provided class from the element when removeClass is called', () => {
     const elem = document.createElement('div');
     const domInstance = new Dom(elem);
     elem.classList.add('old-class');
@@ -86,7 +90,7 @@ describe('Dom Class - HTMLElement', () => {
     expect(elem.classList).not.toContain('old-class');
   });
 
-  test('should set an attribute', () => {
+  it('should set the provided attribute to the element when setAttribute is called', () => {
     const elem = document.createElement('div');
     const domInstance = new Dom(elem);
     domInstance.setAttribute('data-test', 'value');
@@ -94,7 +98,7 @@ describe('Dom Class - HTMLElement', () => {
     expect(elem.getAttribute('data-test')).toBe('value');
   });
 
-  test('should get an attribute value', () => {
+  it('should return the value of the provided attribute when getAttribute is called', () => {
     const elem = document.createElement('div');
     const domInstance = new Dom(elem);
     elem.setAttribute('data-test', 'value');
@@ -116,12 +120,12 @@ describe('Dom Class - SVG Elements', () => {
     document.body.removeChild(svgElem);
   });
 
-  test('should correctly get width of SVG element', () => {
+  it('should return the width of SVGElement when width is called', () => {
     const domInstance = new Dom(svgElem);
     expect(domInstance.width).toBe(100);
   });
 
-  test('should correctly get height of SVG element', () => {
+  it('should return the height of SVGElement when height is called', () => {
     const domInstance = new Dom(svgElem);
     expect(domInstance.height).toBe(200);
   });

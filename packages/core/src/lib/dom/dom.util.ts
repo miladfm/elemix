@@ -1,10 +1,7 @@
 /**
  * Selects a DOM element based on a variety of input types.
  */
-export function domSelector<T extends Element>(
-  element: Node | string,
-  parent: Element | Document = document
-): T | null {
+export function domSelector<T extends Element>(element: Node | string, parent: Element | Document = document): T | null {
   // Validate the type of the incoming selector
   if (!(element instanceof Node) && typeof element !== 'string') {
     throw new Error('There is no valid selector.');

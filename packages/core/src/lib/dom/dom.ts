@@ -1,48 +1,48 @@
 import { domSelector } from './dom.util';
 import { toStr } from '../common/ensure.util';
 import { CssStylesKey, Dimension } from '../common/common.model';
-import { parseElementTransform } from './parse-transform.util';
+import { parseElementTransform } from './dom-parse-transform.util';
 
 export type DomType = HTMLElement | SVGSVGElement;
-export type DomInputType = Dom<DomType> | HTMLElement | string | Node;
+export type DomSelector = Dom<DomType> | HTMLElement | string | Node;
 
 export class Dom<T extends DomType = HTMLElement> {
-  public target: T;
+  public nativeElement: T;
 
-  constructor(target: DomInputType, parentElem: HTMLElement | Document = document) {
-    if (target instanceof Dom) {
-      return target as Dom<T>;
+  constructor(selector: DomSelector, parentElem: HTMLElement | Document = document) {
+    if (selector instanceof Dom) {
+      return selector as Dom<T>;
     }
 
-    const _target = domSelector<T>(target, parentElem);
+    const _target = domSelector<T>(selector, parentElem);
 
     if (!_target) {
       throw new Error('No element was found');
     }
 
-    this.target = _target;
+    this.nativeElement = _target;
   }
 
   public setStyleImmediately(property: CssStylesKey, value: string | number) {
-    this.target.style[property] = toStr(value);
+    this.nativeElement.style[property] = toStr(value);
   }
 
   public get width(): number {
-    if (this.target instanceof SVGSVGElement) {
-      const svgBBox = this.target.getBBox();
+    if (this.nativeElement instanceof SVGSVGElement) {
+      const svgBBox = this.nativeElement.getBBox();
       return svgBBox.width;
     }
 
-    return this.target.offsetWidth;
+    return this.nativeElement.offsetWidth;
   }
 
   public get height() {
-    if (this.target instanceof SVGSVGElement) {
-      const svgBBox = this.target.getBBox();
+    if (this.nativeElement instanceof SVGSVGElement) {
+      const svgBBox = this.nativeElement.getBBox();
       return svgBBox.height;
     }
 
-    return this.target.offsetHeight;
+    return this.nativeElement.offsetHeight;
   }
 
   public get dimension(): Dimension {
@@ -53,77 +53,77 @@ export class Dom<T extends DomType = HTMLElement> {
   }
 
   public getTransform() {
-    return parseElementTransform(this.target);
+    return parseElementTransform(this.nativeElement);
   }
 
   public getOpacity() {
-    return Number(window.getComputedStyle(this.target).opacity);
+    return Number(window.getComputedStyle(this.nativeElement).opacity);
   }
 
   public querySelector(selector: string) {
-    return this.target.querySelector(selector);
+    return this.nativeElement.querySelector(selector);
   }
 
-  public appendTo(parentElem: DomInputType) {
+  public appendTo(parentElem: DomSelector) {
     const parent = new Dom(parentElem);
-    parent.target.appendChild(this.target);
+    parent.nativeElement.appendChild(this.nativeElement);
     return this;
   }
 
-  public appendChild(childElem: DomInputType) {
+  public appendChild(childElem: DomSelector) {
     const child = new Dom(childElem);
-    this.target.appendChild(child.target);
+    this.nativeElement.appendChild(child.nativeElement);
     return this;
   }
 
   public addClass(...className: string[]) {
-    this.target.classList.add(...className);
+    this.nativeElement.classList.add(...className);
     return this;
   }
 
   public removeClass(...className: string[]) {
-    this.target.classList.remove(...className);
+    this.nativeElement.classList.remove(...className);
     return this;
   }
 
   public getBoundingClientRect(): DOMRect {
-    return this.target.getBoundingClientRect();
+    return this.nativeElement.getBoundingClientRect();
   }
 
   public setAttribute(attr: string, value: string) {
-    this.target.setAttribute(attr, value);
+    this.nativeElement.setAttribute(attr, value);
     return this;
   }
 
   public getAttribute(attr: string): string | null {
-    return this.target.getAttribute(attr);
+    return this.nativeElement.getAttribute(attr);
   }
 
   public remove() {
-    this.target.remove();
+    this.nativeElement.remove();
   }
 
   public get children() {
-    return this.target.children;
+    return this.nativeElement.children;
   }
 
   public get naturalWidth() {
-    if (!(this.target instanceof HTMLImageElement)) {
+    if (!(this.nativeElement instanceof HTMLImageElement)) {
       return null;
     }
 
-    return this.target.naturalWidth;
+    return this.nativeElement.naturalWidth;
   }
 
   public get naturalHeight() {
-    if (!(this.target instanceof HTMLImageElement)) {
+    if (!(this.nativeElement instanceof HTMLImageElement)) {
       return null;
     }
 
-    return this.target.naturalHeight;
+    return this.nativeElement.naturalHeight;
   }
 
   public get parentElement() {
-    return this.target.parentElement;
+    return this.nativeElement.parentElement;
   }
 }

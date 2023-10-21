@@ -3,8 +3,8 @@ import {
   parseElementTransform,
   parseIndividualTransforms,
   parseMatrixTransform,
-} from './parse-transform.util';
-import { TransformObject } from '../common/common.model';
+} from '../../lib/dom/dom-parse-transform.util';
+import { TransformObject } from '../../lib/common/common.model';
 
 const INITIALIZE_TRANSFORM: TransformObject = {
   translateX: 0,
@@ -15,8 +15,8 @@ const INITIALIZE_TRANSFORM: TransformObject = {
   skewY: 0,
 };
 
-describe('checkFor3DTransforms', () => {
-  test('should return true for 3D transforms', () => {
+describe('Util - checkFor3DTransforms', () => {
+  it('should return true when passed 3D transforms', () => {
     expect(checkFor3DTransforms('matrix3d()')).toBe(true);
     expect(checkFor3DTransforms('translate3d()')).toBe(true);
     expect(checkFor3DTransforms('scale3d()')).toBe(true);
@@ -24,23 +24,23 @@ describe('checkFor3DTransforms', () => {
     expect(checkFor3DTransforms('perspective()')).toBe(true);
   });
 
-  test('should return false for 2D transforms', () => {
+  it('should return false when passed 2D transforms', () => {
     expect(checkFor3DTransforms('matrix()')).toBe(false);
     expect(checkFor3DTransforms('translate()')).toBe(false);
   });
 
-  test('should handle multiple transform functions', () => {
+  it('should handle multiple transform functions correctly', () => {
     expect(checkFor3DTransforms('matrix() translate3d()')).toBe(true);
     expect(checkFor3DTransforms('matrix() translate()')).toBe(false);
   });
 
-  test('should handle empty string', () => {
+  it('should return false when passed an empty string', () => {
     expect(checkFor3DTransforms('')).toBe(false);
   });
 });
 
-describe('parseMatrixTransform', () => {
-  test('should parse matrix correctly', () => {
+describe('Util - parseMatrixTransform', () => {
+  it('should parse the matrix correctly when provided a valid matrix', () => {
     expect(parseMatrixTransform('matrix(1, 0, 0, 1, 0, 0)')).toEqual({
       scaleX: 1,
       skewY: 0,
@@ -51,21 +51,21 @@ describe('parseMatrixTransform', () => {
     });
   });
 
-  test('should handle empty string', () => {
+  it('should return null when passed an empty string', () => {
     expect(() => parseMatrixTransform('')).toThrow('Failed to parse matrix values.');
   });
 
-  test('should handle invalid format', () => {
-    expect(() => parseMatrixTransform('invalid')).toThrow('Failed to parse matrix values.');
+  it('should throw an error when passed an invalid format', () => {
+    expect(() => parseMatrixTransform('invalid matrix')).toThrow('Failed to parse matrix values.');
   });
 
-  test('should handle less than 6 values', () => {
+  it('should throw an error when passed a string with less than 6 values', () => {
     expect(() => parseMatrixTransform('matrix(1, 0, 0)')).toThrow('Failed to parse matrix values.');
   });
 });
 
-describe('parseIndividualTransforms', () => {
-  it('should parse translate correctly', () => {
+describe('Util - parseIndividualTransforms', () => {
+  it('should parse translate correctly when passed a valid translate function', () => {
     expect(parseIndividualTransforms('translate(10.5px, 20px)')).toEqual({
       ...INITIALIZE_TRANSFORM,
       translateX: 10.5,
@@ -77,7 +77,7 @@ describe('parseIndividualTransforms', () => {
     });
   });
 
-  it('should parse scale correctly', () => {
+  it('should parse scale correctly when passed a valid scale function', () => {
     expect(parseIndividualTransforms('scale(2, 1.5)')).toEqual({
       ...INITIALIZE_TRANSFORM,
       scaleX: 2,
@@ -89,7 +89,7 @@ describe('parseIndividualTransforms', () => {
     });
   });
 
-  it('should parse skew correctly', () => {
+  it('should parse skew correctly when passed a valid skew function', () => {
     expect(parseIndividualTransforms('skew(10.4deg, 20deg)')).toEqual({
       ...INITIALIZE_TRANSFORM,
       skewX: 10.4,
@@ -101,7 +101,7 @@ describe('parseIndividualTransforms', () => {
     });
   });
 
-  it('should parse multiple transformations', () => {
+  it('should parse multiple transformations correctly when passed multiple valid functions', () => {
     expect(parseIndividualTransforms('translate(10px, 20px) scale(2, 2)')).toEqual({
       ...INITIALIZE_TRANSFORM,
       translateX: 10,
@@ -136,38 +136,36 @@ describe('parseIndividualTransforms', () => {
     });
   });
 
-  it('should throw error for invalid transform functions', () => {
+  it('should throw an error when passed invalid transform functions', () => {
     expect(() => parseIndividualTransforms('')).toThrow('Failed to parse individual transforms');
     expect(() => parseIndividualTransforms('matrix(10px, 20px)')).toThrow('Failed to parse individual transforms');
     expect(() => parseIndividualTransforms('scaleX(10)')).toThrow('Failed to parse individual transforms');
     expect(() => parseIndividualTransforms('skewX(10deg)')).toThrow('Failed to parse individual transforms');
     expect(() => parseIndividualTransforms('translateX(10px)')).toThrow('Failed to parse individual transforms');
-    expect(() => parseIndividualTransforms('translate(10px) skewX(10deg) skewY(10deg)')).toThrow(
-      'Failed to parse individual transforms'
-    );
+    expect(() => parseIndividualTransforms('translate(10px) skewX(10deg) skewY(10deg)')).toThrow('Failed to parse individual transforms');
   });
 
-  it('should throw error for missing translate values', () => {
+  it('should throw an error when a translate unit is missing', () => {
     expect(() => parseIndividualTransforms('translate()')).toThrow('The translate do not have a valid value');
     expect(() => parseIndividualTransforms('translate(10)')).toThrow('The translate do not have a valid value');
     expect(() => parseIndividualTransforms('translate(10px, 3)')).toThrow('The translate do not have a valid value');
     expect(() => parseIndividualTransforms('translate(10%)')).toThrow('The translate do not have a valid value');
   });
 
-  it('should throw error for missing scale values', () => {
+  it('should throw an error when a scale unit is missing', () => {
     expect(() => parseIndividualTransforms('scale()')).toThrow('The scale do not have a valid value');
     expect(() => parseIndividualTransforms('scale(2%)')).toThrow('The scale do not have a valid value');
     expect(() => parseIndividualTransforms('scale(1, 2%)')).toThrow('The scale do not have a valid value');
   });
 
-  it('should throw error for missing skew values', () => {
+  it('should throw an error when a skew unit is missing', () => {
     expect(() => parseIndividualTransforms('skew()')).toThrow('The skew do not have a valid value');
     expect(() => parseIndividualTransforms('skew(10)')).toThrow('The skew do not have a valid value');
     expect(() => parseIndividualTransforms('skew(10deg, 10)')).toThrow('The skew do not have a valid value');
   });
 });
 
-describe('parseElementTransform', () => {
+describe('Util - parseElementTransform', () => {
   let element: any;
 
   beforeEach(() => {
@@ -178,17 +176,17 @@ describe('parseElementTransform', () => {
     }));
   });
 
-  it('should return default values if no transformations applied', () => {
+  it('should return default values when no transformations are applied', () => {
     const result = parseElementTransform(element);
     expect(result).toEqual(INITIALIZE_TRANSFORM);
   });
 
-  it('should throw an error for 3D transformations', () => {
+  it('should throw an error when passed 3D transformations', () => {
     element.style.transform = 'rotate3d(1, 1, 1, 45deg)';
     expect(() => parseElementTransform(element)).toThrow("Sorry, we don't support 3D transformations right now.");
   });
 
-  it('should handle matrix transformations', () => {
+  it('should parse matrix transformations correctly when passed a valid matrix', () => {
     element.style.transform = 'matrix(1.5, 3, 4, 2, 50, 10)';
     const result = parseElementTransform(element);
     expect(result).toEqual({
@@ -201,7 +199,7 @@ describe('parseElementTransform', () => {
     });
   });
 
-  it('should handle individual transforms', () => {
+  it('should handle individual transforms correctly when passed valid individual transform functions', () => {
     element.style.transform = 'translate(10px, 20px)';
     const result = parseElementTransform(element);
     expect(result).toEqual({

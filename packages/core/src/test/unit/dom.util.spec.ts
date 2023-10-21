@@ -1,6 +1,6 @@
-import { domSelector } from './dom.util';
+import { domSelector } from '../../lib/dom/dom.util';
 
-describe('domSelector', () => {
+describe('Util - domSelector', () => {
   describe('Valid Selectors', () => {
     let parentDiv: HTMLDivElement;
 
@@ -14,43 +14,43 @@ describe('domSelector', () => {
       document.body.removeChild(parentDiv);
     });
 
-    test('should return the Node when passed a Node', () => {
+    it('should return the same Node when a Node is provided', () => {
       const node = document.createElement('div');
       expect(domSelector(node)).toBe(node);
     });
 
-    test('should create an element from the HTML string', () => {
+    it('should return an element when an HTML string is provided', () => {
       const element = domSelector('<div></div>');
       expect(element).toBeInstanceOf(HTMLDivElement);
     });
 
-    test('should return only the first element from an HTML string with multiple elements', () => {
+    it('should return only the first element when multiple HTML elements are provided in a string', () => {
       const element = domSelector('<div></div><span></span>');
       expect(element).toBeInstanceOf(HTMLDivElement);
     });
 
-    test('should return the child element when searching within a parent', () => {
+    it('should return an element as a child of the provided parent element when the parent element is specified', () => {
       const element = domSelector('.child', parentDiv);
       expect(element).toBeInstanceOf(HTMLSpanElement);
     });
 
-    test('should return the element when searching without specifying a parent', () => {
+    it('should return an element from the document when no parent element is specified', () => {
       const element = domSelector('.child');
       expect(element).toBeInstanceOf(HTMLSpanElement);
     });
   });
 
   describe('Invalid Selectors', () => {
-    test('should throw an error for invalid selector', () => {
+    it('should throw an error when an invalid selector is provided', () => {
       expect(() => domSelector(null as unknown as Node)).toThrow('There is no valid selector.');
     });
 
-    test('should return null for non-existing selector', () => {
+    it('should return null when a non-existing selector is provided', () => {
       const element = domSelector('.non-existent');
       expect(element).toBeNull();
     });
 
-    test('should return null for a non-element Node', () => {
+    it('should return null when a non-element Node is provided', () => {
       const textNode = document.createTextNode('some text');
       expect(domSelector(textNode)).toBeNull();
     });
