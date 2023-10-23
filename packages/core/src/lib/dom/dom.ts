@@ -1,6 +1,6 @@
 import { domSelector } from './dom.util';
 import { toStr } from '../common/ensure.util';
-import { CssStylesKey, Dimension } from '../common/common.model';
+import { CssStylesKey, Dimensions } from '../common/common.model';
 import { parseElementTransform } from './dom-parse-transform.util';
 
 export type DomType = HTMLElement | SVGSVGElement;
@@ -45,7 +45,7 @@ export class Dom<T extends DomType = HTMLElement> {
     return this.nativeElement.offsetHeight;
   }
 
-  public get dimension(): Dimension {
+  public get dimension(): Dimensions {
     return {
       width: this.width,
       height: this.height,

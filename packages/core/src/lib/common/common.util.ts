@@ -75,3 +75,7 @@ export function getObjectDiff<T extends AnyObject>(obj1: T, obj2: T): Partial<T>
 
   return diff as Partial<T>;
 }
+
+export function isImage(element: unknown): element is HTMLImageElement {
+  return element instanceof HTMLImageElement;
+}

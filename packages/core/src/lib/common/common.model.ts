@@ -1,6 +1,16 @@
-export interface Dimension {
+export interface Dimensions {
   width: number;
   height: number;
+}
+
+export interface DimensionalGap {
+  vertical: number;
+  horizontal: number;
+}
+
+export interface Coordinates {
+  x: number;
+  y: number;
 }
 
 export interface TransformObject {

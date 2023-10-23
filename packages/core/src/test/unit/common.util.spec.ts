@@ -1,4 +1,4 @@
-import { deepClone, deepmerge, getObjectDiff } from '../../lib/common/common.util';
+import { deepClone, deepmerge, getObjectDiff, isImage } from '../../lib/common/common.util';
 
 describe('Util - deepClone', () => {
   it('should return the primitive type as is when a primitive type is provided', () => {
@@ -96,5 +96,41 @@ describe('Util - getObjectDiff', () => {
     const obj1: any = { a: 1, b: { c: 2 } };
     const obj2: any = { a: 2, b: { c: 3 }, d: 4 };
     expect(getObjectDiff(obj1, obj2)).toEqual({ a: 2, b: { c: 3 }, d: 4 });
+  });
+});
+
+describe('Util - isImage', () => {
+  it('should return true when passed an HTMLImageElement', () => {
+    const img = new Image();
+    expect(isImage(img)).toBe(true);
+  });
+
+  it('should return false when passed an HTMLElement that is not an HTMLImageElement', () => {
+    const div = document.createElement('div');
+    expect(isImage(div)).toBe(false);
+  });
+
+  it('should return false when passed a string', () => {
+    expect(isImage('string')).toBe(false);
+  });
+
+  it('should return false when passed a number', () => {
+    expect(isImage(42)).toBe(false);
+  });
+
+  it('should return false when passed null', () => {
+    expect(isImage(null)).toBe(false);
+  });
+
+  it('should return false when passed an array', () => {
+    expect(isImage([])).toBe(false);
+  });
+
+  it('should return false when passed an object', () => {
+    expect(isImage({})).toBe(false);
+  });
+
+  it('should return false when passed undefined', () => {
+    expect(isImage(undefined)).toBe(false);
   });
 });
