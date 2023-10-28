@@ -23,14 +23,14 @@ export class TouchEventSerializer implements InteractionEventSerializer {
       share()
     );
 
-    this.move$ = fromEvent<TouchEvent>(this.dom.nativeElement, 'touchmove').pipe(
+    this.move$ = fromEvent<TouchEvent>(document, 'touchmove').pipe(
       map((e) => this.serializer(e, this.lastInteractionEvent)),
       tap((interactionEvent) => (this.lastInteractionEvent = interactionEvent)),
       takeUntil(this.destroy$),
       share()
     );
 
-    this.end$ = fromEvent<TouchEvent>(this.dom.nativeElement, 'touchend').pipe(
+    this.end$ = fromEvent<TouchEvent>(document, 'touchend').pipe(
       map((e) => this.serializer(e, this.lastInteractionEvent)),
       tap((_) => (this.lastInteractionEvent = null)),
       takeUntil(this.destroy$),

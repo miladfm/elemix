@@ -59,6 +59,7 @@ describe('Unit - TouchEventSerializer', () => {
   beforeEach(() => {
     element = document.createElement('div');
     mockEventListener(element);
+    mockEventListener(document);
     touchEventSerializer = new TouchEventSerializer(element);
 
     touchstartEvent = generateCustomEvent('touchstart', ACTUAL_TOUCHES_START);
@@ -82,13 +83,13 @@ describe('Unit - TouchEventSerializer', () => {
   });
   it('should listen to `touchmove` when there is a subscription', () => {
     touchEventSerializer.move$.subscribe();
-    expect(element.addEventListener).toHaveBeenCalledTimes(1);
-    expect(element.addEventListener).toHaveBeenCalledWith('touchmove', expect.any(Function), undefined);
+    expect(document.addEventListener).toHaveBeenCalledTimes(1);
+    expect(document.addEventListener).toHaveBeenCalledWith('touchmove', expect.any(Function), undefined);
   });
   it('should listen to `touchend` when there is a subscription', () => {
     touchEventSerializer.end$.subscribe();
-    expect(element.addEventListener).toHaveBeenCalledTimes(1);
-    expect(element.addEventListener).toHaveBeenCalledWith('touchend', expect.any(Function), undefined);
+    expect(document.addEventListener).toHaveBeenCalledTimes(1);
+    expect(document.addEventListener).toHaveBeenCalledWith('touchend', expect.any(Function), undefined);
   });
   it('should listen to `touchcancel` when there is a subscription', () => {
     touchEventSerializer.cancel$.subscribe();
@@ -103,13 +104,13 @@ describe('Unit - TouchEventSerializer', () => {
   });
   it('should remove listener to `touchmove` when subscription has unsubscribe', () => {
     touchEventSerializer.move$.subscribe().unsubscribe();
-    expect(element.removeEventListener).toHaveBeenCalledTimes(1);
-    expect(element.removeEventListener).toHaveBeenCalledWith('touchmove', expect.any(Function), undefined);
+    expect(document.removeEventListener).toHaveBeenCalledTimes(1);
+    expect(document.removeEventListener).toHaveBeenCalledWith('touchmove', expect.any(Function), undefined);
   });
   it('should remove listener to `touchend` when subscription has unsubscribe', () => {
     touchEventSerializer.end$.subscribe().unsubscribe();
-    expect(element.removeEventListener).toHaveBeenCalledTimes(1);
-    expect(element.removeEventListener).toHaveBeenCalledWith('touchend', expect.any(Function), undefined);
+    expect(document.removeEventListener).toHaveBeenCalledTimes(1);
+    expect(document.removeEventListener).toHaveBeenCalledWith('touchend', expect.any(Function), undefined);
   });
   it('should remove listener to `touchcancel` when subscription has unsubscribe', () => {
     touchEventSerializer.cancel$.subscribe().unsubscribe();
@@ -126,14 +127,14 @@ describe('Unit - TouchEventSerializer', () => {
   it('should only listen to `touchmove` once when there is multi subscription', () => {
     touchEventSerializer.move$.subscribe();
     touchEventSerializer.move$.subscribe();
-    expect(element.addEventListener).toHaveBeenCalledTimes(1);
-    expect(element.addEventListener).toHaveBeenCalledWith('touchmove', expect.any(Function), undefined);
+    expect(document.addEventListener).toHaveBeenCalledTimes(1);
+    expect(document.addEventListener).toHaveBeenCalledWith('touchmove', expect.any(Function), undefined);
   });
   it('should only listen to `touchend` once when there is multi subscription', () => {
     touchEventSerializer.end$.subscribe();
     touchEventSerializer.end$.subscribe();
-    expect(element.addEventListener).toHaveBeenCalledTimes(1);
-    expect(element.addEventListener).toHaveBeenCalledWith('touchend', expect.any(Function), undefined);
+    expect(document.addEventListener).toHaveBeenCalledTimes(1);
+    expect(document.addEventListener).toHaveBeenCalledWith('touchend', expect.any(Function), undefined);
   });
   it('should only listen to `touchcancel` once when there is multi subscription', () => {
     touchEventSerializer.cancel$.subscribe();
@@ -172,7 +173,7 @@ describe('Unit - TouchEventSerializer', () => {
       done();
     });
 
-    element.dispatchEvent(touchmoveEvent);
+    document.dispatchEvent(touchmoveEvent);
   });
   it('should return correct values when end event has finished', (done) => {
     touchEventSerializer.end$.subscribe((e) => {
@@ -188,7 +189,7 @@ describe('Unit - TouchEventSerializer', () => {
       done();
     });
 
-    element.dispatchEvent(touchendEvent);
+    document.dispatchEvent(touchendEvent);
   });
   it('should return correct values when cancel event has finished', (done) => {
     touchEventSerializer.cancel$.subscribe((e) => {
@@ -215,7 +216,7 @@ describe('Unit - TouchEventSerializer', () => {
     });
 
     element.dispatchEvent(touchstartEvent);
-    element.dispatchEvent(touchmoveEvent);
+    document.dispatchEvent(touchmoveEvent);
   });
   it('should return correct movement for end when move event has fired before move', (done) => {
     touchEventSerializer.move$.subscribe();
@@ -224,8 +225,8 @@ describe('Unit - TouchEventSerializer', () => {
       done();
     });
 
-    element.dispatchEvent(touchmoveEvent);
-    element.dispatchEvent(touchendEvent);
+    document.dispatchEvent(touchmoveEvent);
+    document.dispatchEvent(touchendEvent);
   });
   it('should return correct movement for cancel when move event has fired before move', (done) => {
     touchEventSerializer.move$.subscribe();
@@ -234,7 +235,7 @@ describe('Unit - TouchEventSerializer', () => {
       done();
     });
 
-    element.dispatchEvent(touchmoveEvent);
+    document.dispatchEvent(touchmoveEvent);
     element.dispatchEvent(touchcancelEvent);
   });
 
@@ -252,10 +253,12 @@ describe('Unit - TouchEventSerializer', () => {
     element.dispatchEvent(touchendEvent);
     element.dispatchEvent(touchcancelEvent);
 
-    expect(element.removeEventListener).toBeCalledTimes(4);
+    expect(element.removeEventListener).toBeCalledTimes(2);
     expect(element.removeEventListener).toBeCalledWith('touchstart', expect.any(Function), undefined);
-    expect(element.removeEventListener).toBeCalledWith('touchmove', expect.any(Function), undefined);
-    expect(element.removeEventListener).toBeCalledWith('touchend', expect.any(Function), undefined);
     expect(element.removeEventListener).toBeCalledWith('touchcancel', expect.any(Function), undefined);
+
+    expect(document.removeEventListener).toBeCalledTimes(2);
+    expect(document.removeEventListener).toBeCalledWith('touchmove', expect.any(Function), undefined);
+    expect(document.removeEventListener).toBeCalledWith('touchend', expect.any(Function), undefined);
   });
 });
