@@ -55,7 +55,6 @@
         "no-mixed-operators": ["error"],
         "no-multi-assign": ["error"],
         "no-param-reassign": ["error"],
-        "no-return-assign": ["error"],
         "no-script-url": ["error"],
         "no-shadow": "off",
         "@typescript-eslint/no-shadow": ["error"],
@@ -76,6 +75,7 @@
         "jest": true
       },
       "rules": {
+        "dot-notation": "off",
         "max-lines-per-function": ["off"],
         "no-empty-function": ["off"],
         "@typescript-eslint/ban-ts-comment": ["off"],
