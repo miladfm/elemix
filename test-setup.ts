@@ -1,5 +1,5 @@
 // add all jest-extended matchers
-import { toBeCalledAsFunctionWith } from '@internal-lib/util-testing';
+import { toBeCalledAsFunctionWith, toContainTimes } from '@internal-lib/util-testing';
 
 // This line is a workaround to prevent IDE liek WebStorm from mistyping `extend`.
 // By default, WebStorm assumes `extend` is part of Node, resulting in a type mismatch error.
@@ -8,6 +8,7 @@ import { toBeCalledAsFunctionWith } from '@internal-lib/util-testing';
 const extend = expect.extend;
 extend({
   toBeCalledAsFunctionWith,
+  toContainTimes,
 });
 
 beforeAll(() => {});
