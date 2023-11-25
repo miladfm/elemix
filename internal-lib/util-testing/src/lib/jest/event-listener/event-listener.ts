@@ -34,6 +34,25 @@ export function mockEventListener(element: Node) {
   });
 }
 
+export function getActiveListener(element: Node, event?: string): number {
+  const elementListeners = events.get(element);
+
+  if (!elementListeners) {
+    return 0;
+  }
+
+  if (event) {
+    return elementListeners.get(event)?.size ?? 0;
+  }
+
+  // If no event name is provided, count all listeners for the element
+  let count = 0;
+  elementListeners.forEach((listeners) => {
+    count += listeners.size;
+  });
+  return count;
+}
+
 export function generateCustomEvent(name: string, data: Record<string, any> = {}): CustomEvent & Record<string, any> {
   const customEvent = new CustomEvent(name) as CustomEvent & Record<string, any>;
 

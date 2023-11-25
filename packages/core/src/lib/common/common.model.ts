@@ -1,3 +1,23 @@
+export enum Axis {
+  /**
+   * Allows movement or operation in both horizontal and vertical directions.
+   * This provides full freedom for bidirectional activity.
+   */
+  Both = 'both',
+
+  /**
+   * Restricts movement or operation to the horizontal axis only.
+   * This limits activity to left and right directions.
+   */
+  Horizontal = 'horizontal',
+
+  /**
+   * Restricts movement or operation to the vertical axis only.
+   * This limits activity to up and down directions.
+   */
+  Vertical = 'vertical',
+}
+
 export interface Dimensions {
   width: number;
   height: number;

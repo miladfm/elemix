@@ -1,11 +1,10 @@
-import { Dom, DomType } from '../dom/dom';
+import { Dom, DomSelector } from '../dom/dom';
 import { filter, fromEvent, map, merge, mergeMap, Observable, share, startWith, Subject, switchMap, takeUntil, tap } from 'rxjs';
 import { GesturesEvent, GesturesEventType, GesturesOptions, PointerId } from './gestures.model';
 import { GestureStrategyBase } from './gesture-strategy.base';
 import { PressGestureStrategy } from './gesture-strategy-press';
 import { DragGestureStrategy } from './gesture-strategy-drag';
 import { ZoomGestureStrategy } from './gesture-strategy-zoom';
-import { logger } from 'verdaccio/build/lib/logger';
 
 const DEFAULT_OPTIONS: GesturesOptions = {
   minDragMovements: 3,
@@ -51,7 +50,7 @@ export class Gestures {
   private destroy$ = new Subject<void>();
   public changes$: Observable<GesturesEvent>;
 
-  constructor(selector: DomType, options: Partial<GesturesOptions> = {}) {
+  constructor(selector: DomSelector, options: Partial<GesturesOptions> = {}) {
     this.options = { ...DEFAULT_OPTIONS, ...options };
     this.dom = new Dom(selector);
 

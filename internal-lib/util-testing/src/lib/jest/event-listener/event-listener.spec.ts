@@ -1,4 +1,4 @@
-import { mockEventListener, generateCustomEvent, clearCallbacks } from './event-listener';
+import { mockEventListener, generateCustomEvent, clearCallbacks, getActiveListener } from './event-listener';
 
 describe('Util - mockEventListener', () => {
   let element1: Node;
@@ -92,6 +92,56 @@ describe('Util - mockEventListener', () => {
     element1.addEventListener('click', mockCallback);
     element1.dispatchEvent(new Event('click'));
     expect(mockCallback).toHaveBeenCalled();
+  });
+});
+
+describe('Util - getActiveListener', () => {
+  let element: Node;
+
+  beforeEach(() => {
+    element = document.createElement('div');
+    mockEventListener(element);
+  });
+
+  it('should return 0 when no listeners are registered for the element', () => {
+    expect(getActiveListener(element)).toBe(0);
+  });
+
+  it('should return 0 when no listeners are registered for the specified event', () => {
+    element.addEventListener('click', jest.fn());
+    expect(getActiveListener(element, 'mousemove')).toBe(0);
+  });
+
+  it('should return the number of listeners for the specified event', () => {
+    element.addEventListener('mouseover', jest.fn());
+    element.addEventListener('click', jest.fn());
+    element.addEventListener('click', jest.fn());
+    expect(getActiveListener(element, 'click')).toBe(2);
+  });
+
+  it('should return the total number of listeners when no event is specified', () => {
+    element.addEventListener('mouseover', jest.fn());
+    element.addEventListener('click', jest.fn());
+    element.addEventListener('click', jest.fn());
+    expect(getActiveListener(element)).toBe(3);
+  });
+
+  it('should return the number of listeners for a single event when a listener has removed', () => {
+    const callback = jest.fn();
+    element.addEventListener('mouseover', jest.fn());
+    element.addEventListener('click', callback);
+    element.addEventListener('click', jest.fn());
+    element.removeEventListener('click', callback);
+    expect(getActiveListener(element, 'click')).toBe(1);
+  });
+
+  it('should return the total number of listeners when a listener has removed', () => {
+    const callback = jest.fn();
+    element.addEventListener('mouseover', jest.fn());
+    element.addEventListener('click', callback);
+    element.addEventListener('click', jest.fn());
+    element.removeEventListener('click', callback);
+    expect(getActiveListener(element)).toBe(2);
   });
 });
 
