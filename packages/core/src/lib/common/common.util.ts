@@ -54,12 +54,15 @@ export function getObjectDiff<T extends AnyObject>(obj1: T, obj2: T): Partial<T>
 
   for (const key in obj1) {
     if (Object.hasOwn(obj2, key)) {
-      if (typeof obj1[key] === 'object' && typeof obj2[key] === 'object') {
+      const areBothObjects = typeof obj1[key] === 'object' && typeof obj2[key] === 'object';
+      const isDifferent = obj1[key] !== obj2[key];
+
+      if (areBothObjects) {
         const nestedDiff = getObjectDiff(obj1[key], obj2[key]);
         if (Object.keys(nestedDiff).length > 0) {
           diff[key] = nestedDiff;
         }
-      } else if (obj1[key] !== obj2[key]) {
+      } else if (isDifferent) {
         diff[key] = obj2[key];
       }
     } else {

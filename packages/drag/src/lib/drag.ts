@@ -9,7 +9,7 @@ import {
   GesturesEventType,
   TransformProperty,
 } from '@elemix/core';
-import { Subject, Subscription } from 'rxjs';
+import { Observable, Subject, Subscription } from 'rxjs';
 import { BoundaryInteraction, DragBoundaryType, DragOptions } from './drag.model';
 
 const DEFAULT_OPTIONS: DragOptions = {
@@ -30,7 +30,7 @@ const DRAG_GESTURES_TYPE = [
 
 export class Drag {
   private eventsSubject$ = new Subject<DragGesturesEvent>();
-  public events$ = this.eventsSubject$.asObservable();
+  public events$: Observable<DragGesturesEvent> = this.eventsSubject$.asObservable();
 
   private _isEnable = false;
   public get isEnable() {
@@ -87,6 +87,7 @@ export class Drag {
   }
 
   private handleDragPress(event: DragGesturesEvent) {
+    this.animation.syncValue();
     this.translateOnStart = { ...this.animation.value.transform };
   }
 

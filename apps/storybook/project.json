@@ -1,0 +1,55 @@
+{
+  "name": "storybook",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/storybook/src",
+  "projectType": "library",
+  "targets": {
+    "lint": {
+      "executor": "@nx/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["apps/storybook/**/*.ts"]
+      }
+    },
+    "storybook": {
+      "executor": "@nx/storybook:storybook",
+      "options": {
+        "port": 4400,
+        "configDir": "apps/storybook/.storybook"
+      },
+      "configurations": {
+        "ci": {
+          "quiet": true
+        }
+      },
+      "dependsOn": ["^build", "prepare-dependencies"]
+    },
+    "build-storybook": {
+      "executor": "@nx/storybook:build",
+      "outputs": ["{options.outputDir}"],
+      "options": {
+        "outputDir": "dist/storybook/storybook",
+        "configDir": "apps/storybook/.storybook"
+      },
+      "configurations": {
+        "ci": {
+          "quiet": true
+        }
+      }
+    },
+    "prepare-dependencies": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm i",
+        "cwd": "apps/storybook"
+      }
+    },
+    "test-storybook": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "test-storybook -c apps/storybook/.storybook --url=http://localhost:4400"
+      }
+    }
+  },
+  "tags": []
+}

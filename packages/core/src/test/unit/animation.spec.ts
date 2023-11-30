@@ -3,6 +3,7 @@ import { createMockRequestAnimationFrame } from '@internal-lib/util-testing';
 import { Animation } from '../../lib/animation/animation';
 import { TransformObject } from '../../lib/common/common.model';
 import { AnimationProperties } from '../../lib/animation/animation.model';
+import { getObjectDiff } from '../../lib/common/common.util';
 
 // region --- MOCKS ---
 export const INIT_TRANSFORM: TransformObject = {
@@ -29,21 +30,28 @@ const mockReactiveValueAddListener = jest.fn();
 const mockReactiveValueRemoveListener = jest.fn();
 const mockReactiveValueUpdate = jest.fn();
 
-jest.mock('../../lib/common/reactive-value', () => ({
-  ReactiveValue: jest.fn().mockImplementation(() => ({
-    addListener: mockReactiveValueAddListener,
-    removeListener: mockReactiveValueRemoveListener,
-    update: mockReactiveValueUpdate,
-    clone: jest.fn(),
-    value: { ...INIT_ANIM_PROPS },
-  })),
-}));
+const mockGetObjectDiff = jest.fn();
+
+jest.mock('../../lib/common/reactive-value', () => {
+  const originalModule = jest.requireActual('../../lib/common/reactive-value');
+
+  return {
+    ReactiveValue: jest.fn().mockImplementation(() => ({
+      addListener: mockReactiveValueAddListener,
+      removeListener: mockReactiveValueRemoveListener,
+      update: mockReactiveValueUpdate,
+      clone: jest.fn(),
+      value: { ...INIT_ANIM_PROPS },
+      emit: jest.fn(),
+    })),
+  };
+});
 jest.mock('../../lib/dom/dom', () => ({
   Dom: jest.fn().mockImplementation((selector) => {
-    const nativeElement = mockDomInstances.get(selector) || Symbol(selector);
-    mockDomInstances.set(selector, nativeElement);
+    const domSelector = mockDomInstances.get(selector) || selector;
+    mockDomInstances.set(selector, domSelector);
     return {
-      nativeElement,
+      nativeElement: domSelector.nativeElement ?? domSelector,
       getTransform: mockDomGetTransform,
       getOpacity: mockDomGetOpacity,
       setStyleImmediately: mockDomSetStyleImmediately,
@@ -66,7 +74,9 @@ describe('Class - Animation', () => {
 
   beforeEach(() => {
     divElement = document.createElement('div');
+    divElement.style.opacity = '1';
     divElementSecondary = document.createElement('span');
+    divElementSecondary.style.opacity = '1';
 
     Object.defineProperty(divElement, 'offsetWidth', {
       configurable: true,
@@ -136,25 +146,57 @@ describe('Class - Animation', () => {
       animation.addTranslate({ x: 10, y: 10 });
       jest.fn();
       expect(mockReactiveValueUpdate).toBeCalled();
-      expect(mockReactiveValueUpdate).toBeCalledAsFunctionWith({ transform: { x: 5, y: 5 } }, { transform: { x: 15, y: 15 } });
+      expect(mockReactiveValueUpdate).toBeCalledAsFunctionWith(
+        { transform: { x: 5, y: 5 } },
+        {
+          transform: {
+            x: 15,
+            y: 15,
+          },
+        }
+      );
     });
 
     it('should handle adding only x translation', () => {
       const animation = new Animation(divElement);
       animation.addTranslate({ x: 10 });
-      expect(mockReactiveValueUpdate).toBeCalledAsFunctionWith({ transform: { x: 5, y: 5 } }, { transform: { x: 15, y: 5 } });
+      expect(mockReactiveValueUpdate).toBeCalledAsFunctionWith(
+        { transform: { x: 5, y: 5 } },
+        {
+          transform: {
+            x: 15,
+            y: 5,
+          },
+        }
+      );
     });
 
     it('should handle adding only y translation', () => {
       const animation = new Animation(divElement);
       animation.addTranslate({ y: 10 });
-      expect(mockReactiveValueUpdate).toBeCalledAsFunctionWith({ transform: { x: 0, y: 5 } }, { transform: { x: 0, y: 15 } });
+      expect(mockReactiveValueUpdate).toBeCalledAsFunctionWith(
+        { transform: { x: 0, y: 5 } },
+        {
+          transform: {
+            x: 0,
+            y: 15,
+          },
+        }
+      );
     });
 
     it('Should leave values unchanged if no translation parameters are provided', () => {
       const animation = new Animation(divElement);
       animation.addTranslate({});
-      expect(mockReactiveValueUpdate).toBeCalledAsFunctionWith({ transform: { x: 10, y: 10 } }, { transform: { x: 10, y: 10 } });
+      expect(mockReactiveValueUpdate).toBeCalledAsFunctionWith(
+        { transform: { x: 10, y: 10 } },
+        {
+          transform: {
+            x: 10,
+            y: 10,
+          },
+        }
+      );
     });
   });
 
@@ -162,25 +204,57 @@ describe('Class - Animation', () => {
     it('Should override both x and y translation values', () => {
       const animation = new Animation(divElement);
       animation.setTranslate({ x: 10, y: 10 });
-      expect(mockReactiveValueUpdate).toBeCalledAsFunctionWith({ transform: { x: 5, y: 5 } }, { transform: { x: 10, y: 10 } });
+      expect(mockReactiveValueUpdate).toBeCalledAsFunctionWith(
+        { transform: { x: 5, y: 5 } },
+        {
+          transform: {
+            x: 10,
+            y: 10,
+          },
+        }
+      );
     });
 
     it('should override only x translation', () => {
       const animation = new Animation(divElement);
       animation.setTranslate({ x: 10 });
-      expect(mockReactiveValueUpdate).toBeCalledAsFunctionWith({ transform: { x: 5, y: 5 } }, { transform: { x: 10, y: 5 } });
+      expect(mockReactiveValueUpdate).toBeCalledAsFunctionWith(
+        { transform: { x: 5, y: 5 } },
+        {
+          transform: {
+            x: 10,
+            y: 5,
+          },
+        }
+      );
     });
 
     it('should override only y translation', () => {
       const animation = new Animation(divElement);
       animation.setTranslate({ y: 10 });
-      expect(mockReactiveValueUpdate).toBeCalledAsFunctionWith({ transform: { x: 5, y: 5 } }, { transform: { x: 5, y: 10 } });
+      expect(mockReactiveValueUpdate).toBeCalledAsFunctionWith(
+        { transform: { x: 5, y: 5 } },
+        {
+          transform: {
+            x: 5,
+            y: 10,
+          },
+        }
+      );
     });
 
     it('Should leave values unchanged if no translation parameters are provided', () => {
       const animation = new Animation(divElement);
       animation.setTranslate({});
-      expect(mockReactiveValueUpdate).toBeCalledAsFunctionWith({ transform: { x: 5, y: 5 } }, { transform: { x: 5, y: 5 } });
+      expect(mockReactiveValueUpdate).toBeCalledAsFunctionWith(
+        { transform: { x: 5, y: 5 } },
+        {
+          transform: {
+            x: 5,
+            y: 5,
+          },
+        }
+      );
     });
   });
 
@@ -365,13 +439,30 @@ describe('Class - Animation', () => {
 
   describe('applyImmediately', () => {
     it('Should immediately apply all style changes to the DOM element', () => {
-      const animation = new Animation(divElement);
-      animation.applyImmediately();
-      expect(mockDomSetStyleImmediately).toHaveBeenCalledTimes(4);
+      (getObjectDiff as jest.Mock).mockImplementationOnce((_) => ({
+        transform: { x: 0, y: 0, scale: 1, rotateX: 0, rotateY: 0 },
+        dimension: { width: 0, height: 0 },
+        opacity: 0,
+      }));
+      new Animation(divElement).applyImmediately();
+
+      // These values are derived from INIT_ANIM_PROPS, not directly from getObjectDiff
       expect(mockDomSetStyleImmediately).toHaveBeenCalledWith('transform', 'translate(0px, 0px) scale(1, 1) rotateY(0deg) rotateX(0deg)');
       expect(mockDomSetStyleImmediately).toHaveBeenCalledWith('width', '100px');
       expect(mockDomSetStyleImmediately).toHaveBeenCalledWith('height', '100px');
       expect(mockDomSetStyleImmediately).toHaveBeenCalledWith('opacity', 1);
+      expect(mockDomSetStyleImmediately).toHaveBeenCalledTimes(4);
+    });
+    it('Should immediately apply only changes styles changes to the DOM element', () => {
+      (getObjectDiff as jest.Mock).mockImplementationOnce((_) => ({
+        transform: { x: 0, y: 0, scale: 1, rotateX: 0, rotateY: 0 },
+      }));
+
+      new Animation(divElement).applyImmediately();
+
+      // These values are derived from INIT_ANIM_PROPS, not directly from getObjectDiff
+      expect(mockDomSetStyleImmediately).toHaveBeenCalledTimes(1);
+      expect(mockDomSetStyleImmediately).toHaveBeenCalledWith('transform', 'translate(0px, 0px) scale(1, 1) rotateY(0deg) rotateX(0deg)');
     });
   });
 

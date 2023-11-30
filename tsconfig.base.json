@@ -19,7 +19,8 @@
     "paths": {
       "@elemix/core": ["packages/core/src/index.ts"],
       "@elemix/drag": ["packages/drag/src/index.ts"],
-      "@internal-lib/util-testing": ["internal-lib/util-testing/src/index.ts"]
+      "@internal-lib/util-testing": ["internal-lib/util-testing/src/index.ts"],
+      "storybook": ["apps/storybook/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

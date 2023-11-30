@@ -48,7 +48,10 @@ export class Animation {
 
   constructor(element: DomSelector) {
     this.dom = new Dom(element);
+    this.syncValue();
+  }
 
+  public syncValue() {
     const transform = this.dom.getTransform();
 
     if (transform.scaleX !== transform.scaleY) {
@@ -65,7 +68,7 @@ export class Animation {
           rotateY: 0, // TODO: Get the current rotate value from element
         },
         dimension: this.dom.dimension,
-        opacity: this.dom.getOpacity(),
+        opacity: Number(window.getComputedStyle(this.dom.nativeElement).opacity),
       },
       { manualEmitter: true }
     );
@@ -199,12 +202,24 @@ export class Animation {
   }
 
   public applyImmediately() {
-    this.dom.setStyleImmediately('transform', getTransform2dValue(this.reactiveValue.value.transform));
-    this.dom.setStyleImmediately('width', `${this.reactiveValue.value.dimension.width}px`);
-    this.dom.setStyleImmediately('height', `${this.reactiveValue.value.dimension.height}px`);
-    this.dom.setStyleImmediately('opacity', this.reactiveValue.value.opacity);
-
     const changesValues = getObjectDiff(this.oldValue, this.reactiveValue.value);
+
+    if (changesValues.transform !== undefined) {
+      this.dom.setStyleImmediately('transform', getTransform2dValue(this.reactiveValue.value.transform));
+    }
+
+    if (changesValues.dimension?.width !== undefined) {
+      this.dom.setStyleImmediately('width', `${this.reactiveValue.value.dimension.width}px`);
+    }
+
+    if (changesValues.dimension?.height !== undefined) {
+      this.dom.setStyleImmediately('height', `${this.reactiveValue.value.dimension.height}px`);
+    }
+
+    if (changesValues.opacity !== undefined) {
+      this.dom.setStyleImmediately('opacity', this.reactiveValue.value.opacity);
+    }
+
     if (Object.keys(changesValues).length > 0) {
       this.reactiveValue.emit();
     }
