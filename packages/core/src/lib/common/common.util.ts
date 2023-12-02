@@ -1,5 +1,5 @@
 import { isObject } from './ensure.util';
-import { AnyObject, DeepPartial } from './common.model';
+import { AnyObject, Class, DeepPartial } from './common.model';
 
 export function deepClone<T>(obj: T): T {
   if (obj === null || typeof obj !== 'object') {
@@ -81,4 +81,8 @@ export function getObjectDiff<T extends AnyObject>(obj1: T, obj2: T): Partial<T>
 
 export function isImage(element: unknown): element is HTMLImageElement {
   return element instanceof HTMLImageElement;
+}
+
+export function isClass<T>(func: any): func is Class<T> {
+  return typeof func === 'function' && /^class\s/.test(Function.prototype.toString.call(func));
 }

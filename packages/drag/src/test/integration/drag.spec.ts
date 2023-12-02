@@ -2,6 +2,7 @@ import { Drag } from '../../lib/drag';
 import { generateCustomEvent, getActiveListener, mockEventListener } from '@internal-lib/util-testing';
 import { map, Observable, toArray } from 'rxjs';
 import { DragGesturesEventType, GesturesEventType } from '@elemix/core';
+import { MovementDirection } from '../../lib/drag.model';
 
 type MockPointerEvent = CustomEvent<unknown> & {
   pointerId: number;
@@ -79,9 +80,9 @@ describe('Feature - Drag', () => {
     mockEventListener(element);
     mockEventListener(document);
 
-    // createMockRequestAnimationFrame({ stopOnFrames: 1 });
     jest.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => {
       cb(1);
+      return 0;
     });
 
     drag = new Drag(element);
@@ -270,9 +271,65 @@ describe('Feature - Drag', () => {
     });
   });
 
+  describe('MovementDirection Dragging', () => {
+    it(`should move the element in x and y axis when no 'movementDirection' has defined`, () => {
+      element.dispatchEvent(pointerdownEvent);
+      document.dispatchEvent(pointermoveEvent);
+      document.dispatchEvent(additionalPointermoveEvent);
+      expect(element.style.transform).toEqual('translate(50px, 50px) scale(1, 1) rotateY(0deg) rotateX(0deg)');
+    });
+    it(`should move the element in x and y axis when 'movementDirection' is 'Both`, () => {
+      drag = new Drag(element, { movementDirection: MovementDirection.Both });
+      element.dispatchEvent(pointerdownEvent);
+      document.dispatchEvent(pointermoveEvent);
+      document.dispatchEvent(additionalPointermoveEvent);
+      expect(element.style.transform).toEqual('translate(50px, 50px) scale(1, 1) rotateY(0deg) rotateX(0deg)');
+    });
+    it(`should move the element only in x axis when 'movementDirection' is 'Horizontal`, () => {
+      drag = new Drag(element, { movementDirection: MovementDirection.Horizontal });
+      element.dispatchEvent(pointerdownEvent);
+      document.dispatchEvent(pointermoveEvent);
+      document.dispatchEvent(additionalPointermoveEvent);
+      expect(element.style.transform).toEqual('translate(50px, 0px) scale(1, 1) rotateY(0deg) rotateX(0deg)');
+    });
+    it(`should move the element only in y axis when 'movementDirection' is 'Vertical`, () => {
+      drag = new Drag(element, { movementDirection: MovementDirection.Vertical });
+      element.dispatchEvent(pointerdownEvent);
+      document.dispatchEvent(pointermoveEvent);
+      document.dispatchEvent(additionalPointermoveEvent);
+      expect(element.style.transform).toEqual('translate(0px, 50px) scale(1, 1) rotateY(0deg) rotateX(0deg)');
+    });
+    it(`should move the element only in x axis when the initial drag movement starts in a x axis and 'movementDirection' is 'Lock`, () => {
+      // Press: 100, 400 - Start: 150, 410 - Move: 200, 500
+      const pointermoveEventInXAxis = generateCustomEvent('pointermove', {
+        ...POINTER_MOVE,
+        pageX: 150,
+        pageY: 410,
+      }) as MockPointerEvent;
+
+      drag = new Drag(element, { movementDirection: MovementDirection.Lock });
+      element.dispatchEvent(pointerdownEvent);
+      document.dispatchEvent(pointermoveEventInXAxis);
+      document.dispatchEvent(additionalPointermoveEvent);
+      expect(element.style.transform).toEqual('translate(50px, 0px) scale(1, 1) rotateY(0deg) rotateX(0deg)');
+    });
+    it(`should move the element only in y axis when the initial drag movement starts in a y axis and 'movementDirection' is 'Lock`, () => {
+      // Press: 100, 400 - Start: 150, 450 - Move: 200, 500
+      const pointermoveEventInXAxis = generateCustomEvent('pointermove', {
+        ...POINTER_MOVE,
+        pageX: 110,
+        pageY: 450,
+      }) as MockPointerEvent;
+
+      drag = new Drag(element, { movementDirection: MovementDirection.Lock });
+      element.dispatchEvent(pointerdownEvent);
+      document.dispatchEvent(pointermoveEventInXAxis);
+      document.dispatchEvent(additionalPointermoveEvent);
+      expect(element.style.transform).toEqual('translate(0px, 50px) scale(1, 1) rotateY(0deg) rotateX(0deg)');
+    });
+  });
+
   describe('MinMovement Dragging', () => {});
-  describe('LockAxis Dragging', () => {});
-  describe('MovementDirection Dragging', () => {});
   describe('Boundary Dragging', () => {});
   describe('Boundary Dragging', () => {});
 });

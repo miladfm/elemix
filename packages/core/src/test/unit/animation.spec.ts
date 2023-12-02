@@ -30,22 +30,16 @@ const mockReactiveValueAddListener = jest.fn();
 const mockReactiveValueRemoveListener = jest.fn();
 const mockReactiveValueUpdate = jest.fn();
 
-const mockGetObjectDiff = jest.fn();
-
-jest.mock('../../lib/common/reactive-value', () => {
-  const originalModule = jest.requireActual('../../lib/common/reactive-value');
-
-  return {
-    ReactiveValue: jest.fn().mockImplementation(() => ({
-      addListener: mockReactiveValueAddListener,
-      removeListener: mockReactiveValueRemoveListener,
-      update: mockReactiveValueUpdate,
-      clone: jest.fn(),
-      value: { ...INIT_ANIM_PROPS },
-      emit: jest.fn(),
-    })),
-  };
-});
+jest.mock('../../lib/common/reactive-value', () => ({
+  ReactiveValue: jest.fn().mockImplementation(() => ({
+    addListener: mockReactiveValueAddListener,
+    removeListener: mockReactiveValueRemoveListener,
+    update: mockReactiveValueUpdate,
+    clone: jest.fn(),
+    value: { ...INIT_ANIM_PROPS },
+    emit: jest.fn(),
+  })),
+}));
 jest.mock('../../lib/dom/dom', () => ({
   Dom: jest.fn().mockImplementation((selector) => {
     const domSelector = mockDomInstances.get(selector) || selector;
@@ -439,7 +433,7 @@ describe('Class - Animation', () => {
 
   describe('applyImmediately', () => {
     it('Should immediately apply all style changes to the DOM element', () => {
-      (getObjectDiff as jest.Mock).mockImplementationOnce((_) => ({
+      (getObjectDiff as jest.Mock).mockImplementationOnce(() => ({
         transform: { x: 0, y: 0, scale: 1, rotateX: 0, rotateY: 0 },
         dimension: { width: 0, height: 0 },
         opacity: 0,
@@ -454,7 +448,7 @@ describe('Class - Animation', () => {
       expect(mockDomSetStyleImmediately).toHaveBeenCalledTimes(4);
     });
     it('Should immediately apply only changes styles changes to the DOM element', () => {
-      (getObjectDiff as jest.Mock).mockImplementationOnce((_) => ({
+      (getObjectDiff as jest.Mock).mockImplementationOnce(() => ({
         transform: { x: 0, y: 0, scale: 1, rotateX: 0, rotateY: 0 },
       }));
 

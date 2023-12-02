@@ -1,17 +1,11 @@
-import { Axis, DomSelector } from '@elemix/core';
+import { Coordinate, DomSelector, DragGesturesEvent, TransformProperty } from '@elemix/core';
 
 export interface DragOptions {
-  /**
-   * Determines whether the drag movement is locked to a single axis. When set to true,
-   * if the initial drag movement starts in a horizontal direction, any vertical movement is ignored, and the same applies in reverse for vertical starts.
-   */
-  lockAxis: boolean;
-
   /**
    * Specifies the axis of movement for the draggable element, dictating whether the element
    * is allowed to move horizontally, vertically, or both.
    */
-  movementDirection: Axis;
+  movementDirection: MovementDirection;
 
   /**
    * Defines the type of boundary constraints applied to the draggable element, dictating how the element interacts
@@ -29,6 +23,29 @@ export interface DragOptions {
    * Specifies the interaction behavior when the draggable element reaches the boundary.
    */
   boundaryInteraction: BoundaryInteraction;
+}
+
+export enum MovementDirection {
+  /**
+   * Determines whether the drag movement is locked to a single axis. When set to true,
+   * if the initial drag movement starts in a horizontal direction, any vertical movement is ignored, and the same applies in reverse for vertical starts.
+   */
+  Lock = 'lock',
+
+  /**
+   * Allows drag movement in both horizontal and vertical directions without restriction.
+   */
+  Both = 'both',
+
+  /**
+   * Restricts drag movement to only the horizontal axis.
+   */
+  Horizontal = 'horizontal',
+
+  /**
+   * Restricts drag movement to only the vertical axis.
+   */
+  Vertical = 'vertical',
 }
 
 export enum BoundaryInteraction {
@@ -73,3 +90,13 @@ export enum DragBoundaryType {
    */
   Auto = 'auto',
 }
+
+export interface DragPositionAdjusterConfig {
+  translateOnStart: TransformProperty;
+  pressEvent: DragGesturesEvent;
+  startEvent: DragGesturesEvent;
+  event: DragGesturesEvent;
+  option: DragOptions;
+}
+
+export type DragPositionAdjuster = (nextPosition: Coordinate, config: DragPositionAdjusterConfig) => Coordinate;

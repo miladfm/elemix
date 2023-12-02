@@ -86,7 +86,7 @@ export class Gestures {
     }
   }
 
-  private initProcess(e: PointerEvent) {
+  private initProcess(_e: PointerEvent) {
     this.strategies = [
       new PressGestureStrategy(),
       new DragGestureStrategy({ minMovement: this.options.minDragMovements }),

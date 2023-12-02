@@ -1,6 +1,5 @@
 import {
   Animation,
-  Axis,
   Dom,
   DomSelector,
   DragGesturesEvent,
@@ -10,11 +9,19 @@ import {
   TransformProperty,
 } from '@elemix/core';
 import { Observable, Subject, Subscription } from 'rxjs';
-import { BoundaryInteraction, DragBoundaryType, DragOptions } from './drag.model';
+import {
+  BoundaryInteraction,
+  DragBoundaryType,
+  DragOptions,
+  DragPositionAdjuster,
+  DragPositionAdjusterConfig,
+  MovementDirection,
+} from './drag.model';
+import { movementDirectionPositionAdjuster } from './drag-movement-direction-position-adjusters';
+import { basicPositionAdjuster } from './drag-basic-position-adjusters';
 
 const DEFAULT_OPTIONS: DragOptions = {
-  lockAxis: false,
-  movementDirection: Axis.Both,
+  movementDirection: MovementDirection.Both,
   boundaryType: DragBoundaryType.None,
   boundaryElem: null,
   boundaryInteraction: BoundaryInteraction.Stop,
@@ -57,12 +64,22 @@ export class Drag {
   private gestureChangesSub: Subscription | null = null;
 
   private translateOnStart: TransformProperty | null;
+  private pressEvent: DragGesturesEvent | null;
+  private startEvent: DragGesturesEvent | null;
+  private positionAdjuster: DragPositionAdjuster[];
 
   constructor(selector: DomSelector, options: Partial<DragOptions> = {}) {
     this.options = { ...DEFAULT_OPTIONS, ...options };
     this.element = new Dom(selector);
     this.gesture = new Gestures(this.element);
     this.animation = new Animation(this.element);
+
+    this.positionAdjuster = [
+      basicPositionAdjuster,
+      movementDirectionPositionAdjuster,
+      // isClass or function
+    ];
+
     this.enable();
   }
 
@@ -81,35 +98,56 @@ export class Drag {
         break;
 
       case GesturesEventType.DragEnd:
-        this.handleDragEndPress(event);
+        this.handleDragEnd(event);
+        break;
+
+      case GesturesEventType.DragRelease:
+        this.handleDragRelease(event);
         break;
     }
   }
 
   private handleDragPress(event: DragGesturesEvent) {
     this.animation.syncValue();
-    this.translateOnStart = { ...this.animation.value.transform };
+    this.pressEvent = event;
   }
 
   private handleDragStart(event: DragGesturesEvent) {
     this.isDragging = true;
+    this.translateOnStart = { ...this.animation.value.transform };
+    this.startEvent = event;
   }
 
   private async handleDrag(event: DragGesturesEvent) {
-    if (!event.movementXFromStart || !event.movementYFromStart || !this.translateOnStart) {
+    if (!this.translateOnStart || !this.startEvent || !this.pressEvent) {
       return;
     }
 
-    this.animation.setTranslate({
-      x: this.translateOnStart.x + event.movementXFromStart,
-      y: this.translateOnStart.y + event.movementYFromStart,
-    });
+    const positionAdjusterConfig: DragPositionAdjusterConfig = {
+      translateOnStart: this.translateOnStart,
+      pressEvent: this.pressEvent,
+      startEvent: this.startEvent,
+      event,
+      option: this.options,
+    };
 
+    const nextTranslate = this.positionAdjuster.reduce(
+      (translate, positionAdjusterFn) => positionAdjusterFn(translate, positionAdjusterConfig),
+      { x: 0, y: 0 }
+    );
+
+    this.animation.setTranslate(nextTranslate);
     await this.animation.apply();
   }
 
-  private handleDragEndPress(event: DragGesturesEvent) {
+  private handleDragEnd(_event: DragGesturesEvent) {
     this.isDragging = false;
+    this.translateOnStart = null;
+    this.startEvent = null;
+  }
+
+  private handleDragRelease(_event: DragGesturesEvent) {
+    this.pressEvent = null;
   }
 
   public enable() {
@@ -117,7 +155,7 @@ export class Drag {
       return;
     }
 
-    this.gestureChangesSub = this.gesture.changes$.subscribe(async (event) => {
+    this.gestureChangesSub = this.gesture.changes$.subscribe(async (event: GesturesEvent) => {
       if (!this.isDragGesture(event)) {
         return;
       }

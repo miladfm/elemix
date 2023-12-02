@@ -61,3 +61,8 @@ export type DeepPartial<T> = T extends object
       [P in keyof T]?: DeepPartial<T[P]>;
     }
   : T;
+
+// eslint-disable-next-line @typescript-eslint/ban-types
+export declare interface Class<T> extends Function {
+  new (...args: any[]): T;
+}
