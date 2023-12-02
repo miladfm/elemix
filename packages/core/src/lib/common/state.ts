@@ -1,22 +1,25 @@
 import { Callback } from '../common/common.model';
 import { deepClone, deepmerge } from './common.util';
 
-export interface ReactiveValueOption {
+export interface StateConfig {
   manualEmitter: boolean;
 }
-export class ReactiveValue<T> {
+
+const DEFAULT_CONFIG: StateConfig = {
+  manualEmitter: true,
+};
+
+export class State<T> {
   private _value: T;
   private callbacks = new Set<Callback<T>>();
-  private options: ReactiveValueOption = {
-    manualEmitter: false,
-  };
+  private options: StateConfig;
 
   public get value() {
     return this._value;
   }
 
-  constructor(_value: T, options: Partial<ReactiveValueOption> = {}) {
-    this.options = deepmerge(this.options, options);
+  constructor(_value: T, options: Partial<StateConfig> = {}) {
+    this.options = deepmerge(DEFAULT_CONFIG, options);
     this._value = _value;
   }
 

@@ -1,7 +1,7 @@
 import { Dom, DomSelector, DomType } from '../dom/dom';
 import { Callback, Coordinate } from '../common/common.model';
 import { deepClone, deepmerge, getObjectDiff } from '../common/common.util';
-import { ReactiveValue } from '../common/reactive-value';
+import { State } from '../common/state';
 import { AnimationProperties, Dimension } from './animation.model';
 import { getAnimationValueOnProgress, getTransform2dValue } from './animation.util';
 import { clamp } from '../common/math.util';
@@ -24,8 +24,8 @@ export class Animation {
   private static instances: Map<DomType, Animation> = new Map();
 
   private dom: Dom;
-  private oldValue: AnimationProperties;
-  private reactiveValue: ReactiveValue<AnimationProperties>;
+  private previousStateValue: AnimationProperties;
+  private state: State<AnimationProperties>;
 
   // Used to resolve the Promise when the animation is manually stopped outside animate method.
   private resolveAnimationPromise: ((isCompleted: boolean) => void) | null = null;
@@ -43,7 +43,7 @@ export class Animation {
   private animationDelayTimerID: NodeJS.Timeout;
 
   public get value() {
-    return this.reactiveValue.value;
+    return this.state.value;
   }
 
   constructor(element: DomSelector) {
@@ -58,7 +58,7 @@ export class Animation {
       throw new Error(`Sorry, Animation class support right now just 'scale' and not 'scaleX, scaleY'`);
     }
 
-    this.reactiveValue = new ReactiveValue<AnimationProperties>(
+    this.state = new State<AnimationProperties>(
       {
         transform: {
           x: transform.translateX,
@@ -72,7 +72,7 @@ export class Animation {
       },
       { manualEmitter: true }
     );
-    this.oldValue = this.reactiveValue.clone();
+    this.previousStateValue = this.state.clone();
   }
 
   /**
@@ -89,15 +89,15 @@ export class Animation {
 
   // region --- Values ---
   public addValueChangeListener(fn: Callback<AnimationProperties>) {
-    this.reactiveValue.addListener(fn);
+    this.state.addListener(fn);
   }
 
   public removeValueChangeListener(fn: Callback<AnimationProperties>) {
-    this.reactiveValue.removeListener(fn);
+    this.state.removeListener(fn);
   }
 
   public addTranslate({ x = 0, y = 0 }: Partial<Coordinate>) {
-    this.reactiveValue.update((value) =>
+    this.state.update((value) =>
       deepmerge(value, {
         transform: {
           x: value.transform.x + x,
@@ -109,7 +109,7 @@ export class Animation {
   }
 
   public setTranslate({ x, y }: Partial<Coordinate>) {
-    this.reactiveValue.update((value) =>
+    this.state.update((value) =>
       deepmerge(value, {
         transform: {
           x: x ?? value.transform.x,
@@ -121,7 +121,7 @@ export class Animation {
   }
 
   public addDimension({ width = 0, height = 0 }: Partial<Dimension>) {
-    this.reactiveValue.update((value) =>
+    this.state.update((value) =>
       deepmerge(value, {
         dimension: {
           width: value.dimension.width + width,
@@ -133,7 +133,7 @@ export class Animation {
   }
 
   public setDimension({ width, height }: Partial<Dimension>) {
-    this.reactiveValue.update((value) =>
+    this.state.update((value) =>
       deepmerge(value, {
         dimension: {
           width: width ?? value.dimension.width,
@@ -146,7 +146,7 @@ export class Animation {
   }
 
   public flipX() {
-    this.reactiveValue.update((value) =>
+    this.state.update((value) =>
       deepmerge(value, {
         transform: {
           rotateX: value.transform.rotateX === 180 ? 0 : 180,
@@ -157,7 +157,7 @@ export class Animation {
   }
 
   public flipY() {
-    this.reactiveValue.update((value) =>
+    this.state.update((value) =>
       deepmerge(value, {
         transform: {
           rotateY: value.transform.rotateY === 180 ? 0 : 180,
@@ -168,7 +168,7 @@ export class Animation {
   }
 
   public setScale(scale: number) {
-    this.reactiveValue.update((value) =>
+    this.state.update((value) =>
       deepmerge(value, {
         transform: {
           scale: scale,
@@ -180,7 +180,7 @@ export class Animation {
 
   public setOpacity(opacity: number) {
     const boundedOpacity = clamp(opacity, [0, 1]);
-    this.reactiveValue.update((value) => deepmerge(value, { opacity: boundedOpacity }));
+    this.state.update((value) => deepmerge(value, { opacity: boundedOpacity }));
     return this;
   }
 
@@ -202,29 +202,29 @@ export class Animation {
   }
 
   public applyImmediately() {
-    const changesValues = getObjectDiff(this.oldValue, this.reactiveValue.value);
+    const changesValues = getObjectDiff(this.previousStateValue, this.state.value);
 
     if (changesValues.transform !== undefined) {
-      this.dom.setStyleImmediately('transform', getTransform2dValue(this.reactiveValue.value.transform));
+      this.dom.setStyleImmediately('transform', getTransform2dValue(this.state.value.transform));
     }
 
     if (changesValues.dimension?.width !== undefined) {
-      this.dom.setStyleImmediately('width', `${this.reactiveValue.value.dimension.width}px`);
+      this.dom.setStyleImmediately('width', `${this.state.value.dimension.width}px`);
     }
 
     if (changesValues.dimension?.height !== undefined) {
-      this.dom.setStyleImmediately('height', `${this.reactiveValue.value.dimension.height}px`);
+      this.dom.setStyleImmediately('height', `${this.state.value.dimension.height}px`);
     }
 
     if (changesValues.opacity !== undefined) {
-      this.dom.setStyleImmediately('opacity', this.reactiveValue.value.opacity);
+      this.dom.setStyleImmediately('opacity', this.state.value.opacity);
     }
 
     if (Object.keys(changesValues).length > 0) {
-      this.reactiveValue.emit();
+      this.state.emit();
     }
 
-    this.oldValue = this.reactiveValue.clone();
+    this.previousStateValue = this.state.clone();
   }
 
   public apply() {
@@ -249,8 +249,8 @@ export class Animation {
       } else {
         this.stopAnimation();
 
-        const valueOnStart = deepClone(this.oldValue);
-        const valueOnEnd = this.reactiveValue.clone();
+        const valueOnStart = deepClone(this.previousStateValue);
+        const valueOnEnd = this.state.clone();
 
         let start: number;
         this.isAnimating = true;
@@ -280,7 +280,7 @@ export class Animation {
           const progress = easing(frameTime);
 
           // Update Animation State
-          this.reactiveValue.update((value) =>
+          this.state.update((value) =>
             deepmerge(value, {
               transform: {
                 x: getAnimationValueOnProgress(progress, valueOnStart.transform.x, valueOnEnd.transform.x),

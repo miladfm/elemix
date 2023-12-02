@@ -26,15 +26,15 @@ const mockDomGetTransform = jest.fn().mockReturnValue({ ...INIT_TRANSFORM });
 const mockDomGetOpacity = jest.fn().mockReturnValue(0);
 const mockDomSetStyleImmediately = jest.fn();
 
-const mockReactiveValueAddListener = jest.fn();
-const mockReactiveValueRemoveListener = jest.fn();
-const mockReactiveValueUpdate = jest.fn();
+const mockStateAddListener = jest.fn();
+const mockStateRemoveListener = jest.fn();
+const mockStateUpdate = jest.fn();
 
-jest.mock('../../lib/common/reactive-value', () => ({
-  ReactiveValue: jest.fn().mockImplementation(() => ({
-    addListener: mockReactiveValueAddListener,
-    removeListener: mockReactiveValueRemoveListener,
-    update: mockReactiveValueUpdate,
+jest.mock('../../lib/common/state', () => ({
+  State: jest.fn().mockImplementation(() => ({
+    addListener: mockStateAddListener,
+    removeListener: mockStateRemoveListener,
+    update: mockStateUpdate,
     clone: jest.fn(),
     value: { ...INIT_ANIM_PROPS },
     emit: jest.fn(),
@@ -122,7 +122,7 @@ describe('Class - Animation', () => {
       const animation = new Animation(divElement);
 
       animation.addValueChangeListener(jest.fn());
-      expect(mockReactiveValueAddListener).toHaveBeenCalledTimes(1);
+      expect(mockStateAddListener).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -130,7 +130,7 @@ describe('Class - Animation', () => {
     it('should remove value changes callback', () => {
       const animation = new Animation(divElement);
       animation.removeValueChangeListener(jest.fn());
-      expect(mockReactiveValueRemoveListener).toHaveBeenCalledTimes(1);
+      expect(mockStateRemoveListener).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -139,8 +139,8 @@ describe('Class - Animation', () => {
       const animation = new Animation(divElement);
       animation.addTranslate({ x: 10, y: 10 });
       jest.fn();
-      expect(mockReactiveValueUpdate).toBeCalled();
-      expect(mockReactiveValueUpdate).toBeCalledAsFunctionWith(
+      expect(mockStateUpdate).toBeCalled();
+      expect(mockStateUpdate).toBeCalledAsFunctionWith(
         { transform: { x: 5, y: 5 } },
         {
           transform: {
@@ -154,7 +154,7 @@ describe('Class - Animation', () => {
     it('should handle adding only x translation', () => {
       const animation = new Animation(divElement);
       animation.addTranslate({ x: 10 });
-      expect(mockReactiveValueUpdate).toBeCalledAsFunctionWith(
+      expect(mockStateUpdate).toBeCalledAsFunctionWith(
         { transform: { x: 5, y: 5 } },
         {
           transform: {
@@ -168,7 +168,7 @@ describe('Class - Animation', () => {
     it('should handle adding only y translation', () => {
       const animation = new Animation(divElement);
       animation.addTranslate({ y: 10 });
-      expect(mockReactiveValueUpdate).toBeCalledAsFunctionWith(
+      expect(mockStateUpdate).toBeCalledAsFunctionWith(
         { transform: { x: 0, y: 5 } },
         {
           transform: {
@@ -182,7 +182,7 @@ describe('Class - Animation', () => {
     it('Should leave values unchanged if no translation parameters are provided', () => {
       const animation = new Animation(divElement);
       animation.addTranslate({});
-      expect(mockReactiveValueUpdate).toBeCalledAsFunctionWith(
+      expect(mockStateUpdate).toBeCalledAsFunctionWith(
         { transform: { x: 10, y: 10 } },
         {
           transform: {
@@ -198,7 +198,7 @@ describe('Class - Animation', () => {
     it('Should override both x and y translation values', () => {
       const animation = new Animation(divElement);
       animation.setTranslate({ x: 10, y: 10 });
-      expect(mockReactiveValueUpdate).toBeCalledAsFunctionWith(
+      expect(mockStateUpdate).toBeCalledAsFunctionWith(
         { transform: { x: 5, y: 5 } },
         {
           transform: {
@@ -212,7 +212,7 @@ describe('Class - Animation', () => {
     it('should override only x translation', () => {
       const animation = new Animation(divElement);
       animation.setTranslate({ x: 10 });
-      expect(mockReactiveValueUpdate).toBeCalledAsFunctionWith(
+      expect(mockStateUpdate).toBeCalledAsFunctionWith(
         { transform: { x: 5, y: 5 } },
         {
           transform: {
@@ -226,7 +226,7 @@ describe('Class - Animation', () => {
     it('should override only y translation', () => {
       const animation = new Animation(divElement);
       animation.setTranslate({ y: 10 });
-      expect(mockReactiveValueUpdate).toBeCalledAsFunctionWith(
+      expect(mockStateUpdate).toBeCalledAsFunctionWith(
         { transform: { x: 5, y: 5 } },
         {
           transform: {
@@ -240,7 +240,7 @@ describe('Class - Animation', () => {
     it('Should leave values unchanged if no translation parameters are provided', () => {
       const animation = new Animation(divElement);
       animation.setTranslate({});
-      expect(mockReactiveValueUpdate).toBeCalledAsFunctionWith(
+      expect(mockStateUpdate).toBeCalledAsFunctionWith(
         { transform: { x: 5, y: 5 } },
         {
           transform: {
@@ -256,37 +256,25 @@ describe('Class - Animation', () => {
     it('Should handle adding both width and height dimensions', () => {
       const animation = new Animation(divElement);
       animation.addDimension({ width: 10, height: 10 });
-      expect(mockReactiveValueUpdate).toBeCalledAsFunctionWith(
-        { dimension: { width: 5, height: 5 } },
-        { dimension: { width: 15, height: 15 } }
-      );
+      expect(mockStateUpdate).toBeCalledAsFunctionWith({ dimension: { width: 5, height: 5 } }, { dimension: { width: 15, height: 15 } });
     });
 
     it('should handle adding only width dimension', () => {
       const animation = new Animation(divElement);
       animation.addDimension({ width: 10 });
-      expect(mockReactiveValueUpdate).toBeCalledAsFunctionWith(
-        { dimension: { width: 5, height: 5 } },
-        { dimension: { width: 15, height: 5 } }
-      );
+      expect(mockStateUpdate).toBeCalledAsFunctionWith({ dimension: { width: 5, height: 5 } }, { dimension: { width: 15, height: 5 } });
     });
 
     it('should handle adding only height dimension', () => {
       const animation = new Animation(divElement);
       animation.addDimension({ height: 10 });
-      expect(mockReactiveValueUpdate).toBeCalledAsFunctionWith(
-        { dimension: { width: 5, height: 5 } },
-        { dimension: { width: 5, height: 15 } }
-      );
+      expect(mockStateUpdate).toBeCalledAsFunctionWith({ dimension: { width: 5, height: 5 } }, { dimension: { width: 5, height: 15 } });
     });
 
     it('Should leave values unchanged if no dimension parameters are provided', () => {
       const animation = new Animation(divElement);
       animation.addDimension({});
-      expect(mockReactiveValueUpdate).toBeCalledAsFunctionWith(
-        { dimension: { width: 5, height: 5 } },
-        { dimension: { width: 5, height: 5 } }
-      );
+      expect(mockStateUpdate).toBeCalledAsFunctionWith({ dimension: { width: 5, height: 5 } }, { dimension: { width: 5, height: 5 } });
     });
   });
 
@@ -294,37 +282,25 @@ describe('Class - Animation', () => {
     it('Should override both width and height dimensions', () => {
       const animation = new Animation(divElement);
       animation.setDimension({ width: 10, height: 10 });
-      expect(mockReactiveValueUpdate).toBeCalledAsFunctionWith(
-        { dimension: { width: 5, height: 5 } },
-        { dimension: { width: 10, height: 10 } }
-      );
+      expect(mockStateUpdate).toBeCalledAsFunctionWith({ dimension: { width: 5, height: 5 } }, { dimension: { width: 10, height: 10 } });
     });
 
     it('should override only width dimension', () => {
       const animation = new Animation(divElement);
       animation.setDimension({ width: 10 });
-      expect(mockReactiveValueUpdate).toBeCalledAsFunctionWith(
-        { dimension: { width: 5, height: 5 } },
-        { dimension: { width: 10, height: 5 } }
-      );
+      expect(mockStateUpdate).toBeCalledAsFunctionWith({ dimension: { width: 5, height: 5 } }, { dimension: { width: 10, height: 5 } });
     });
 
     it('should override only height dimension', () => {
       const animation = new Animation(divElement);
       animation.setDimension({ height: 10 });
-      expect(mockReactiveValueUpdate).toBeCalledAsFunctionWith(
-        { dimension: { width: 5, height: 5 } },
-        { dimension: { width: 5, height: 10 } }
-      );
+      expect(mockStateUpdate).toBeCalledAsFunctionWith({ dimension: { width: 5, height: 5 } }, { dimension: { width: 5, height: 10 } });
     });
 
     it('Should leave values unchanged if no dimension parameters are provided', () => {
       const animation = new Animation(divElement);
       animation.setDimension({});
-      expect(mockReactiveValueUpdate).toBeCalledAsFunctionWith(
-        { dimension: { width: 5, height: 5 } },
-        { dimension: { width: 5, height: 5 } }
-      );
+      expect(mockStateUpdate).toBeCalledAsFunctionWith({ dimension: { width: 5, height: 5 } }, { dimension: { width: 5, height: 5 } });
     });
   });
 
@@ -332,13 +308,13 @@ describe('Class - Animation', () => {
     it('Should toggle rotation on the X-axis from 0 to 180 degrees', () => {
       const animation = new Animation(divElement);
       animation.flipX();
-      expect(mockReactiveValueUpdate).toBeCalledAsFunctionWith({ transform: { rotateX: 0 } }, { transform: { rotateX: 180 } });
+      expect(mockStateUpdate).toBeCalledAsFunctionWith({ transform: { rotateX: 0 } }, { transform: { rotateX: 180 } });
     });
 
     it('Should toggle rotation on the X-axis from 180 to 0 degrees', () => {
       const animation = new Animation(divElement);
       animation.flipX();
-      expect(mockReactiveValueUpdate).toBeCalledAsFunctionWith({ transform: { rotateX: 180 } }, { transform: { rotateX: 0 } });
+      expect(mockStateUpdate).toBeCalledAsFunctionWith({ transform: { rotateX: 180 } }, { transform: { rotateX: 0 } });
     });
   });
 
@@ -346,13 +322,13 @@ describe('Class - Animation', () => {
     it('Should toggle rotation on the Y-axis from 0 to 180 degrees', () => {
       const animation = new Animation(divElement);
       animation.flipY();
-      expect(mockReactiveValueUpdate).toBeCalledAsFunctionWith({ transform: { rotateY: 0 } }, { transform: { rotateY: 180 } });
+      expect(mockStateUpdate).toBeCalledAsFunctionWith({ transform: { rotateY: 0 } }, { transform: { rotateY: 180 } });
     });
 
     it('Should toggle rotation on the Y-axis from 180 to 0 degrees', () => {
       const animation = new Animation(divElement);
       animation.flipY();
-      expect(mockReactiveValueUpdate).toBeCalledAsFunctionWith({ transform: { rotateY: 180 } }, { transform: { rotateY: 0 } });
+      expect(mockStateUpdate).toBeCalledAsFunctionWith({ transform: { rotateY: 180 } }, { transform: { rotateY: 0 } });
     });
   });
 
@@ -360,7 +336,7 @@ describe('Class - Animation', () => {
     it('should override scale', () => {
       const animation = new Animation(divElement);
       animation.setScale(2);
-      expect(mockReactiveValueUpdate).toBeCalledAsFunctionWith({ transform: { scale: 0 } }, { transform: { scale: 2 } });
+      expect(mockStateUpdate).toBeCalledAsFunctionWith({ transform: { scale: 0 } }, { transform: { scale: 2 } });
     });
   });
 
@@ -368,19 +344,19 @@ describe('Class - Animation', () => {
     it('should override opacity', () => {
       const animation = new Animation(divElement);
       animation.setOpacity(0.7);
-      expect(mockReactiveValueUpdate).toBeCalledAsFunctionWith({}, { opacity: 0.7 });
+      expect(mockStateUpdate).toBeCalledAsFunctionWith({}, { opacity: 0.7 });
     });
 
     it('should adjust opacity to 0 for values less than 0', () => {
       const animation = new Animation(divElement);
       animation.setOpacity(-1);
-      expect(mockReactiveValueUpdate).toBeCalledAsFunctionWith({}, { opacity: 0 });
+      expect(mockStateUpdate).toBeCalledAsFunctionWith({}, { opacity: 0 });
     });
 
     it('should adjust opacity to 1 for values greater than 1', () => {
       const animation = new Animation(divElement);
       animation.setOpacity(2);
-      expect(mockReactiveValueUpdate).toBeCalledAsFunctionWith({}, { opacity: 1 });
+      expect(mockStateUpdate).toBeCalledAsFunctionWith({}, { opacity: 1 });
     });
   });
 
