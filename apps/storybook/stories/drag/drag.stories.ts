@@ -1,14 +1,10 @@
 import { Meta, StoryObj } from '@storybook/html';
-import { action, HandlerFunction } from '@storybook/addon-actions';
 import { createDrag } from './drag';
+import { MovementDirection } from '@elemix/drag';
 
 export interface DragStoryType {
-  backgroundColor: string;
-  onDragPress: HandlerFunction;
-  onDragStart: HandlerFunction;
-  onDrag: HandlerFunction;
-  onDragEnd: HandlerFunction;
-  onDragRelease: HandlerFunction;
+  movementDirection: MovementDirection;
+  onPress: any;
 }
 
 type Story = StoryObj<DragStoryType>;
@@ -16,12 +12,20 @@ type Story = StoryObj<DragStoryType>;
 const meta: Meta<DragStoryType> = {
   title: 'Drag/Basic',
   render: (args) => createDrag(args),
-  argTypes: {},
+  argTypes: {
+    onPress: { action: 'OnPress', table: { disable: true } },
+    movementDirection: {
+      control: { type: 'select' },
+      options: Object.values(MovementDirection),
+    },
+  },
   args: {},
 };
 
 export default meta;
 
 export const Basic: Story = {
-  args: {},
+  args: {
+    movementDirection: MovementDirection.Both,
+  },
 };

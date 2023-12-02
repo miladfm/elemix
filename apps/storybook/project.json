@@ -21,8 +21,7 @@
         "ci": {
           "quiet": true
         }
-      },
-      "dependsOn": ["^build", "prepare-dependencies"]
+      }
     },
     "build-storybook": {
       "executor": "@nx/storybook:build",
@@ -35,13 +34,6 @@
         "ci": {
           "quiet": true
         }
-      }
-    },
-    "prepare-dependencies": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "pnpm i",
-        "cwd": "apps/storybook"
       }
     },
     "test-storybook": {

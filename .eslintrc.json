@@ -7,6 +7,17 @@
       "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
       "extends": [],
       "rules": {
+        "@typescript-eslint/no-unused-vars": [
+          "error",
+          {
+            "vars": "all",
+            "varsIgnorePattern": "^_",
+            "args": "after-used",
+            "argsIgnorePattern": "^_",
+            "ignoreRestSiblings": true,
+            "caughtErrors": "none"
+          }
+        ],
         "@nx/enforce-module-boundaries": [
           "error",
           {
@@ -26,6 +37,7 @@
       "files": ["*.ts", "*.tsx"],
       "extends": ["plugin:@nx/typescript"],
       "rules": {
+        "@typescript-eslint/no-explicit-any": "off",
         "indent": ["error", 2, { "SwitchCase": 1 }],
         "constructor-super": ["error"],
         "semi": ["error", "always"],
@@ -38,7 +50,6 @@
         "dot-notation": "error",
         "eqeqeq": ["error"],
         "func-name-matching": ["error"],
-        "max-classes-per-file": ["error", 1],
         "max-depth": ["error", 4],
         "max-lines": ["error", { "max": 400, "skipBlankLines": true, "skipComments": true }],
         "max-lines-per-function": ["error", { "max": 65, "skipComments": true }],
