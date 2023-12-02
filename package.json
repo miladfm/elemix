@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "clean": "node tools/scripts/clean-pnpm.js"
   },
   "private": true,
   "dependencies": {
