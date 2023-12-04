@@ -56,11 +56,9 @@ export type Callback<T> = (data: T) => void;
 
 export type AnyObject = Record<string | number, any>;
 
-export type DeepPartial<T> = T extends object
-  ? {
-      [P in keyof T]?: DeepPartial<T[P]>;
-    }
-  : T;
+export type DeepPartial<T> = {
+  [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
+};
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 export declare interface Class<T> extends Function {

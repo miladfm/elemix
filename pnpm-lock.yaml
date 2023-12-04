@@ -160,6 +160,9 @@ importers:
       rxjs:
         specifier: ^7.8.1
         version: 7.8.1
+      xoid:
+        specifier: 1.0.0-beta.10
+        version: 1.0.0-beta.10
 
   packages/drag:
     dependencies:
@@ -13249,6 +13252,10 @@ packages:
   /xmlchars@2.2.0:
     resolution: {integrity: sha512-JZnDKK8B0RCDw84FNdDAIpZK+JuJw+s7Lz8nksI7SIuU3UXJJslUthsi+uWBUYOwPFwW7W7PRLRfUKpxjtjFCw==}
     dev: true
+
+  /xoid@1.0.0-beta.10:
+    resolution: {integrity: sha512-CoXPeYS6ZFcZL1iHYgZKTtZDlCR78E+KIV+VmJFepMc6Jx4ZS4SCf2u7Ux9B6R4pUmVJzGogWvbeAs4koDGKvw==}
+    dev: false
 
   /xtend@4.0.2:
     resolution: {integrity: sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ==}

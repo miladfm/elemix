@@ -23,9 +23,9 @@ export function deepClone<T>(obj: T): T {
   return objCopy;
 }
 
-export function deepmerge<T extends AnyObject>(target: T, source: DeepPartial<T>): T {
+export function deepmerge<T>(target: T, source: DeepPartial<T>): T {
   if (isObject(target) && isObject(source)) {
-    const output: AnyObject = { ...target };
+    const output: AnyObject = deepClone(target);
 
     for (const key in source) {
       const sourceValue = source[key];

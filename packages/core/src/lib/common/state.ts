@@ -1,57 +1,27 @@
-import { Callback } from '../common/common.model';
+import { DeepPartial } from '../common/common.model';
 import { deepClone, deepmerge } from './common.util';
-
-export interface StateConfig {
-  manualEmitter: boolean;
-}
-
-const DEFAULT_CONFIG: StateConfig = {
-  manualEmitter: true,
-};
+import { create, Atom } from 'xoid';
 
 export class State<T> {
-  private _value: T;
-  private callbacks = new Set<Callback<T>>();
-  private options: StateConfig;
+  private readonly atom: Atom<T>;
 
   public get value() {
-    return this._value;
+    return this.atom.value;
   }
 
-  constructor(_value: T, options: Partial<StateConfig> = {}) {
-    this.options = deepmerge(DEFAULT_CONFIG, options);
-    this._value = _value;
+  constructor(value: T) {
+    this.atom = create(value);
   }
 
-  public set(_value: T) {
-    this._value = _value;
-
-    if (!this.options.manualEmitter) {
-      this.emit();
-    }
+  public set(value: T) {
+    this.atom.set(value);
   }
 
-  public update(fn: (value: T) => T) {
-    this._value = fn(this._value);
-
-    if (!this.options.manualEmitter) {
-      this.emit();
-    }
-  }
-
-  public addListener(fn: Callback<T>) {
-    this.callbacks.add(fn);
-  }
-
-  public removeListener(fn: Callback<T>) {
-    this.callbacks.delete(fn);
-  }
-
-  public emit() {
-    this.callbacks.forEach((callback) => callback(this._value));
+  public deepSet(value: DeepPartial<T>) {
+    this.atom.set(deepmerge(this.atom.value, value));
   }
 
   public clone(): T {
-    return deepClone(this._value);
+    return deepClone(this.atom.value);
   }
 }

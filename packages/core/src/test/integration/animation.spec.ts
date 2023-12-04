@@ -33,6 +33,27 @@ describe('Feature - Animation', () => {
     jest.restoreAllMocks();
   });
 
+  describe('Initialize', () => {
+    it('should not throw an error during initialize', () => {
+      expect(() => new Animation(divElement)).not.toThrow();
+    });
+    it('should throw an error when scaleX and scaleY differ', () => {
+      divElement.style.transform = 'scale(1, 2)';
+      expect(() => new Animation(divElement)).toThrow(`Sorry, Animation class support right now just 'scale' and not 'scaleX, scaleY'`);
+    });
+    it('Should return an existing instance if one already exists for the passed element', () => {
+      const animation1 = Animation.getOrCreateInstance(divElement);
+      const animation2 = Animation.getOrCreateInstance(divElement);
+      expect(animation1).toBe(animation2);
+    });
+    it('Should return a new instance if none exists for the passed element', () => {
+      const divElementSecondary = document.createElement('span');
+      const animation1 = Animation.getOrCreateInstance(divElement);
+      const animation2 = Animation.getOrCreateInstance(divElementSecondary);
+      expect(animation1).not.toBe(animation2);
+    });
+  });
+
   describe('Values', () => {
     it('Should correctly update `value` with current DOM element properties when syncValue has called,', () => {
       const animation = new Animation(divElement);
@@ -139,6 +160,13 @@ describe('Feature - Animation', () => {
 
       expect(mockCallback1).not.toHaveBeenCalled();
       expect(mockCallback2).toHaveBeenCalled();
+    });
+    it('should not invoke the callback when no style modifications have been made', () => {
+      const mockValueChangesCallback = jest.fn();
+      const animation = new Animation(divElement);
+      animation.applyImmediately();
+
+      expect(mockValueChangesCallback).not.toHaveBeenCalled();
     });
   });
 
@@ -393,7 +421,7 @@ describe('Feature - Animation', () => {
   });
 
   describe('Manipulation DOM Without Animation', () => {
-    it('should apply all style changes to DOM element immediately', () => {
+    it('should immediately apply all style changes to DOM element when applyImmediately method has called', () => {
       const animation = new Animation(divElement);
       animation
         .setTranslate({ x: 10, y: 10 })
@@ -408,7 +436,16 @@ describe('Feature - Animation', () => {
       expect(divElement.style.height).toEqual('50px');
       expect(divElement.style.opacity).toEqual('0.5');
     });
-    it('should apply all style changes to DOM element at next animation frame', () => {
+    it('should only apply specified style changes and not affect other properties when applyImmediately method is called', () => {
+      const animation = new Animation(divElement);
+      animation.setTranslate({ x: 10, y: 10 }).setOpacity(0.5).applyImmediately();
+
+      expect(divElement.style.transform).toEqual('translate(10px, 10px) scale(1, 1) rotateY(0deg) rotateX(0deg)');
+      expect(divElement.style.width).toEqual('');
+      expect(divElement.style.height).toEqual('');
+      expect(divElement.style.opacity).toEqual('0.5');
+    });
+    it('should apply all style changes to DOM element at next animation frame when apply method has called', () => {
       const animation = new Animation(divElement);
       const { mockRequestAnimationFrame } = createMockRequestAnimationFrame({ stopOnFrames: 1 });
       animation.setTranslate({ x: 10, y: 10 }).setDimension({ width: 200, height: 50 }).setScale(2).setOpacity(0.5).flipX().apply();
@@ -419,47 +456,34 @@ describe('Feature - Animation', () => {
       expect(divElement.style.height).toEqual('50px');
       expect(divElement.style.opacity).toEqual('0.5');
     });
-    it('should emit changes when style modifications are present', () => {
-      const mockValueChangesCallback = jest.fn();
+    it('should only apply specified style changes and not affect other properties at next animation frame when apply method is called', () => {
       const animation = new Animation(divElement);
-      animation.addValueChangeListener(mockValueChangesCallback);
-      animation
-        .setTranslate({ x: 10, y: 10 })
-        .setDimension({ width: 200, height: 50 })
-        .setScale(2)
-        .setOpacity(0.5)
-        .flipX()
-        .applyImmediately();
+      const { mockRequestAnimationFrame } = createMockRequestAnimationFrame({ stopOnFrames: 1 });
+      animation.setTranslate({ x: 10, y: 10 }).setOpacity(0.5).apply();
 
-      expect(mockValueChangesCallback).toHaveBeenCalledTimes(1);
-      expect(mockValueChangesCallback).toBeCalledWith({
-        transform: { x: 10, y: 10, scale: 2, rotateX: 180, rotateY: 0 },
-        dimension: { width: 200, height: 50 },
-        opacity: 0.5,
-      });
-    });
-    it('should not emit changes when no style modifications have been made', () => {
-      const mockValueChangesCallback = jest.fn();
-      const animation = new Animation(divElement);
-      animation.applyImmediately();
-
-      expect(mockValueChangesCallback).not.toHaveBeenCalled();
+      expect(mockRequestAnimationFrame).toHaveBeenCalledTimes(1);
+      expect(divElement.style.transform).toEqual('translate(10px, 10px) scale(1, 1) rotateY(0deg) rotateX(0deg)');
+      expect(divElement.style.width).toEqual('');
+      expect(divElement.style.height).toEqual('');
+      expect(divElement.style.opacity).toEqual('0.5');
     });
   });
 
   describe('Manipulation DOM With Animation', () => {
-    it('should stop animation when receiving a stop signal', () => {
+    it('should throw an error message when the animation duration is lees than 0', async () => {
       const animation = new Animation(divElement);
-      createMockRequestAnimationFrame({
-        frames: 6,
-        beforeEachFrame: (timestamp, frame) => {
-          if (frame === 4) {
-            animation.stopAnimation();
-          }
-        },
-      });
-      animation.setTranslate({ x: 500 }).animate();
-      expect(animation.value.transform.x).toBe(200);
+      await expect(animation.animate({ duration: 0 })).rejects.toThrow('the duration of animation cna not be less than 1ms');
+    });
+    it('should throw an error message for invalid delay', async () => {
+      const animation = new Animation(divElement);
+      await expect(animation.animate({ delay: -1 })).rejects.toThrow('the delay of animation cna not be less than 0ms');
+    });
+
+    it('should resolve a promise with true when ongoing animation has completed', async () => {
+      const animation = new Animation(divElement);
+      createMockRequestAnimationFrame({ frames: 2 });
+      const animatePromise = animation.setTranslate({ x: 500 }).animate();
+      await expect(animatePromise).resolves.toEqual(true);
     });
     it('should resolve a promise with false when ongoing animation has stopped', async () => {
       const animation = new Animation(divElement);
@@ -468,24 +492,35 @@ describe('Feature - Animation', () => {
       animation.stopAnimation();
       await expect(animatePromise).resolves.toEqual(false);
     });
-    it('should complete the animation within the specified duration', async () => {
-      // const { getTotalDuration, frameDuration } = mockRequestAnimationFrameWithFPS(100);
-      const duration = 150;
-      const { frameDuration, getLastTime } = createMockRequestAnimationFrame({ frames: 45, duration });
+
+    it('should not clear any animation states or change anythings when there is no running animation and stopAnimation has called', () => {
       const animation = new Animation(divElement);
 
-      await animation.setDimension({ width: 100 }).animate({ duration });
+      const mockCancelAnimationFrame = jest.spyOn(window, 'cancelAnimationFrame');
+      const mockClearTimeout = jest.spyOn(global, 'clearTimeout');
+      createMockRequestAnimationFrame({ stopOnFrames: 1 });
 
-      expect(getLastTime()).toBeGreaterThanOrEqual(duration);
-      expect(getLastTime()).toBeLessThanOrEqual(duration + frameDuration);
+      animation.stopAnimation();
+
+      expect(mockCancelAnimationFrame).not.toHaveBeenCalled();
+      expect(mockClearTimeout).not.toHaveBeenCalled();
     });
-    it('should delay the start of the animation until after the delay period', async () => {
-      jest.spyOn(global, 'setTimeout');
+    it('should stop animation when receiving a stop signal', () => {
+      const mockCancelAnimationFrame = jest.spyOn(window, 'cancelAnimationFrame');
+      const mockClearTimeout = jest.spyOn(global, 'clearTimeout');
       const animation = new Animation(divElement);
-      await animation.animate({ delay: 10 });
-
-      expect(setTimeout).toHaveBeenCalledTimes(1);
-      expect(setTimeout).toHaveBeenLastCalledWith(expect.any(Function), 10);
+      createMockRequestAnimationFrame({
+        frames: 6,
+        beforeEachFrame: (_, frame) => {
+          if (frame === 4) {
+            animation.stopAnimation();
+          }
+        },
+      });
+      animation.setTranslate({ x: 500 }).animate();
+      expect(animation.value.transform.x).toBe(200);
+      expect(mockClearTimeout).toHaveBeenCalledTimes(1);
+      expect(mockCancelAnimationFrame).toHaveBeenCalledTimes(1);
     });
     it('should cancel any existing animations before starting a new one', () => {
       const { getLastFrameID } = createMockRequestAnimationFrame({ stopOnFrames: 1 });
@@ -499,6 +534,7 @@ describe('Feature - Animation', () => {
       expect(cancelAnimationFrame).toHaveBeenCalledTimes(1);
       expect(cancelAnimationFrame).toHaveBeenCalledWith(firstFrameID);
     });
+
     it('should update DOM attributes consistently during the animation', async () => {
       createMockRequestAnimationFrame({
         frames: 3,
@@ -531,6 +567,26 @@ describe('Feature - Animation', () => {
       expect(divElement.style.height).toEqual(`200px`);
       expect(divElement.style.opacity).toEqual(`0`);
     });
+
+    it('should complete the animation within the specified duration', async () => {
+      // const { getTotalDuration, frameDuration } = mockRequestAnimationFrameWithFPS(100);
+      const duration = 150;
+      const { frameDuration, getLastTime } = createMockRequestAnimationFrame({ frames: 45, duration });
+      const animation = new Animation(divElement);
+
+      await animation.setDimension({ width: 100 }).animate({ duration });
+
+      expect(getLastTime()).toBeGreaterThanOrEqual(duration);
+      expect(getLastTime()).toBeLessThanOrEqual(duration + frameDuration);
+    });
+    it('should delay the start of the animation until after the delay period', async () => {
+      jest.spyOn(global, 'setTimeout');
+      const animation = new Animation(divElement);
+      await animation.animate({ delay: 10 });
+
+      expect(setTimeout).toHaveBeenCalledTimes(1);
+      expect(setTimeout).toHaveBeenLastCalledWith(expect.any(Function), 10);
+    });
     it('should update DOM attributes according to the provided easing functions', async () => {
       const mockEaseIn = jest.fn().mockImplementation((progress) => progress * progress);
       createMockRequestAnimationFrame({
@@ -546,6 +602,7 @@ describe('Feature - Animation', () => {
       const animation = new Animation(divElement);
       await animation.setTranslate({ x: 100 }).animate({ easing: mockEaseIn });
 
+      expect(mockEaseIn).toHaveBeenCalledTimes(3);
       expect(divElement.style.transform).toEqual(`translate(100px, 0px) scale(1, 1) rotateY(0deg) rotateX(0deg)`);
     });
   });

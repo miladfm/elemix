@@ -1,3 +1,5 @@
+import { AnyObject } from './common.model';
+
 /**
  * Converts a given value to its string representation.
  */
@@ -13,6 +15,6 @@ export function isNotNullish<T>(value: T | null | undefined): value is T {
   return !isNullish(value);
 }
 
-export function isObject(value: unknown): boolean {
+export function isObject(value: unknown): value is AnyObject {
   return isNotNullish(value) && typeof value === 'object' && !Array.isArray(value);
 }
