@@ -13,18 +13,6 @@ interface AnimationState {
   isAnimating: boolean;
 }
 
-export const INITIAL_ANIMATION_PROPERTIES: AnimationProperties = {
-  transform: { x: 0, y: 0, scale: 0 },
-  dimension: { width: 0, height: 0 },
-  opacity: 0,
-};
-
-export const INITIAL_STATE: AnimationState = {
-  properties: { ...INITIAL_ANIMATION_PROPERTIES },
-  previousProperties: { ...INITIAL_ANIMATION_PROPERTIES },
-  isAnimating: false,
-};
-
 /**
  * Animation class for handling element animations.
  *
@@ -42,7 +30,7 @@ export class Animation {
   private static instances: Map<DomType, Animation> = new Map();
   private callbacks = new Set<Callback<AnimationProperties>>();
 
-  private state = new State(INITIAL_STATE);
+  private state: State<AnimationState>;
 
   private dom: Dom;
 
@@ -58,31 +46,18 @@ export class Animation {
 
   constructor(element: DomSelector) {
     this.dom = new Dom(element);
-    this.syncValue();
-  }
-
-  public syncValue() {
-    const transform = this.dom.getTransform();
-
-    if (transform.scaleX !== transform.scaleY) {
-      throw new Error(`Sorry, Animation class support right now just 'scale' and not 'scaleX, scaleY'`);
-    }
+    Animation.instances.set(this.dom.nativeElement, this);
 
     const properties: AnimationProperties = {
-      transform: {
-        x: transform.translateX,
-        y: transform.translateY,
-        scale: transform.scaleX,
-        rotateX: 0, // TODO: Get the current rotate value from element
-        rotateY: 0, // TODO: Get the current rotate value from element
-      },
+      transform: { x: 0, y: 0, scale: 1, rotateX: 0, rotateY: 0 },
       dimension: this.dom.dimension,
       opacity: Number(window.getComputedStyle(this.dom.nativeElement).opacity),
     };
 
-    this.state.deepSet({
+    this.state = new State({
       properties,
       previousProperties: deepClone(properties),
+      isAnimating: false,
     });
   }
 

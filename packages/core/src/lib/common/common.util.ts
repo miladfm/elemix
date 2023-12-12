@@ -83,6 +83,6 @@ export function isImage(element: unknown): element is HTMLImageElement {
   return element instanceof HTMLImageElement;
 }
 
-export function isClass<T>(func: any): func is Class<T> {
+export function isClassRef<T>(func: any): func is Class<T> {
   return typeof func === 'function' && /^class\s/.test(Function.prototype.toString.call(func));
 }

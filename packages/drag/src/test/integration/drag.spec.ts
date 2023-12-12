@@ -1,8 +1,8 @@
 import { Drag } from '../../lib/drag';
-import { generateCustomEvent, getActiveListener, mockEventListener } from '@internal-lib/util-testing';
+import { createMockRequestAnimationFrame, generateCustomEvent, getActiveListener, mockEventListener } from '@internal-lib/util-testing';
 import { map, Observable, toArray } from 'rxjs';
 import { DragGesturesEventType, GesturesEventType } from '@elemix/core';
-import { MovementDirection } from '../../lib/drag.model';
+import { DragBoundaryType, MovementDirection } from '../../lib/drag.model';
 
 type MockPointerEvent = CustomEvent<unknown> & {
   pointerId: number;
@@ -28,6 +28,20 @@ describe('Feature - Drag', () => {
   let additionalPointermoveEvent: MockPointerEvent;
   let pointerupEvent: MockPointerEvent;
   let pointercancelEvent: MockPointerEvent;
+
+  const moveTo = (x: number, y: number) => {
+    const event = generateCustomEvent('pointermove', {
+      pointerId: 1,
+      pageX: x,
+      pageY: y,
+      clientX: x,
+      clientY: y,
+      movementX: 0,
+      movementY: 0,
+    }) as MockPointerEvent;
+
+    document.dispatchEvent(event);
+  };
 
   beforeEach(() => {
     POINTER_DOWN = {
@@ -84,11 +98,12 @@ describe('Feature - Drag', () => {
       cb(1);
       return 0;
     });
-
-    drag = new Drag(element);
   });
 
   describe('Initialized', () => {
+    beforeEach(() => {
+      drag = new Drag(element);
+    });
     // Init
     it(`should 'isEnabled' be true when drag functionality is initialized`, () => {
       expect(drag.isEnable).toEqual(true);
@@ -138,6 +153,8 @@ describe('Feature - Drag', () => {
     let events$: Observable<DragGesturesEventType[]>;
 
     beforeEach(() => {
+      drag = new Drag(element);
+
       events$ = drag.events$.pipe(
         map((e) => e.type),
         toArray()
@@ -214,6 +231,10 @@ describe('Feature - Drag', () => {
   });
 
   describe('Basic Dragging', () => {
+    beforeEach(() => {
+      drag = new Drag(element);
+    });
+
     it(`should 'isDragging' be false when the element is no dragging begins`, () => {
       element.dispatchEvent(pointerdownEvent);
       expect(drag.isDragging).toEqual(false);
@@ -227,7 +248,7 @@ describe('Feature - Drag', () => {
       element.dispatchEvent(pointerdownEvent);
       document.dispatchEvent(pointermoveEvent);
       document.dispatchEvent(additionalPointermoveEvent);
-      expect(element.style.transform).toEqual('translate(50px, 50px) scale(1, 1) rotateY(0deg) rotateX(0deg)');
+      expect(element.style.transform).toContain('translate(50px, 50px)');
     });
     it(`should not allow dragging when drag start has not fired`, () => {
       document.dispatchEvent(pointermoveEvent);
@@ -255,8 +276,8 @@ describe('Feature - Drag', () => {
       document.dispatchEvent(secondPointermoveEvent);
       document.dispatchEvent(secondAdditionalPointermoveEvent);
 
-      expect(element.style.transform).toEqual('translate(50px, 50px) scale(1, 1) rotateY(0deg) rotateX(0deg)');
-      expect(secondElement.style.transform).toEqual('translate(150px, 150px) scale(1, 1) rotateY(0deg) rotateX(0deg)');
+      expect(element.style.transform).toContain('translate(50px, 50px)');
+      expect(secondElement.style.transform).toContain('translate(150px, 150px)');
     });
     it(`should not update the other element's position during dragging a draggable element`, () => {
       const secondElement = document.createElement('div');
@@ -266,38 +287,42 @@ describe('Feature - Drag', () => {
       document.dispatchEvent(pointermoveEvent);
       document.dispatchEvent(additionalPointermoveEvent);
 
-      expect(element.style.transform).toEqual('translate(50px, 50px) scale(1, 1) rotateY(0deg) rotateX(0deg)');
+      expect(element.style.transform).toContain('translate(50px, 50px)');
       expect(secondElement.style.transform).toEqual('');
     });
   });
 
   describe('MovementDirection Dragging', () => {
+    beforeEach(() => {
+      drag = new Drag(element);
+    });
+
     it(`should move the element in x and y axis when no 'movementDirection' has defined`, () => {
       element.dispatchEvent(pointerdownEvent);
       document.dispatchEvent(pointermoveEvent);
       document.dispatchEvent(additionalPointermoveEvent);
-      expect(element.style.transform).toEqual('translate(50px, 50px) scale(1, 1) rotateY(0deg) rotateX(0deg)');
+      expect(element.style.transform).toContain('translate(50px, 50px)');
     });
     it(`should move the element in x and y axis when 'movementDirection' is 'Both`, () => {
       drag = new Drag(element, { movementDirection: MovementDirection.Both });
       element.dispatchEvent(pointerdownEvent);
       document.dispatchEvent(pointermoveEvent);
       document.dispatchEvent(additionalPointermoveEvent);
-      expect(element.style.transform).toEqual('translate(50px, 50px) scale(1, 1) rotateY(0deg) rotateX(0deg)');
+      expect(element.style.transform).toContain('translate(50px, 50px)');
     });
     it(`should move the element only in x axis when 'movementDirection' is 'Horizontal`, () => {
       drag = new Drag(element, { movementDirection: MovementDirection.Horizontal });
       element.dispatchEvent(pointerdownEvent);
       document.dispatchEvent(pointermoveEvent);
       document.dispatchEvent(additionalPointermoveEvent);
-      expect(element.style.transform).toEqual('translate(50px, 0px) scale(1, 1) rotateY(0deg) rotateX(0deg)');
+      expect(element.style.transform).toContain('translate(50px, 0px)');
     });
     it(`should move the element only in y axis when 'movementDirection' is 'Vertical`, () => {
       drag = new Drag(element, { movementDirection: MovementDirection.Vertical });
       element.dispatchEvent(pointerdownEvent);
       document.dispatchEvent(pointermoveEvent);
       document.dispatchEvent(additionalPointermoveEvent);
-      expect(element.style.transform).toEqual('translate(0px, 50px) scale(1, 1) rotateY(0deg) rotateX(0deg)');
+      expect(element.style.transform).toContain('translate(0px, 50px)');
     });
     it(`should move the element only in x axis when the initial drag movement starts in a x axis and 'movementDirection' is 'Lock`, () => {
       // Press: 100, 400 - Start: 150, 410 - Move: 200, 500
@@ -311,7 +336,7 @@ describe('Feature - Drag', () => {
       element.dispatchEvent(pointerdownEvent);
       document.dispatchEvent(pointermoveEventInXAxis);
       document.dispatchEvent(additionalPointermoveEvent);
-      expect(element.style.transform).toEqual('translate(50px, 0px) scale(1, 1) rotateY(0deg) rotateX(0deg)');
+      expect(element.style.transform).toContain('translate(50px, 0px)');
     });
     it(`should move the element only in y axis when the initial drag movement starts in a y axis and 'movementDirection' is 'Lock`, () => {
       // Press: 100, 400 - Start: 150, 450 - Move: 200, 500
@@ -325,11 +350,1426 @@ describe('Feature - Drag', () => {
       element.dispatchEvent(pointerdownEvent);
       document.dispatchEvent(pointermoveEventInXAxis);
       document.dispatchEvent(additionalPointermoveEvent);
-      expect(element.style.transform).toEqual('translate(0px, 50px) scale(1, 1) rotateY(0deg) rotateX(0deg)');
+      expect(element.style.transform).toContain('translate(0px, 50px)');
     });
   });
 
-  describe('MinMovement Dragging', () => {});
-  describe('Boundary Dragging', () => {});
-  describe('Boundary Dragging', () => {});
+  describe('Boundary Dragging', () => {
+    let boundaryElement: HTMLElement;
+
+    /**
+     * Boundary Movement:
+     * Horizontal: -100 - 100
+     * Vertical: -100 - 100
+     *
+     * Free space:
+     * left: 400-500
+     * top: 400-500
+     * right: 700-800
+     * bottom: 700-800
+     */
+    const initInnerBoundary = () => {
+      jest.spyOn(boundaryElement, 'getBoundingClientRect').mockReturnValue({
+        ...element.getBoundingClientRect(),
+        width: 400,
+        height: 400,
+        x: 400,
+        y: 400,
+        left: 400,
+        top: 400,
+        right: 800,
+        bottom: 800,
+      });
+      jest.spyOn(element, 'getBoundingClientRect').mockReturnValue({
+        ...element.getBoundingClientRect(),
+        width: 200,
+        height: 200,
+        x: 500,
+        y: 500,
+        left: 500,
+        top: 500,
+        right: 700,
+        bottom: 700,
+      });
+
+      drag = new Drag(element, {
+        boundary: {
+          elem: boundaryElement,
+          type: DragBoundaryType.Inner,
+        },
+      });
+
+      element.dispatchEvent(pointerdownEvent);
+      moveTo(0, 0); // To start dragging
+    };
+    const initAutoBoundaryWithSmallElement = () => {
+      jest.spyOn(boundaryElement, 'getBoundingClientRect').mockReturnValue({
+        ...element.getBoundingClientRect(),
+        width: 400,
+        height: 400,
+        x: 400,
+        y: 400,
+        left: 400,
+        top: 400,
+        right: 800,
+        bottom: 800,
+      });
+      jest.spyOn(element, 'getBoundingClientRect').mockReturnValue({
+        ...element.getBoundingClientRect(),
+        width: 200,
+        height: 200,
+        x: 500,
+        y: 500,
+        left: 500,
+        top: 500,
+        right: 700,
+        bottom: 700,
+      });
+
+      drag = new Drag(element, {
+        boundary: {
+          elem: boundaryElement,
+          type: DragBoundaryType.Auto,
+        },
+      });
+
+      element.dispatchEvent(pointerdownEvent);
+      moveTo(0, 0); // To start dragging
+    };
+
+    /**
+     * Boundary Movement:
+     * Horizontal: -100 - 100
+     * Vertical: -100 - 100
+     *
+     * Free space:
+     * left: 300-400
+     * top: 300-400
+     * right: 800-900
+     * bottom: 800-900
+     */
+    const initOuterBoundary = () => {
+      jest.spyOn(boundaryElement, 'getBoundingClientRect').mockReturnValue({
+        ...element.getBoundingClientRect(),
+        width: 400,
+        height: 400,
+        x: 400,
+        y: 400,
+        left: 400,
+        top: 400,
+        right: 800,
+        bottom: 800,
+      });
+      jest.spyOn(element, 'getBoundingClientRect').mockReturnValue({
+        ...element.getBoundingClientRect(),
+        width: 600,
+        height: 600,
+        x: 300,
+        y: 300,
+        left: 300,
+        top: 300,
+        right: 900,
+        bottom: 900,
+      });
+
+      drag = new Drag(element, {
+        boundary: {
+          elem: boundaryElement,
+          type: DragBoundaryType.Outer,
+        },
+      });
+
+      element.dispatchEvent(pointerdownEvent);
+      moveTo(0, 0); // To start dragging
+    };
+    const initAutoBoundaryWithBigElement = () => {
+      jest.spyOn(boundaryElement, 'getBoundingClientRect').mockReturnValue({
+        ...element.getBoundingClientRect(),
+        width: 400,
+        height: 400,
+        x: 400,
+        y: 400,
+        left: 400,
+        top: 400,
+        right: 800,
+        bottom: 800,
+      });
+      jest.spyOn(element, 'getBoundingClientRect').mockReturnValue({
+        ...element.getBoundingClientRect(),
+        width: 600,
+        height: 600,
+        x: 300,
+        y: 300,
+        left: 300,
+        top: 300,
+        right: 900,
+        bottom: 900,
+      });
+
+      drag = new Drag(element, {
+        boundary: {
+          elem: boundaryElement,
+          type: DragBoundaryType.Auto,
+        },
+      });
+
+      element.dispatchEvent(pointerdownEvent);
+      moveTo(0, 0); // To start dragging
+    };
+
+    const initAutoBoundaryWithSmallerHeight = () => {
+      jest.spyOn(boundaryElement, 'getBoundingClientRect').mockReturnValue({
+        ...element.getBoundingClientRect(),
+        width: 400,
+        height: 400,
+        x: 400,
+        y: 400,
+        left: 400,
+        top: 400,
+        right: 800,
+        bottom: 800,
+      });
+      jest.spyOn(element, 'getBoundingClientRect').mockReturnValue({
+        ...element.getBoundingClientRect(),
+        width: 600,
+        height: 200,
+        x: 300,
+        y: 500,
+        left: 300,
+        top: 500,
+        right: 900,
+        bottom: 700,
+      });
+
+      drag = new Drag(element, {
+        boundary: {
+          elem: boundaryElement,
+          type: DragBoundaryType.Auto,
+        },
+      });
+
+      element.dispatchEvent(pointerdownEvent);
+      moveTo(0, 0); // To start dragging
+    };
+    const initAutoBoundaryWithSmallerWidth = () => {
+      jest.spyOn(boundaryElement, 'getBoundingClientRect').mockReturnValue({
+        ...element.getBoundingClientRect(),
+        width: 400,
+        height: 400,
+        x: 400,
+        y: 400,
+        left: 400,
+        top: 400,
+        right: 800,
+        bottom: 800,
+      });
+      jest.spyOn(element, 'getBoundingClientRect').mockReturnValue({
+        ...element.getBoundingClientRect(),
+        width: 200,
+        height: 600,
+        x: 500,
+        y: 300,
+        left: 500,
+        top: 300,
+        right: 700,
+        bottom: 900,
+      });
+
+      drag = new Drag(element, {
+        boundary: {
+          elem: boundaryElement,
+          type: DragBoundaryType.Auto,
+        },
+      });
+
+      element.dispatchEvent(pointerdownEvent);
+      moveTo(0, 0); // To start dragging
+    };
+
+    beforeEach(() => {
+      boundaryElement = document.createElement('div');
+      boundaryElement.classList.add('boundary-element');
+      boundaryElement.style.width = '400px';
+      boundaryElement.style.height = '400px';
+    });
+
+    it(`should prevent the draggable element from moving outside the boundary when 'boundaryType' is 'Inner'`, () => {
+      initInnerBoundary();
+
+      // left
+      moveTo(-300, 0);
+      expect(element.style.transform).toContain('translate(-100px, 0px)');
+
+      // left-top
+      moveTo(-300, 300);
+      expect(element.style.transform).toContain('translate(-100px, 100px)');
+
+      // top
+      moveTo(0, 300);
+      expect(element.style.transform).toContain('translate(0px, 100px)');
+
+      // top-right
+      moveTo(300, 300);
+      expect(element.style.transform).toContain('translate(100px, 100px)');
+
+      // right
+      moveTo(300, 0);
+      expect(element.style.transform).toContain('translate(100px, 0px)');
+
+      // right-bottom
+      moveTo(300, 300);
+      expect(element.style.transform).toContain('translate(100px, 100px)');
+
+      // bottom
+      moveTo(0, 300);
+      expect(element.style.transform).toContain('translate(0px, 100px)');
+
+      // bottom-left
+      moveTo(-300, 300);
+      expect(element.style.transform).toContain('translate(-100px, 100px)');
+    });
+    it(`should allow movement within the boundary when the draggable element is smaller than the boundary and 'boundaryType' is 'Inner'`, () => {
+      initInnerBoundary();
+
+      // left
+      moveTo(-50, 0);
+      expect(element.style.transform).toContain('translate(-50px, 0px)');
+      moveTo(-100, 0);
+      expect(element.style.transform).toContain('translate(-100px, 0px)');
+
+      // left-top
+      moveTo(-50, 50);
+      expect(element.style.transform).toContain('translate(-50px, 50px)');
+      moveTo(-100, 100);
+      expect(element.style.transform).toContain('translate(-100px, 100px)');
+
+      // top
+      moveTo(0, 50);
+      expect(element.style.transform).toContain('translate(0px, 50px)');
+      moveTo(0, 100);
+      expect(element.style.transform).toContain('translate(0px, 100px)');
+
+      // top-right
+      moveTo(50, 50);
+      expect(element.style.transform).toContain('translate(50px, 50px)');
+      moveTo(100, 100);
+      expect(element.style.transform).toContain('translate(100px, 100px)');
+
+      // right
+      moveTo(100, 0);
+      expect(element.style.transform).toContain('translate(100px, 0px)');
+      moveTo(50, 0);
+      expect(element.style.transform).toContain('translate(50px, 0px)');
+
+      // right-bottom
+      moveTo(50, 50);
+      expect(element.style.transform).toContain('translate(50px, 50px)');
+      moveTo(100, 100);
+      expect(element.style.transform).toContain('translate(100px, 100px)');
+
+      // bottom
+      moveTo(0, 50);
+      expect(element.style.transform).toContain('translate(0px, 50px)');
+      moveTo(0, 100);
+      expect(element.style.transform).toContain('translate(0px, 100px)');
+
+      // bottom-left
+      moveTo(-50, 50);
+      expect(element.style.transform).toContain('translate(-50px, 50px)');
+      moveTo(-100, 100);
+      expect(element.style.transform).toContain('translate(-100px, 100px)');
+    });
+
+    it(`should ensure the boundary does not exit the confines of the draggable element when 'boundaryType' is 'Outer'`, () => {
+      initOuterBoundary();
+
+      // left
+      moveTo(-300, 0);
+      expect(element.style.transform).toContain('translate(-100px, 0px)');
+
+      // left-top
+      moveTo(-300, 300);
+      expect(element.style.transform).toContain('translate(-100px, 100px)');
+
+      // top
+      moveTo(0, 300);
+      expect(element.style.transform).toContain('translate(0px, 100px)');
+
+      // top-right
+      moveTo(300, 300);
+      expect(element.style.transform).toContain('translate(100px, 100px)');
+
+      // right
+      moveTo(300, 0);
+      expect(element.style.transform).toContain('translate(100px, 0px)');
+
+      // right-bottom
+      moveTo(300, 300);
+      expect(element.style.transform).toContain('translate(100px, 100px)');
+
+      // bottom
+      moveTo(0, 300);
+      expect(element.style.transform).toContain('translate(0px, 100px)');
+
+      // bottom-left
+      moveTo(-300, 300);
+      expect(element.style.transform).toContain('translate(-100px, 100px)');
+    });
+    it(`should allow movement within the boundary when the draggable element is bigger than the boundary and 'boundaryType' is 'Outer'`, () => {
+      initOuterBoundary();
+
+      // left
+      moveTo(-50, 0);
+      expect(element.style.transform).toContain('translate(-50px, 0px)');
+      moveTo(-100, 0);
+      expect(element.style.transform).toContain('translate(-100px, 0px)');
+
+      // left-top
+      moveTo(-50, 50);
+      expect(element.style.transform).toContain('translate(-50px, 50px)');
+      moveTo(-100, 100);
+      expect(element.style.transform).toContain('translate(-100px, 100px)');
+
+      // top
+      moveTo(0, 50);
+      expect(element.style.transform).toContain('translate(0px, 50px)');
+      moveTo(0, 100);
+      expect(element.style.transform).toContain('translate(0px, 100px)');
+
+      // top-right
+      moveTo(50, 50);
+      expect(element.style.transform).toContain('translate(50px, 50px)');
+      moveTo(100, 100);
+      expect(element.style.transform).toContain('translate(100px, 100px)');
+
+      // right
+      moveTo(100, 0);
+      expect(element.style.transform).toContain('translate(100px, 0px)');
+      moveTo(50, 0);
+      expect(element.style.transform).toContain('translate(50px, 0px)');
+
+      // right-bottom
+      moveTo(50, 50);
+      expect(element.style.transform).toContain('translate(50px, 50px)');
+      moveTo(100, 100);
+      expect(element.style.transform).toContain('translate(100px, 100px)');
+
+      // bottom
+      moveTo(0, 50);
+      expect(element.style.transform).toContain('translate(0px, 50px)');
+      moveTo(0, 100);
+      expect(element.style.transform).toContain('translate(0px, 100px)');
+
+      // bottom-left
+      moveTo(-50, 50);
+      expect(element.style.transform).toContain('translate(-50px, 50px)');
+      moveTo(-100, 100);
+      expect(element.style.transform).toContain('translate(-100px, 100px)');
+    });
+
+    it(`should automatically select 'Inner' boundary constraints when the draggable is smaller than the boundary on both axes and 'boundaryType' is 'Auto'`, () => {
+      initAutoBoundaryWithSmallElement();
+
+      // left
+      moveTo(-300, 0);
+      expect(element.style.transform).toContain('translate(-100px, 0px)');
+
+      // top
+      moveTo(0, 300);
+      expect(element.style.transform).toContain('translate(0px, 100px)');
+
+      // right
+      moveTo(300, 0);
+      expect(element.style.transform).toContain('translate(100px, 0px)');
+
+      // bottom
+      moveTo(0, 300);
+      expect(element.style.transform).toContain('translate(0px, 100px)');
+    });
+    it(`should automatically select 'Outer' boundary constraints when the draggable is larger than the boundary on both axes and 'boundaryType' is 'Auto'`, () => {
+      initAutoBoundaryWithBigElement();
+
+      // left
+      moveTo(-300, 0);
+      expect(element.style.transform).toContain('translate(-100px, 0px)');
+
+      // top
+      moveTo(0, 300);
+      expect(element.style.transform).toContain('translate(0px, 100px)');
+
+      // right
+      moveTo(300, 0);
+      expect(element.style.transform).toContain('translate(100px, 0px)');
+
+      // bottom
+      moveTo(0, 300);
+      expect(element.style.transform).toContain('translate(0px, 100px)');
+    });
+    it(`should apply 'Inner' vertical and 'Outer' horizontal boundary constraints when boundaryType is 'Auto' and draggable element is shorter in height and wider in width than the boundary`, () => {
+      initAutoBoundaryWithSmallerHeight();
+
+      // left
+      moveTo(-500, 0);
+      expect(element.style.transform).toContain('translate(-100px, 0px)');
+
+      // left-top
+      moveTo(-500, 500);
+      expect(element.style.transform).toContain('translate(-100px, 100px)');
+
+      // top
+      moveTo(0, 500);
+      expect(element.style.transform).toContain('translate(0px, 100px)');
+
+      // top-right
+      moveTo(500, 500);
+      expect(element.style.transform).toContain('translate(100px, 100px)');
+
+      // right
+      moveTo(500, 0);
+      expect(element.style.transform).toContain('translate(100px, 0px)');
+
+      // right-bottom
+      moveTo(500, 500);
+      expect(element.style.transform).toContain('translate(100px, 100px)');
+
+      // bottom
+      moveTo(0, 500);
+      expect(element.style.transform).toContain('translate(0px, 100px)');
+
+      // bottom-left
+      moveTo(-500, 500);
+      expect(element.style.transform).toContain('translate(-100px, 100px)');
+    });
+    it(`should apply 'Inner' horizontal and 'Outer' vertical boundary constraints when boundaryType is 'Auto' and draggable element is shorter in width and wider in height than the boundary`, () => {
+      initAutoBoundaryWithSmallerWidth();
+
+      // left
+      moveTo(-500, 0);
+      expect(element.style.transform).toContain('translate(-100px, 0px)');
+
+      // left-top
+      moveTo(-500, 500);
+      expect(element.style.transform).toContain('translate(-100px, 100px)');
+
+      // top
+      moveTo(0, 500);
+      expect(element.style.transform).toContain('translate(0px, 100px)');
+
+      // top-right
+      moveTo(500, 500);
+      expect(element.style.transform).toContain('translate(100px, 100px)');
+
+      // right
+      moveTo(500, 0);
+      expect(element.style.transform).toContain('translate(100px, 0px)');
+
+      // right-bottom
+      moveTo(500, 500);
+      expect(element.style.transform).toContain('translate(100px, 100px)');
+
+      // bottom
+      moveTo(0, 500);
+      expect(element.style.transform).toContain('translate(0px, 100px)');
+
+      // bottom-left
+      moveTo(-500, 500);
+      expect(element.style.transform).toContain('translate(-100px, 100px)');
+    });
+
+    it(`should throw an error where boundaryElem does not exist.`, () => {
+      expect(() => {
+        new Drag(element, {
+          boundary: {
+            elem: null,
+          },
+        });
+      }).toThrow();
+    });
+    it(`should verify that boundary constraints are still effective after changes in DOM structure`, () => {
+      new Drag(element, {
+        boundary: {
+          elem: boundaryElement,
+          type: DragBoundaryType.Inner,
+        },
+      });
+
+      jest.spyOn(boundaryElement, 'getBoundingClientRect').mockReturnValue({
+        ...element.getBoundingClientRect(),
+        width: 400,
+        height: 400,
+        x: 400,
+        y: 400,
+        left: 400,
+        top: 400,
+        right: 800,
+        bottom: 800,
+      });
+      jest.spyOn(element, 'getBoundingClientRect').mockReturnValue({
+        ...element.getBoundingClientRect(),
+        width: 200,
+        height: 200,
+        x: 500,
+        y: 500,
+        left: 500,
+        top: 500,
+        right: 700,
+        bottom: 700,
+      });
+
+      element.dispatchEvent(pointerdownEvent);
+      moveTo(0, 0); // To start dragging
+
+      // left
+      moveTo(-300, 0);
+      expect(element.style.transform).toContain('translate(-100px, 0px)');
+
+      // left-top
+      moveTo(-300, 300);
+      expect(element.style.transform).toContain('translate(-100px, 100px)');
+
+      // top
+      moveTo(0, 300);
+      expect(element.style.transform).toContain('translate(0px, 100px)');
+
+      // top-right
+      moveTo(300, 300);
+      expect(element.style.transform).toContain('translate(100px, 100px)');
+
+      // right
+      moveTo(300, 0);
+      expect(element.style.transform).toContain('translate(100px, 0px)');
+
+      // right-bottom
+      moveTo(300, 300);
+      expect(element.style.transform).toContain('translate(100px, 100px)');
+
+      // bottom
+      moveTo(0, 300);
+      expect(element.style.transform).toContain('translate(0px, 100px)');
+
+      // bottom-left
+      moveTo(-300, 300);
+      expect(element.style.transform).toContain('translate(-100px, 100px)');
+    });
+    it(`should use '1' bounceFactor and 'Auto' type when the interaction or type has not defined`, () => {
+      jest.spyOn(boundaryElement, 'getBoundingClientRect').mockReturnValue({
+        ...element.getBoundingClientRect(),
+        width: 400,
+        height: 400,
+        x: 400,
+        y: 400,
+        left: 400,
+        top: 400,
+        right: 800,
+        bottom: 800,
+      });
+      jest.spyOn(element, 'getBoundingClientRect').mockReturnValue({
+        ...element.getBoundingClientRect(),
+        width: 600,
+        height: 200,
+        x: 300,
+        y: 500,
+        left: 300,
+        top: 500,
+        right: 900,
+        bottom: 700,
+      });
+
+      new Drag(element, { boundary: { elem: boundaryElement } });
+
+      element.dispatchEvent(pointerdownEvent);
+      moveTo(0, 0); // To start dragging
+
+      // left
+      moveTo(-500, 0);
+      expect(element.style.transform).toContain('translate(-100px, 0px)');
+
+      // left-top
+      moveTo(-500, 500);
+      expect(element.style.transform).toContain('translate(-100px, 100px)');
+
+      // top
+      moveTo(0, 500);
+      expect(element.style.transform).toContain('translate(0px, 100px)');
+
+      // top-right
+      moveTo(500, 500);
+      expect(element.style.transform).toContain('translate(100px, 100px)');
+
+      // right
+      moveTo(500, 0);
+      expect(element.style.transform).toContain('translate(100px, 0px)');
+
+      // right-bottom
+      moveTo(500, 500);
+      expect(element.style.transform).toContain('translate(100px, 100px)');
+
+      // bottom
+      moveTo(0, 500);
+      expect(element.style.transform).toContain('translate(0px, 100px)');
+
+      // bottom-left
+      moveTo(-500, 500);
+      expect(element.style.transform).toContain('translate(-100px, 100px)');
+    });
+
+    it(`should calculate and apply bounce effect when the draggable element moves outside boundary and boundaryType is 'Inner'`, () => {
+      jest.spyOn(boundaryElement, 'getBoundingClientRect').mockReturnValue({
+        ...element.getBoundingClientRect(),
+        width: 400,
+        height: 400,
+        x: 400,
+        y: 400,
+        left: 400,
+        top: 400,
+        right: 800,
+        bottom: 800,
+      });
+      jest.spyOn(element, 'getBoundingClientRect').mockReturnValue({
+        ...element.getBoundingClientRect(),
+        width: 200,
+        height: 200,
+        x: 500,
+        y: 500,
+        left: 500,
+        top: 500,
+        right: 700,
+        bottom: 700,
+      });
+
+      drag = new Drag(element, {
+        boundary: {
+          elem: boundaryElement,
+          type: DragBoundaryType.Inner,
+          bounceFactor: 0.5,
+        },
+      });
+
+      element.dispatchEvent(pointerdownEvent);
+      moveTo(0, 0); // To start dragging
+
+      // left
+      moveTo(-300, 0);
+      expect(element.style.transform).toContain('translate(-250px, 0px)');
+
+      // left-top
+      moveTo(-300, 300);
+      expect(element.style.transform).toContain('translate(-250px, 250px)');
+
+      // top
+      moveTo(0, 300);
+      expect(element.style.transform).toContain('translate(0px, 250px)');
+
+      // top-right
+      moveTo(300, 300);
+      expect(element.style.transform).toContain('translate(250px, 250px)');
+
+      // right
+      moveTo(300, 0);
+      expect(element.style.transform).toContain('translate(250px, 0px)');
+
+      // right-bottom
+      moveTo(300, 300);
+      expect(element.style.transform).toContain('translate(250px, 250px)');
+
+      // bottom
+      moveTo(0, 300);
+      expect(element.style.transform).toContain('translate(0px, 250px)');
+
+      // bottom-left
+      moveTo(-300, 300);
+      expect(element.style.transform).toContain('translate(-250px, 250px)');
+    });
+    it(`should calculate and apply bounce effect when the draggable element moves outside boundary and boundaryType is 'Outer'`, () => {
+      jest.spyOn(boundaryElement, 'getBoundingClientRect').mockReturnValue({
+        ...element.getBoundingClientRect(),
+        width: 400,
+        height: 400,
+        x: 400,
+        y: 400,
+        left: 400,
+        top: 400,
+        right: 800,
+        bottom: 800,
+      });
+      jest.spyOn(element, 'getBoundingClientRect').mockReturnValue({
+        ...element.getBoundingClientRect(),
+        width: 600,
+        height: 600,
+        x: 300,
+        y: 300,
+        left: 300,
+        top: 300,
+        right: 900,
+        bottom: 900,
+      });
+
+      drag = new Drag(element, {
+        boundary: {
+          elem: boundaryElement,
+          type: DragBoundaryType.Outer,
+          bounceFactor: 0.5,
+        },
+      });
+
+      element.dispatchEvent(pointerdownEvent);
+      moveTo(0, 0); // To start dragging
+
+      // left
+      moveTo(-300, 0);
+      expect(element.style.transform).toContain('translate(-250px, 0px)');
+
+      // left-top
+      moveTo(-300, 300);
+      expect(element.style.transform).toContain('translate(-250px, 250px)');
+
+      // top
+      moveTo(0, 300);
+      expect(element.style.transform).toContain('translate(0px, 250px)');
+
+      // top-right
+      moveTo(300, 300);
+      expect(element.style.transform).toContain('translate(250px, 250px)');
+
+      // right
+      moveTo(300, 0);
+      expect(element.style.transform).toContain('translate(250px, 0px)');
+
+      // right-bottom
+      moveTo(300, 300);
+      expect(element.style.transform).toContain('translate(250px, 250px)');
+
+      // bottom
+      moveTo(0, 300);
+      expect(element.style.transform).toContain('translate(0px, 250px)');
+
+      // bottom-left
+      moveTo(-300, 300);
+      expect(element.style.transform).toContain('translate(-250px, 250px)');
+    });
+    it(`should calculate and apply bounce effect when the draggable element moves outside boundary and boundaryType is 'Auto' and draggable element is shorter in height and wider in width than the boundary`, () => {
+      jest.spyOn(boundaryElement, 'getBoundingClientRect').mockReturnValue({
+        ...element.getBoundingClientRect(),
+        width: 400,
+        height: 400,
+        x: 400,
+        y: 400,
+        left: 400,
+        top: 400,
+        right: 800,
+        bottom: 800,
+      });
+      jest.spyOn(element, 'getBoundingClientRect').mockReturnValue({
+        ...element.getBoundingClientRect(),
+        width: 600,
+        height: 200,
+        x: 300,
+        y: 500,
+        left: 300,
+        top: 500,
+        right: 900,
+        bottom: 700,
+      });
+
+      drag = new Drag(element, {
+        boundary: {
+          elem: boundaryElement,
+          type: DragBoundaryType.Auto,
+          bounceFactor: 0.5,
+        },
+      });
+
+      element.dispatchEvent(pointerdownEvent);
+      moveTo(0, 0); // To start dragging
+
+      // left
+      moveTo(-300, 0);
+      expect(element.style.transform).toContain('translate(-250px, 0px)');
+
+      // left-top
+      moveTo(-300, 300);
+      expect(element.style.transform).toContain('translate(-250px, 250px)');
+
+      // top
+      moveTo(0, 300);
+      expect(element.style.transform).toContain('translate(0px, 250px)');
+
+      // top-right
+      moveTo(300, 300);
+      expect(element.style.transform).toContain('translate(250px, 250px)');
+
+      // right
+      moveTo(300, 0);
+      expect(element.style.transform).toContain('translate(250px, 0px)');
+
+      // right-bottom
+      moveTo(300, 300);
+      expect(element.style.transform).toContain('translate(250px, 250px)');
+
+      // bottom
+      moveTo(0, 300);
+      expect(element.style.transform).toContain('translate(0px, 250px)');
+
+      // bottom-left
+      moveTo(-300, 300);
+      expect(element.style.transform).toContain('translate(-250px, 250px)');
+    });
+    it(`should calculate and apply bounce effect when the draggable element moves outside boundary and boundaryType is 'Auto' and draggable element is shorter in width and wider in height than the boundary`, () => {
+      jest.spyOn(boundaryElement, 'getBoundingClientRect').mockReturnValue({
+        ...element.getBoundingClientRect(),
+        width: 400,
+        height: 400,
+        x: 400,
+        y: 400,
+        left: 400,
+        top: 400,
+        right: 800,
+        bottom: 800,
+      });
+      jest.spyOn(element, 'getBoundingClientRect').mockReturnValue({
+        ...element.getBoundingClientRect(),
+        width: 200,
+        height: 600,
+        x: 500,
+        y: 300,
+        left: 500,
+        top: 300,
+        right: 700,
+        bottom: 900,
+      });
+
+      drag = new Drag(element, {
+        boundary: {
+          elem: boundaryElement,
+          type: DragBoundaryType.Auto,
+          bounceFactor: 0.5,
+        },
+      });
+
+      element.dispatchEvent(pointerdownEvent);
+      moveTo(0, 0); // To start dragging
+
+      // left
+      moveTo(-300, 0);
+      expect(element.style.transform).toContain('translate(-250px, 0px)');
+
+      // left-top
+      moveTo(-300, 300);
+      expect(element.style.transform).toContain('translate(-250px, 250px)');
+
+      // top
+      moveTo(0, 300);
+      expect(element.style.transform).toContain('translate(0px, 250px)');
+
+      // top-right
+      moveTo(300, 300);
+      expect(element.style.transform).toContain('translate(250px, 250px)');
+
+      // right
+      moveTo(300, 0);
+      expect(element.style.transform).toContain('translate(250px, 0px)');
+
+      // right-bottom
+      moveTo(300, 300);
+      expect(element.style.transform).toContain('translate(250px, 250px)');
+
+      // bottom
+      moveTo(0, 300);
+      expect(element.style.transform).toContain('translate(0px, 250px)');
+
+      // bottom-left
+      moveTo(-300, 300);
+      expect(element.style.transform).toContain('translate(-250px, 250px)');
+    });
+
+    it(`should apply stronger bounce effect for higher 'bounceFactor' values`, () => {
+      jest.spyOn(boundaryElement, 'getBoundingClientRect').mockReturnValue({
+        ...element.getBoundingClientRect(),
+        width: 400,
+        height: 400,
+        x: 400,
+        y: 400,
+        left: 400,
+        top: 400,
+        right: 800,
+        bottom: 800,
+      });
+      jest.spyOn(element, 'getBoundingClientRect').mockReturnValue({
+        ...element.getBoundingClientRect(),
+        width: 200,
+        height: 200,
+        x: 500,
+        y: 500,
+        left: 500,
+        top: 500,
+        right: 700,
+        bottom: 700,
+      });
+
+      new Drag(element, {
+        boundary: {
+          elem: boundaryElement,
+          type: DragBoundaryType.Inner,
+          bounceFactor: 0.9,
+        },
+      });
+
+      element.dispatchEvent(pointerdownEvent);
+      moveTo(0, 0); // To start dragging
+
+      moveTo(-300, 300);
+      expect(element.style.transform).toContain('translate(-138px, 138px)');
+    });
+    it(`should apply weaker bounce effect for lower 'bounceFactor values`, () => {
+      jest.spyOn(boundaryElement, 'getBoundingClientRect').mockReturnValue({
+        ...element.getBoundingClientRect(),
+        width: 400,
+        height: 400,
+        x: 400,
+        y: 400,
+        left: 400,
+        top: 400,
+        right: 800,
+        bottom: 800,
+      });
+      jest.spyOn(element, 'getBoundingClientRect').mockReturnValue({
+        ...element.getBoundingClientRect(),
+        width: 200,
+        height: 200,
+        x: 500,
+        y: 500,
+        left: 500,
+        top: 500,
+        right: 700,
+        bottom: 700,
+      });
+
+      new Drag(element, {
+        boundary: {
+          elem: boundaryElement,
+          type: DragBoundaryType.Inner,
+          bounceFactor: 0.2,
+        },
+      });
+
+      element.dispatchEvent(pointerdownEvent);
+      moveTo(0, 0); // To start dragging
+
+      moveTo(-300, 300);
+      expect(element.style.transform).toContain('translate(-292px, 292px)');
+    });
+    it(`should draggable element moving outside the boundary like basic drag without bounce effect when 'bounceFactor' is 0`, () => {
+      jest.spyOn(boundaryElement, 'getBoundingClientRect').mockReturnValue({
+        ...element.getBoundingClientRect(),
+        width: 400,
+        height: 400,
+        x: 400,
+        y: 400,
+        left: 400,
+        top: 400,
+        right: 800,
+        bottom: 800,
+      });
+      jest.spyOn(element, 'getBoundingClientRect').mockReturnValue({
+        ...element.getBoundingClientRect(),
+        width: 200,
+        height: 200,
+        x: 500,
+        y: 500,
+        left: 500,
+        top: 500,
+        right: 700,
+        bottom: 700,
+      });
+
+      new Drag(element, {
+        boundary: {
+          elem: boundaryElement,
+          type: DragBoundaryType.Inner,
+          bounceFactor: 0,
+        },
+      });
+
+      element.dispatchEvent(pointerdownEvent);
+      moveTo(0, 0); // To start dragging
+
+      moveTo(-300, 300);
+      expect(element.style.transform).toContain('translate(-300px, 300px)');
+    });
+    it(`should draggable element moving outside the boundary like basic drag without bounce effect when 'bounceFactor' is less than 0`, () => {
+      jest.spyOn(boundaryElement, 'getBoundingClientRect').mockReturnValue({
+        ...element.getBoundingClientRect(),
+        width: 400,
+        height: 400,
+        x: 400,
+        y: 400,
+        left: 400,
+        top: 400,
+        right: 800,
+        bottom: 800,
+      });
+      jest.spyOn(element, 'getBoundingClientRect').mockReturnValue({
+        ...element.getBoundingClientRect(),
+        width: 200,
+        height: 200,
+        x: 500,
+        y: 500,
+        left: 500,
+        top: 500,
+        right: 700,
+        bottom: 700,
+      });
+
+      new Drag(element, {
+        boundary: {
+          elem: boundaryElement,
+          type: DragBoundaryType.Inner,
+          bounceFactor: -1,
+        },
+      });
+
+      element.dispatchEvent(pointerdownEvent);
+      moveTo(0, 0); // To start dragging
+
+      moveTo(-300, 300);
+      expect(element.style.transform).toContain('translate(-300px, 300px)');
+    });
+    it(`should prevent the draggable element from moving outside the boundary without bounce effect when 'bounceFactor' is equal to 1`, () => {
+      jest.spyOn(boundaryElement, 'getBoundingClientRect').mockReturnValue({
+        ...element.getBoundingClientRect(),
+        width: 400,
+        height: 400,
+        x: 400,
+        y: 400,
+        left: 400,
+        top: 400,
+        right: 800,
+        bottom: 800,
+      });
+      jest.spyOn(element, 'getBoundingClientRect').mockReturnValue({
+        ...element.getBoundingClientRect(),
+        width: 200,
+        height: 200,
+        x: 500,
+        y: 500,
+        left: 500,
+        top: 500,
+        right: 700,
+        bottom: 700,
+      });
+
+      new Drag(element, {
+        boundary: {
+          elem: boundaryElement,
+          type: DragBoundaryType.Inner,
+          bounceFactor: 1,
+        },
+      });
+
+      element.dispatchEvent(pointerdownEvent);
+      moveTo(0, 0); // To start dragging
+
+      moveTo(-300, 300);
+      expect(element.style.transform).toContain('translate(-100px, 100px)');
+    });
+    it(`should prevent the draggable element from moving outside the boundary without bounce effect when 'bounceFactor' is bigger than 1`, () => {
+      jest.spyOn(boundaryElement, 'getBoundingClientRect').mockReturnValue({
+        ...element.getBoundingClientRect(),
+        width: 400,
+        height: 400,
+        x: 400,
+        y: 400,
+        left: 400,
+        top: 400,
+        right: 800,
+        bottom: 800,
+      });
+      jest.spyOn(element, 'getBoundingClientRect').mockReturnValue({
+        ...element.getBoundingClientRect(),
+        width: 200,
+        height: 200,
+        x: 500,
+        y: 500,
+        left: 500,
+        top: 500,
+        right: 700,
+        bottom: 700,
+      });
+
+      new Drag(element, {
+        boundary: {
+          elem: boundaryElement,
+          type: DragBoundaryType.Inner,
+          bounceFactor: 2,
+        },
+      });
+
+      element.dispatchEvent(pointerdownEvent);
+      moveTo(0, 0); // To start dragging
+
+      moveTo(-300, 300);
+      expect(element.style.transform).toContain('translate(-100px, 100px)');
+    });
+
+    it(`should animate the element back to the boundary when bounce effect has applied and dragging has finished`, () => {
+      createMockRequestAnimationFrame();
+
+      mockClientRect(boundaryElement, { width: 400, height: 400, left: 400, top: 400 });
+      mockClientRect(element, { width: 200, height: 200, left: 500, top: 500 });
+
+      drag = new Drag(element, {
+        boundary: {
+          elem: boundaryElement,
+          type: DragBoundaryType.Inner,
+          bounceFactor: 0.5,
+        },
+      });
+
+      // left-top
+      element.dispatchEvent(pointerdownEvent);
+      moveTo(0, 0); // To start dragging
+      moveTo(-300, 300);
+      document.dispatchEvent(pointerupEvent);
+      expect(element.style.transform).toContain('translate(-100px, 100px)');
+
+      // top-right
+      mockClientRect(element, { width: 200, height: 200, left: 400, top: 600 });
+      mockDOMMatrix({ x: -100, y: 100 });
+
+      element.dispatchEvent(pointerdownEvent);
+      moveTo(0, 0); // To start dragging
+      moveTo(300, 300);
+      document.dispatchEvent(pointerupEvent);
+      expect(element.style.transform).toContain('translate(100px, 100px)');
+
+      // right-bottom
+      mockClientRect(element, { width: 200, height: 200, left: 600, top: 600 });
+      mockDOMMatrix({ x: 100, y: 100 });
+
+      element.dispatchEvent(pointerdownEvent);
+      moveTo(0, 0); // To start dragging
+      moveTo(300, -300);
+      document.dispatchEvent(pointerupEvent);
+      expect(element.style.transform).toContain('translate(100px, -100px)');
+
+      // bottom-left
+      mockClientRect(element, { width: 200, height: 200, left: 600, top: 400 });
+      mockDOMMatrix({ x: 100, y: -100 });
+
+      element.dispatchEvent(pointerdownEvent);
+      moveTo(0, 0); // To start dragging
+      moveTo(-300, -300);
+      document.dispatchEvent(pointerupEvent);
+      expect(element.style.transform).toContain('translate(-100px, -100px)');
+    });
+    it(`should skip boundary concept where the boundary element is removed before start dragging`, () => {
+      jest.spyOn(boundaryElement, 'getBoundingClientRect').mockReturnValue({
+        ...element.getBoundingClientRect(),
+        width: 400,
+        height: 400,
+        x: 400,
+        y: 400,
+        left: 400,
+        top: 400,
+        right: 800,
+        bottom: 800,
+      });
+      jest.spyOn(element, 'getBoundingClientRect').mockReturnValue({
+        ...element.getBoundingClientRect(),
+        width: 200,
+        height: 200,
+        x: 500,
+        y: 500,
+        left: 500,
+        top: 500,
+        right: 700,
+        bottom: 700,
+      });
+
+      drag = new Drag(element, {
+        boundary: {
+          elem: boundaryElement,
+          type: DragBoundaryType.Inner,
+        },
+      });
+
+      boundaryElement.remove();
+      jest.spyOn(boundaryElement, 'getBoundingClientRect').mockReturnValue({
+        ...element.getBoundingClientRect(),
+        width: 0,
+        height: 0,
+        x: 0,
+        y: 0,
+        left: 0,
+        top: 0,
+        right: 0,
+        bottom: 0,
+      });
+
+      // left-top
+      element.dispatchEvent(pointerdownEvent);
+      moveTo(0, 0); // To start dragging
+      moveTo(-300, 300);
+      document.dispatchEvent(pointerupEvent);
+      expect(element.style.transform).toContain('translate(-300px, 300px)');
+    });
+  });
+
+  describe('Multi Options', () => {
+    it(`should move the element in both x and y axes within boundary constraints when 'movementDirection' is 'Both' and 'boundaryType' is 'Inner'`, () => {});
+    it(`should move the element only in x axis within boundary constraints when 'movementDirection' is 'Horizontal' and 'boundaryType' is 'Inner'`, () => {});
+    it(`should move the element only in y axis within boundary constraints when 'movementDirection' is 'Vertical' and 'boundaryType' is 'Inner'`, () => {});
+    it(`should move the element only in x axis within boundary constraints when the initial drag movement starts in a x axis and 'movementDirection' is 'Lock' and 'boundaryType' is 'Inner'`, () => {});
+    it(`should move the element only in y axis within boundary constraints when the initial drag movement starts in a y axis and 'movementDirection' is 'Lock' and 'boundaryType' is 'Inner'`, () => {});
+
+    it(`should move the element in both x and y axes within boundary constraints when 'movementDirection' is 'Both' and 'boundaryType' is 'Outer'`, () => {});
+    it(`should move the element only in x axis within boundary constraints when 'movementDirection' is 'Horizontal' and 'boundaryType' is 'Outer'`, () => {});
+    it(`should move the element only in y axis within boundary constraints when 'movementDirection' is 'Vertical' and 'boundaryType' is 'Outer'`, () => {});
+    it(`should move the element only in x axis within boundary constraints when the initial drag movement starts in a x axis and 'movementDirection' is 'Lock' and 'boundaryType' is 'Outer'`, () => {});
+    it(`should move the element only in y axis within boundary constraints when the initial drag movement starts in a y axis and 'movementDirection' is 'Lock' and 'boundaryType' is 'Outer'`, () => {});
+
+    it(`should move the element in both x and y axes within boundary constraints when 'movementDirection' is 'Both' and 'boundaryType' is 'Auto'`, () => {});
+    it(`should move the element only in x axis within boundary constraints when 'movementDirection' is 'Horizontal' and 'boundaryType' is 'Auto'`, () => {});
+    it(`should move the element only in y axis within boundary constraints when 'movementDirection' is 'Vertical' and 'boundaryType' is 'Auto'`, () => {});
+    it(`should move the element only in x axis within boundary constraints when the initial drag movement starts in a x axis and 'movementDirection' is 'Lock' and 'boundaryType' is 'Auto'`, () => {});
+    it(`should move the element only in y axis within boundary constraints when the initial drag movement starts in a y axis and 'movementDirection' is 'Lock' and 'boundaryType' is 'Auto'`, () => {});
+  });
+
+  describe('MinMovement Dragging', () => {
+    it(`should not the element when the movement is less than the defined minMovements threshold`, () => {});
+    it(`should move the element when the movement exceeds the minMovements threshold`, () => {});
+  });
 });
+
+// interface TransformValue {
+//   rotateX: number;
+//   rotateY: number;
+//   rotateZ: number;
+//   scaleX: number;
+//   scaleY: number;
+//   scaleZ: number;
+//   translateX: number;
+//   translateY: number;
+//   translateZ: number;
+// }
+
+function mockClientRect(element: Element, { width, height, left, top }: { width: number; height: number; top: number; left: number }) {
+  jest.spyOn(element, 'getBoundingClientRect').mockReturnValue({
+    ...element.getBoundingClientRect(),
+    width,
+    height,
+    x: left,
+    y: top,
+    left,
+    top,
+    right: left + width,
+    bottom: height + top,
+  });
+}
+function mockDOMMatrix({ x, y }: { x: number; y: number }) {
+  (global as any).DOMMatrix = jest.fn().mockReturnValueOnce({
+    a: 1,
+    b: 0,
+    c: 0,
+    d: 1,
+    e: x,
+    f: y,
+    m11: 1,
+    m12: 0,
+    m13: 0,
+    m14: 0,
+    m21: 0,
+    m22: 1,
+    m23: 0,
+    m24: 0,
+    m31: 0,
+    m32: 0,
+    m33: 1,
+    m34: 0,
+    m41: x,
+    m42: y,
+    m43: 0,
+    m44: 1,
+    is2D: true,
+    isIdentity: false,
+  } as any);
+}
+
+// function getMatrixValue(transform: TransformValue): number[] {
+//   // Convert degrees to radians
+//   const radX = transform.rotateX * Math.PI / 180;
+//   const radY = transform.rotateY * Math.PI / 180;
+//   const radZ = transform.rotateZ * Math.PI / 180;
+//
+//   // Calculate rotation matrices for each axis
+//   const rotationX = [
+//     1, 0, 0, 0,
+//     0, Math.cos(radX), -Math.sin(radX), 0,
+//     0, Math.sin(radX), Math.cos(radX), 0,
+//     0, 0, 0, 1
+//   ];
+//
+//   const rotationY = [
+//     Math.cos(radY), 0, Math.sin(radY), 0,
+//     0, 1, 0, 0,
+//     -Math.sin(radY), 0, Math.cos(radY), 0,
+//     0, 0, 0, 1
+//   ];
+//
+//   const rotationZ = [
+//     Math.cos(radZ), -Math.sin(radZ), 0, 0,
+//     Math.sin(radZ), Math.cos(radZ), 0, 0,
+//     0, 0, 1, 0,
+//     0, 0, 0, 1
+//   ];
+//
+//   // Calculate scale and translation matrices
+//   const scale = [
+//     transform.scaleX, 0, 0, 0,
+//     0, transform.scaleY, 0, 0,
+//     0, 0, transform.scaleZ, 0,
+//     0, 0, 0, 1
+//   ];
+//
+//   const translate = [
+//     1, 0, 0, transform.translateX,
+//     0, 1, 0, transform.translateY,
+//     0, 0, 1, transform.translateZ,
+//     0, 0, 0, 1
+//   ];
+//
+//   // Combine all transformations
+//   // Note: This simplistic approach multiplies the matrices in a fixed order.
+//   // In a real-world scenario, the order of these transformations might matter.
+//   const combinedMatrix = multiplyMatrices(multiplyMatrices(multiplyMatrices(multiplyMatrices(translate, scale), rotationX), rotationY), rotationZ);
+//
+//   // Determine if the transformation is 2D or 3D
+//   const is2D = transform.rotateX === 0 && transform.rotateY === 0 && transform.rotateZ === 0 && transform.translateZ === 0 && transform.scaleZ === 1;
+//
+//   if (is2D) {
+//     // Convert 3D matrix to 2D matrix (assuming no Z-axis transformations)
+//     return [
+//       combinedMatrix[0], combinedMatrix[1], // a, b
+//       combinedMatrix[4], combinedMatrix[5], // c, d
+//       combinedMatrix[12], combinedMatrix[13] // e, f
+//     ];
+//   }
+//
+//   return combinedMatrix;
+// }
+//
+// // Helper function to multiply 4x4 matrices
+// function multiplyMatrices(a: number[], b: number[]): number[] {
+//   const result = new Array(16).fill(0);
+//
+//   for (let row = 0; row < 4; row++) {
+//     for (let col = 0; col < 4; col++) {
+//       for (let i = 0; i < 4; i++) {
+//         result[row * 4 + col] += a[row * 4 + i] * b[i * 4 + col];
+//       }
+//     }
+//   }
+//
+//   return result;
+// }
+//

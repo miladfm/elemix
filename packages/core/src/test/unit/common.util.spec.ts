@@ -1,4 +1,4 @@
-import { deepClone, deepmerge, getObjectDiff, isClass, isImage } from '../../lib/common/common.util';
+import { deepClone, deepmerge, getObjectDiff, isClassRef, isImage } from '../../lib/common/common.util';
 
 describe('Util - deepClone', () => {
   it('should return the primitive type as is when a primitive type is provided', () => {
@@ -135,48 +135,48 @@ describe('Util - isImage', () => {
   });
 });
 
-describe('Util - isClass', () => {
+describe('Util - isClassRef', () => {
   it('should return true for a class constructor', () => {
     class MyClass {}
-    expect(isClass(MyClass)).toBe(true);
+    expect(isClassRef(MyClass)).toBe(true);
   });
 
   it('should return false for a function not using class syntax', () => {
     function notAClass() {}
-    expect(isClass(notAClass)).toBe(false);
+    expect(isClassRef(notAClass)).toBe(false);
   });
 
   it('should return true for an anonymous class', () => {
     const AnonymousClass = class {};
-    expect(isClass(AnonymousClass)).toBe(true);
+    expect(isClassRef(AnonymousClass)).toBe(true);
   });
 
   it('should return false for an arrow function', () => {
     const arrowFunction = () => {};
-    expect(isClass(arrowFunction)).toBe(false);
+    expect(isClassRef(arrowFunction)).toBe(false);
   });
 
   it('should return false for a string', () => {
-    expect(isClass('string')).toBe(false);
+    expect(isClassRef('string')).toBe(false);
   });
 
   it('should return false for a number', () => {
-    expect(isClass(42)).toBe(false);
+    expect(isClassRef(42)).toBe(false);
   });
 
   it('should return false for null', () => {
-    expect(isClass(null)).toBe(false);
+    expect(isClassRef(null)).toBe(false);
   });
 
   it('should return false for an array', () => {
-    expect(isClass([])).toBe(false);
+    expect(isClassRef([])).toBe(false);
   });
 
   it('should return false for an object', () => {
-    expect(isClass({})).toBe(false);
+    expect(isClassRef({})).toBe(false);
   });
 
   it('should return false for undefined', () => {
-    expect(isClass(undefined)).toBe(false);
+    expect(isClassRef(undefined)).toBe(false);
   });
 });

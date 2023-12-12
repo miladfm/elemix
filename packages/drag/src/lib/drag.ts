@@ -9,22 +9,13 @@ import {
   TransformProperty,
 } from '@elemix/core';
 import { Observable, Subject, Subscription } from 'rxjs';
-import {
-  BoundaryInteraction,
-  DragBoundaryType,
-  DragOptions,
-  DragPositionAdjuster,
-  DragPositionAdjusterConfig,
-  MovementDirection,
-} from './drag.model';
+import { DragOptions, DragPositionAdjuster, DragPositionAdjusterConfig, DragPositionAdjusterHooks, MovementDirection } from './drag.model';
 import { movementDirectionPositionAdjuster } from './drag-movement-direction-position-adjusters';
 import { basicPositionAdjuster } from './drag-basic-position-adjusters';
+import { BoundaryPositionAdjuster } from './drag-boundary-position-adjusters';
 
 const DEFAULT_OPTIONS: DragOptions = {
   movementDirection: MovementDirection.Both,
-  boundaryType: DragBoundaryType.None,
-  boundaryElem: null,
-  boundaryInteraction: BoundaryInteraction.Stop,
 };
 
 const DRAG_GESTURES_TYPE = [
@@ -66,7 +57,7 @@ export class Drag {
   private translateOnStart: TransformProperty | null;
   private pressEvent: DragGesturesEvent | null;
   private startEvent: DragGesturesEvent | null;
-  private positionAdjuster: DragPositionAdjuster[];
+  private positionAdjuster: (DragPositionAdjuster | DragPositionAdjusterHooks)[];
 
   constructor(selector: DomSelector, options: Partial<DragOptions> = {}) {
     this.options = { ...DEFAULT_OPTIONS, ...options };
@@ -74,13 +65,16 @@ export class Drag {
     this.gesture = new Gestures(this.element);
     this.animation = new Animation(this.element);
 
-    this.positionAdjuster = [
-      basicPositionAdjuster,
-      movementDirectionPositionAdjuster,
-      // isClass or function
-    ];
-
+    this.setPositionAdjuster();
     this.enable();
+  }
+
+  private setPositionAdjuster() {
+    this.positionAdjuster = [basicPositionAdjuster, movementDirectionPositionAdjuster];
+
+    if (this.options.boundary) {
+      this.positionAdjuster.push(new BoundaryPositionAdjuster(this.element, this.options));
+    }
   }
 
   private async onDetectGesture(event: GesturesEvent) {
@@ -108,14 +102,25 @@ export class Drag {
   }
 
   private handleDragPress(event: DragGesturesEvent) {
-    this.animation.syncValue();
     this.pressEvent = event;
+
+    this.positionAdjuster.forEach((positionAdjuster) => {
+      if (typeof positionAdjuster !== 'function' && positionAdjuster.onPress) {
+        positionAdjuster.onPress(event, this.options);
+      }
+    });
   }
 
   private handleDragStart(event: DragGesturesEvent) {
     this.isDragging = true;
     this.translateOnStart = { ...this.animation.value.transform };
     this.startEvent = event;
+
+    this.positionAdjuster.forEach((positionAdjuster) => {
+      if (typeof positionAdjuster !== 'function' && positionAdjuster.onStart) {
+        positionAdjuster.onStart(event, this.options);
+      }
+    });
   }
 
   private async handleDrag(event: DragGesturesEvent) {
@@ -132,7 +137,10 @@ export class Drag {
     };
 
     const nextTranslate = this.positionAdjuster.reduce(
-      (translate, positionAdjusterFn) => positionAdjusterFn(translate, positionAdjusterConfig),
+      (translate, positionAdjuster) =>
+        typeof positionAdjuster === 'function'
+          ? positionAdjuster(translate, positionAdjusterConfig)
+          : positionAdjuster.adjuster(translate, positionAdjusterConfig),
       { x: 0, y: 0 }
     );
 
@@ -140,14 +148,26 @@ export class Drag {
     await this.animation.apply();
   }
 
-  private handleDragEnd(_event: DragGesturesEvent) {
+  private handleDragEnd(event: DragGesturesEvent) {
     this.isDragging = false;
     this.translateOnStart = null;
     this.startEvent = null;
+
+    this.positionAdjuster.forEach((positionAdjuster) => {
+      if (typeof positionAdjuster !== 'function' && positionAdjuster.onEnd) {
+        positionAdjuster.onEnd(event, this.options);
+      }
+    });
   }
 
-  private handleDragRelease(_event: DragGesturesEvent) {
+  private handleDragRelease(event: DragGesturesEvent) {
     this.pressEvent = null;
+
+    this.positionAdjuster.forEach((positionAdjuster) => {
+      if (typeof positionAdjuster !== 'function' && positionAdjuster.onRelease) {
+        positionAdjuster.onRelease(event, this.options);
+      }
+    });
   }
 
   public enable() {

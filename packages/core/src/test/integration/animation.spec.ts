@@ -37,12 +37,8 @@ describe('Feature - Animation', () => {
     it('should not throw an error during initialize', () => {
       expect(() => new Animation(divElement)).not.toThrow();
     });
-    it('should throw an error when scaleX and scaleY differ', () => {
-      divElement.style.transform = 'scale(1, 2)';
-      expect(() => new Animation(divElement)).toThrow(`Sorry, Animation class support right now just 'scale' and not 'scaleX, scaleY'`);
-    });
     it('Should return an existing instance if one already exists for the passed element', () => {
-      const animation1 = Animation.getOrCreateInstance(divElement);
+      const animation1 = new Animation(divElement);
       const animation2 = Animation.getOrCreateInstance(divElement);
       expect(animation1).toBe(animation2);
     });
@@ -51,36 +47,6 @@ describe('Feature - Animation', () => {
       const animation1 = Animation.getOrCreateInstance(divElement);
       const animation2 = Animation.getOrCreateInstance(divElementSecondary);
       expect(animation1).not.toBe(animation2);
-    });
-  });
-
-  describe('Values', () => {
-    it('Should correctly update `value` with current DOM element properties when syncValue has called,', () => {
-      const animation = new Animation(divElement);
-
-      Object.defineProperty(divElement, 'offsetWidth', {
-        configurable: true,
-        value: 1,
-      });
-
-      Object.defineProperty(divElement, 'offsetHeight', {
-        configurable: true,
-        value: 1,
-      });
-
-      divElement.style.opacity = '0.5';
-      divElement.style.width = '1px';
-      divElement.style.height = '1px';
-      divElement.style.transform = 'translate(1px, 1px) scale(2, 2)';
-
-      animation.syncValue();
-
-      expect(animation.value.transform.x).toEqual(1);
-      expect(animation.value.transform.y).toEqual(1);
-      expect(animation.value.transform.scale).toEqual(2);
-      expect(animation.value.dimension.width).toEqual(1);
-      expect(animation.value.dimension.height).toEqual(1);
-      expect(animation.value.opacity).toEqual(0.5);
     });
   });
 
@@ -431,7 +397,7 @@ describe('Feature - Animation', () => {
         .flipX()
         .applyImmediately();
 
-      expect(divElement.style.transform).toEqual('translate(10px, 10px) scale(2, 2) rotateY(0deg) rotateX(180deg)');
+      expect(divElement.style.transform).toEqual('translate(10px, 10px) rotateX(180deg) rotateY(0deg) scale(2, 2)');
       expect(divElement.style.width).toEqual('200px');
       expect(divElement.style.height).toEqual('50px');
       expect(divElement.style.opacity).toEqual('0.5');
@@ -440,7 +406,7 @@ describe('Feature - Animation', () => {
       const animation = new Animation(divElement);
       animation.setTranslate({ x: 10, y: 10 }).setOpacity(0.5).applyImmediately();
 
-      expect(divElement.style.transform).toEqual('translate(10px, 10px) scale(1, 1) rotateY(0deg) rotateX(0deg)');
+      expect(divElement.style.transform).toEqual('translate(10px, 10px) rotateX(0deg) rotateY(0deg) scale(1, 1)');
       expect(divElement.style.width).toEqual('');
       expect(divElement.style.height).toEqual('');
       expect(divElement.style.opacity).toEqual('0.5');
@@ -451,7 +417,7 @@ describe('Feature - Animation', () => {
       animation.setTranslate({ x: 10, y: 10 }).setDimension({ width: 200, height: 50 }).setScale(2).setOpacity(0.5).flipX().apply();
 
       expect(mockRequestAnimationFrame).toHaveBeenCalledTimes(1);
-      expect(divElement.style.transform).toEqual('translate(10px, 10px) scale(2, 2) rotateY(0deg) rotateX(180deg)');
+      expect(divElement.style.transform).toEqual('translate(10px, 10px) rotateX(180deg) rotateY(0deg) scale(2, 2)');
       expect(divElement.style.width).toEqual('200px');
       expect(divElement.style.height).toEqual('50px');
       expect(divElement.style.opacity).toEqual('0.5');
@@ -462,7 +428,7 @@ describe('Feature - Animation', () => {
       animation.setTranslate({ x: 10, y: 10 }).setOpacity(0.5).apply();
 
       expect(mockRequestAnimationFrame).toHaveBeenCalledTimes(1);
-      expect(divElement.style.transform).toEqual('translate(10px, 10px) scale(1, 1) rotateY(0deg) rotateX(0deg)');
+      expect(divElement.style.transform).toEqual('translate(10px, 10px) rotateX(0deg) rotateY(0deg) scale(1, 1)');
       expect(divElement.style.width).toEqual('');
       expect(divElement.style.height).toEqual('');
       expect(divElement.style.opacity).toEqual('0.5');
@@ -545,7 +511,7 @@ describe('Feature - Animation', () => {
             expect(divElement.style.height).toEqual(``);
             expect(divElement.style.opacity).toEqual(`1`); // Opacity has been set as style of the element on beforeEach
           } else if (frame === 3) {
-            expect(divElement.style.transform).toEqual(`translate(50px, 50px) scale(1.5, 1.5) rotateY(90deg) rotateX(90deg)`);
+            expect(divElement.style.transform).toEqual(`translate(50px, 50px) rotateX(90deg) rotateY(90deg) scale(1.5, 1.5)`);
             expect(divElement.style.width).toEqual(`150px`);
             expect(divElement.style.height).toEqual(`150px`);
             expect(divElement.style.opacity).toEqual(`0.5`);
@@ -562,7 +528,7 @@ describe('Feature - Animation', () => {
         .setOpacity(0)
         .animate();
 
-      expect(divElement.style.transform).toEqual(`translate(100px, 100px) scale(2, 2) rotateY(180deg) rotateX(180deg)`);
+      expect(divElement.style.transform).toEqual(`translate(100px, 100px) rotateX(180deg) rotateY(180deg) scale(2, 2)`);
       expect(divElement.style.width).toEqual(`200px`);
       expect(divElement.style.height).toEqual(`200px`);
       expect(divElement.style.opacity).toEqual(`0`);
@@ -595,7 +561,7 @@ describe('Feature - Animation', () => {
           if (frame === 2) {
             expect(divElement.style.transform).toEqual(``);
           } else if (frame === 3) {
-            expect(divElement.style.transform).toEqual(`translate(25px, 0px) scale(1, 1) rotateY(0deg) rotateX(0deg)`);
+            expect(divElement.style.transform).toEqual(`translate(25px, 0px) rotateX(0deg) rotateY(0deg) scale(1, 1)`);
           }
         },
       });
@@ -603,7 +569,7 @@ describe('Feature - Animation', () => {
       await animation.setTranslate({ x: 100 }).animate({ easing: mockEaseIn });
 
       expect(mockEaseIn).toHaveBeenCalledTimes(3);
-      expect(divElement.style.transform).toEqual(`translate(100px, 0px) scale(1, 1) rotateY(0deg) rotateX(0deg)`);
+      expect(divElement.style.transform).toEqual(`translate(100px, 0px) rotateX(0deg) rotateY(0deg) scale(1, 1)`);
     });
   });
 });

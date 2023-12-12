@@ -36,10 +36,10 @@ export interface Coordinates {
 export interface TransformObject {
   translateX: number;
   translateY: number;
+  rotateX: number;
+  rotateY: number;
   scaleX: number;
   scaleY: number;
-  skewX: number;
-  skewY: number;
 }
 
 export type CssStylesKey = Exclude<

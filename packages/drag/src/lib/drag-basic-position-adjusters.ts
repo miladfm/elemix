@@ -2,7 +2,7 @@ import { Coordinate } from '@elemix/core';
 import { DragPositionAdjusterConfig } from './drag.model';
 
 export function basicPositionAdjuster(nextPosition: Coordinate, config: DragPositionAdjusterConfig): Coordinate {
-  if (!config.event.movementXFromStart || !config.event.movementYFromStart) {
+  if (config.event.movementXFromStart === null || config.event.movementYFromStart === null) {
     return nextPosition;
   }
 

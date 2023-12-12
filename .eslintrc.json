@@ -58,7 +58,6 @@
         "max-statements": ["error", 18],
         "no-alert": ["error"],
         "no-console": ["error"],
-        "no-confusing-arrow": ["error"],
         "no-empty-function": ["error"],
         "no-eval": ["error"],
         "no-extend-native": ["error"],

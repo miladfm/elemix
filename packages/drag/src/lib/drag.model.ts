@@ -8,21 +8,39 @@ export interface DragOptions {
   movementDirection: MovementDirection;
 
   /**
-   * Defines the type of boundary constraints applied to the draggable element, dictating how the element interacts
-   * with the specified boundary.
+   * If provided, these settings define the constraints and behavior
+   * of the draggable element in relation to a specified boundary.
    */
-  boundaryType: DragBoundaryType;
+  boundary?: DragBoundary;
+}
 
+export interface DragBoundary {
   /**
    * Identifies the boundary element. This element is the reference within which or around which
    * the draggable element's movement is constrained.
    */
-  boundaryElem: DomSelector | null;
+  elem: DomSelector;
 
   /**
-   * Specifies the interaction behavior when the draggable element reaches the boundary.
+   * Defines the type of boundary constraints applied to the draggable element, dictating how the element interacts
+   * with the specified boundary.
+   * The default value is 'Auto'
    */
-  boundaryInteraction: BoundaryInteraction;
+  type?: DragBoundaryType;
+
+  /**
+   * The `bounceFactor` is a unified parameter that controls the bounce effect when the element
+   * reaches the boundary. It ranges from 0 to 1, where 1 means no bounce effect, and 0
+   * represents the maximum bounce effect.
+   *
+   * The `bounceFactor` influences both the intensity of the initial bounce and the rate at which
+   * the bounce dampens over time. A lower value results in a more pronounced initial bounce
+   * and a slower dampening, leading to a longer-lasting bounce effect. Conversely, a higher value
+   * results in a subtler bounce and quicker settling.
+   *
+   * The default value is 1 (No bounce effect)
+   */
+  bounceFactor?: number;
 }
 
 export enum MovementDirection {
@@ -48,27 +66,7 @@ export enum MovementDirection {
   Vertical = 'vertical',
 }
 
-export enum BoundaryInteraction {
-  /**
-   * Immediately stops the dragging action when the draggable element reaches its boundary.
-   * The element will not move beyond the boundary even if the mouse continues to drag.
-   */
-  Stop = 'stop',
-
-  /**
-   * Allows the draggable element to exhibit a bounce effect upon reaching the boundary.
-   * Dragging can continue, but the element moves only slightly based on the pointer distance from the boundary
-   * and snaps back to the boundary edge once the dragging ends.
-   */
-  BounceEffect = 'bounceEffect',
-}
-
 export enum DragBoundaryType {
-  /**
-   * Implies no constraints on movement, allowing the draggable element to move freely without regard to any boundary.
-   */
-  None = 'none',
-
   /**
    * Applies when the draggable element is smaller than the boundary. It restricts movement so that
    * the draggable cannot go outside the boundary. This is particularly relevant when the dimensions of the draggable
@@ -91,6 +89,14 @@ export enum DragBoundaryType {
   Auto = 'auto',
 }
 
+export interface DragPositionAdjusterHooks {
+  onPress?(event: DragGesturesEvent, option?: DragOptions): void;
+  onStart?(event: DragGesturesEvent, option?: DragOptions): void;
+  adjuster(nextPosition: Coordinate, config?: DragPositionAdjusterConfig): Coordinate;
+  onEnd?(event: DragGesturesEvent, option?: DragOptions): void;
+  onRelease?(event: DragGesturesEvent, option?: DragOptions): void;
+}
+
 export interface DragPositionAdjusterConfig {
   translateOnStart: TransformProperty;
   pressEvent: DragGesturesEvent;
@@ -100,3 +106,10 @@ export interface DragPositionAdjusterConfig {
 }
 
 export type DragPositionAdjuster = (nextPosition: Coordinate, config: DragPositionAdjusterConfig) => Coordinate;
+
+export interface DragBoundaryRange {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+}
