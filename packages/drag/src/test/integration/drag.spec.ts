@@ -1,103 +1,29 @@
 import { Drag } from '../../lib/drag';
-import { createMockRequestAnimationFrame, generateCustomEvent, getActiveListener, mockEventListener } from '@internal-lib/util-testing';
+import {
+  mockRequestAnimationFrame,
+  getActiveListener,
+  mockClientRect,
+  mockEventListener,
+  MockPointerEvent,
+  mockBasicRequestAnimationFrame,
+} from '@internal-lib/util-testing';
 import { map, Observable, toArray } from 'rxjs';
 import { DragGesturesEventType, GesturesEventType } from '@elemix/core';
 import { DragBoundaryType, MovementDirection } from '../../lib/drag.model';
 
-type MockPointerEvent = CustomEvent<unknown> & {
-  pointerId: number;
-  pageX: number;
-  pageY: number;
-  clientX: number;
-  clientY: number;
-  movementX: number;
-  movementY: number;
-};
-
 describe('Feature - Drag', () => {
   let element: HTMLElement;
   let drag: Drag;
-
-  let POINTER_DOWN: Partial<PointerEvent>;
-  let POINTER_MOVE: Partial<PointerEvent>;
-  let ADDITIONAL_POINTER_MOVE: Partial<PointerEvent>;
-  let POINTER_UP: Partial<PointerEvent>;
-
-  let pointerdownEvent: MockPointerEvent;
-  let pointermoveEvent: MockPointerEvent;
-  let additionalPointermoveEvent: MockPointerEvent;
-  let pointerupEvent: MockPointerEvent;
-  let pointercancelEvent: MockPointerEvent;
-
-  const moveTo = (x: number, y: number) => {
-    const event = generateCustomEvent('pointermove', {
-      pointerId: 1,
-      pageX: x,
-      pageY: y,
-      clientX: x,
-      clientY: y,
-      movementX: 0,
-      movementY: 0,
-    }) as MockPointerEvent;
-
-    document.dispatchEvent(event);
-  };
+  let event: MockPointerEvent;
 
   beforeEach(() => {
-    POINTER_DOWN = {
-      pointerId: 1,
-      pageX: 100,
-      pageY: 400,
-      clientX: 100,
-      clientY: 200,
-      movementX: 0,
-      movementY: 0,
-    };
-    POINTER_MOVE = {
-      pointerId: 1,
-      pageX: 150,
-      pageY: 450,
-      clientX: 150,
-      clientY: 250,
-      movementX: 50,
-      movementY: 50,
-    };
-    ADDITIONAL_POINTER_MOVE = {
-      pointerId: 1,
-      pageX: 200,
-      pageY: 500,
-      clientX: 200,
-      clientY: 300,
-      movementX: 50,
-      movementY: 50,
-    };
-    POINTER_UP = {
-      pointerId: 1,
-      pageX: 250,
-      pageY: 550,
-      clientX: 250,
-      clientY: 350,
-      movementX: 50,
-      movementY: 50,
-    };
-
-    pointerdownEvent = generateCustomEvent('pointerdown', POINTER_DOWN) as MockPointerEvent;
-    pointermoveEvent = generateCustomEvent('pointermove', POINTER_MOVE) as MockPointerEvent;
-    additionalPointermoveEvent = generateCustomEvent('pointermove', ADDITIONAL_POINTER_MOVE) as MockPointerEvent;
-    pointerupEvent = generateCustomEvent('pointerup', POINTER_UP) as MockPointerEvent;
-    pointercancelEvent = generateCustomEvent('pointercancel', POINTER_UP) as MockPointerEvent;
-
     element = document.createElement('div');
-    element.style.width = '200px';
-    element.style.height = '200px';
 
     mockEventListener(element);
     mockEventListener(document);
+    mockBasicRequestAnimationFrame();
 
-    jest.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => {
-      cb(1);
-      return 0;
-    });
+    event = new MockPointerEvent({ defaultDownElement: element, defaultCancelElement: element });
   });
 
   describe('Initialized', () => {
@@ -166,7 +92,7 @@ describe('Feature - Drag', () => {
         expect(types).toContainTimes(GesturesEventType.DragPress, 1);
         done();
       });
-      element.dispatchEvent(pointerdownEvent);
+      event.dispatchDown({ x: 10, y: 10 });
       drag.destroy();
     });
     it(`should dispatch 'DragStart' when 'pointermove' has fired on the document`, (done) => {
@@ -174,8 +100,8 @@ describe('Feature - Drag', () => {
         expect(types).toContainTimes(GesturesEventType.DragStart, 1);
         done();
       });
-      element.dispatchEvent(pointerdownEvent);
-      document.dispatchEvent(pointermoveEvent);
+      event.dispatchDown({ x: 10, y: 10 });
+      event.dispatchMove({ x: 0, y: 0 });
       drag.destroy();
     });
     it(`should dispatch 'Drag' when the second 'pointermove' has fired on the document`, (done) => {
@@ -183,9 +109,9 @@ describe('Feature - Drag', () => {
         expect(types).toContainTimes(GesturesEventType.Drag, 1);
         done();
       });
-      element.dispatchEvent(pointerdownEvent);
-      document.dispatchEvent(pointermoveEvent);
-      document.dispatchEvent(additionalPointermoveEvent);
+      event.dispatchDown({ x: 10, y: 10 });
+      event.dispatchMove({ x: 0, y: 0 });
+      event.dispatchMove({ x: 100, y: 100 });
       drag.destroy();
     });
     it(`should dispatch 'DragEnd' when the 'pointerup' has fired on the element`, (done) => {
@@ -193,9 +119,9 @@ describe('Feature - Drag', () => {
         expect(types).toContainTimes(GesturesEventType.DragEnd, 1);
         done();
       });
-      element.dispatchEvent(pointerdownEvent);
-      document.dispatchEvent(pointermoveEvent);
-      document.dispatchEvent(pointerupEvent);
+      event.dispatchDown({ x: 10, y: 10 });
+      event.dispatchMove({ x: 0, y: 0 });
+      event.dispatchUp({ x: 0, y: 0 });
       drag.destroy();
     });
     it(`should dispatch 'DragEnd' when the 'pointercancel' has fired on the element`, (done) => {
@@ -203,9 +129,9 @@ describe('Feature - Drag', () => {
         expect(types).toContainTimes(GesturesEventType.DragEnd, 1);
         done();
       });
-      element.dispatchEvent(pointerdownEvent);
-      document.dispatchEvent(pointermoveEvent);
-      element.dispatchEvent(pointercancelEvent);
+      event.dispatchDown({ x: 10, y: 10 });
+      event.dispatchMove({ x: 0, y: 0 });
+      event.dispatchCancel({ x: 0, y: 0 });
       drag.destroy();
     });
     it(`should dispatch 'DragRelease' when the 'pointerup' has fired on the document`, (done) => {
@@ -213,9 +139,9 @@ describe('Feature - Drag', () => {
         expect(types).toContainTimes(GesturesEventType.DragRelease, 1);
         done();
       });
-      element.dispatchEvent(pointerdownEvent);
-      document.dispatchEvent(pointermoveEvent);
-      document.dispatchEvent(pointerupEvent);
+      event.dispatchDown({ x: 10, y: 10 });
+      event.dispatchMove({ x: 0, y: 0 });
+      event.dispatchUp({ x: 0, y: 0 });
       drag.destroy();
     });
     it(`should dispatch 'DragRelease' when the 'pointercancel' has fired on the element`, (done) => {
@@ -223,9 +149,9 @@ describe('Feature - Drag', () => {
         expect(types).toContainTimes(GesturesEventType.DragRelease, 1);
         done();
       });
-      element.dispatchEvent(pointerdownEvent);
-      document.dispatchEvent(pointermoveEvent);
-      element.dispatchEvent(pointercancelEvent);
+      event.dispatchDown({ x: 10, y: 10 });
+      event.dispatchMove({ x: 0, y: 0 });
+      event.dispatchCancel({ x: 0, y: 0 });
       drag.destroy();
     });
   });
@@ -236,45 +162,42 @@ describe('Feature - Drag', () => {
     });
 
     it(`should 'isDragging' be false when the element is no dragging begins`, () => {
-      element.dispatchEvent(pointerdownEvent);
+      event.dispatchDown({ x: 10, y: 10 });
       expect(drag.isDragging).toEqual(false);
     });
     it(`should 'isDragging' be true when the element is dragging begins`, () => {
-      element.dispatchEvent(pointerdownEvent);
-      document.dispatchEvent(pointermoveEvent);
+      event.dispatchDown({ x: 10, y: 10 });
+      event.dispatchMove({ x: 0, y: 0 });
       expect(drag.isDragging).toEqual(true);
     });
     it(`should update the element's position correctly when it is dragging`, () => {
-      element.dispatchEvent(pointerdownEvent);
-      document.dispatchEvent(pointermoveEvent);
-      document.dispatchEvent(additionalPointermoveEvent);
+      event.dispatchDown({ x: 10, y: 10 });
+      event.dispatchMove({ x: 0, y: 0 });
+      event.dispatchMove({ x: 50, y: 50 });
       expect(element.style.transform).toContain('translate(50px, 50px)');
     });
     it(`should not allow dragging when drag start has not fired`, () => {
-      document.dispatchEvent(pointermoveEvent);
-      document.dispatchEvent(additionalPointermoveEvent);
+      event.dispatchMove({ x: 0, y: 0 });
+      event.dispatchMove({ x: 50, y: 50 });
       expect(element.style.transform).toEqual('');
       expect(drag.isDragging).toEqual(false);
     });
     it(`should update only the target element's position when multi draggable element exist`, () => {
-      const secondPointerdownEvent = generateCustomEvent('pointerdown', { ...POINTER_DOWN, pointerId: 2 });
-      const secondPointermoveEvent = generateCustomEvent('pointermove', { ...POINTER_MOVE, pointerId: 2 });
-      const secondAdditionalPointermoveEvent = generateCustomEvent('pointermove', {
-        ...ADDITIONAL_POINTER_MOVE,
-        pointerId: 2,
-        pageX: 300,
-        pageY: 600,
-      });
       const secondElement = document.createElement('div');
+      const secondEvent = new MockPointerEvent({
+        pointerId: 1,
+        defaultDownElement: secondElement,
+        defaultCancelElement: secondElement,
+      });
       new Drag(secondElement);
 
-      element.dispatchEvent(pointerdownEvent);
-      document.dispatchEvent(pointermoveEvent);
-      document.dispatchEvent(additionalPointermoveEvent);
+      event.dispatchDown({ x: 10, y: 10 });
+      event.dispatchMove({ x: 0, y: 0 });
+      event.dispatchMove({ x: 50, y: 50 });
 
-      secondElement.dispatchEvent(secondPointerdownEvent);
-      document.dispatchEvent(secondPointermoveEvent);
-      document.dispatchEvent(secondAdditionalPointermoveEvent);
+      secondEvent.dispatchDown({ x: 10, y: 10 });
+      secondEvent.dispatchMove({ x: 0, y: 0 });
+      secondEvent.dispatchMove({ x: 150, y: 150 });
 
       expect(element.style.transform).toContain('translate(50px, 50px)');
       expect(secondElement.style.transform).toContain('translate(150px, 150px)');
@@ -283,9 +206,9 @@ describe('Feature - Drag', () => {
       const secondElement = document.createElement('div');
       new Drag(secondElement);
 
-      element.dispatchEvent(pointerdownEvent);
-      document.dispatchEvent(pointermoveEvent);
-      document.dispatchEvent(additionalPointermoveEvent);
+      event.dispatchDown({ x: 10, y: 10 });
+      event.dispatchMove({ x: 0, y: 0 });
+      event.dispatchMove({ x: 50, y: 50 });
 
       expect(element.style.transform).toContain('translate(50px, 50px)');
       expect(secondElement.style.transform).toEqual('');
@@ -298,58 +221,44 @@ describe('Feature - Drag', () => {
     });
 
     it(`should move the element in x and y axis when no 'movementDirection' has defined`, () => {
-      element.dispatchEvent(pointerdownEvent);
-      document.dispatchEvent(pointermoveEvent);
-      document.dispatchEvent(additionalPointermoveEvent);
+      event.dispatchDown({ x: 10, y: 10 });
+      event.dispatchMove({ x: 0, y: 0 });
+      event.dispatchMove({ x: 50, y: 50 });
       expect(element.style.transform).toContain('translate(50px, 50px)');
     });
     it(`should move the element in x and y axis when 'movementDirection' is 'Both`, () => {
       drag = new Drag(element, { movementDirection: MovementDirection.Both });
-      element.dispatchEvent(pointerdownEvent);
-      document.dispatchEvent(pointermoveEvent);
-      document.dispatchEvent(additionalPointermoveEvent);
+      event.dispatchDown({ x: 10, y: 10 });
+      event.dispatchMove({ x: 0, y: 0 });
+      event.dispatchMove({ x: 50, y: 50 });
       expect(element.style.transform).toContain('translate(50px, 50px)');
     });
     it(`should move the element only in x axis when 'movementDirection' is 'Horizontal`, () => {
       drag = new Drag(element, { movementDirection: MovementDirection.Horizontal });
-      element.dispatchEvent(pointerdownEvent);
-      document.dispatchEvent(pointermoveEvent);
-      document.dispatchEvent(additionalPointermoveEvent);
+      event.dispatchDown({ x: 10, y: 10 });
+      event.dispatchMove({ x: 0, y: 0 });
+      event.dispatchMove({ x: 50, y: 50 });
       expect(element.style.transform).toContain('translate(50px, 0px)');
     });
     it(`should move the element only in y axis when 'movementDirection' is 'Vertical`, () => {
       drag = new Drag(element, { movementDirection: MovementDirection.Vertical });
-      element.dispatchEvent(pointerdownEvent);
-      document.dispatchEvent(pointermoveEvent);
-      document.dispatchEvent(additionalPointermoveEvent);
+      event.dispatchDown({ x: 10, y: 10 });
+      event.dispatchMove({ x: 0, y: 0 });
+      event.dispatchMove({ x: 50, y: 50 });
       expect(element.style.transform).toContain('translate(0px, 50px)');
     });
     it(`should move the element only in x axis when the initial drag movement starts in a x axis and 'movementDirection' is 'Lock`, () => {
-      // Press: 100, 400 - Start: 150, 410 - Move: 200, 500
-      const pointermoveEventInXAxis = generateCustomEvent('pointermove', {
-        ...POINTER_MOVE,
-        pageX: 150,
-        pageY: 410,
-      }) as MockPointerEvent;
-
       drag = new Drag(element, { movementDirection: MovementDirection.Lock });
-      element.dispatchEvent(pointerdownEvent);
-      document.dispatchEvent(pointermoveEventInXAxis);
-      document.dispatchEvent(additionalPointermoveEvent);
+      event.dispatchDown({ x: 10, y: 10 });
+      event.dispatchMove({ x: 0, y: 10 });
+      event.dispatchMove({ x: 50, y: 50 });
       expect(element.style.transform).toContain('translate(50px, 0px)');
     });
     it(`should move the element only in y axis when the initial drag movement starts in a y axis and 'movementDirection' is 'Lock`, () => {
-      // Press: 100, 400 - Start: 150, 450 - Move: 200, 500
-      const pointermoveEventInXAxis = generateCustomEvent('pointermove', {
-        ...POINTER_MOVE,
-        pageX: 110,
-        pageY: 450,
-      }) as MockPointerEvent;
-
       drag = new Drag(element, { movementDirection: MovementDirection.Lock });
-      element.dispatchEvent(pointerdownEvent);
-      document.dispatchEvent(pointermoveEventInXAxis);
-      document.dispatchEvent(additionalPointermoveEvent);
+      event.dispatchDown({ x: 10, y: 10 });
+      event.dispatchMove({ x: 10, y: 0 });
+      event.dispatchMove({ x: 50, y: 50 });
       expect(element.style.transform).toContain('translate(0px, 50px)');
     });
   });
@@ -399,8 +308,8 @@ describe('Feature - Drag', () => {
         },
       });
 
-      element.dispatchEvent(pointerdownEvent);
-      moveTo(0, 0); // To start dragging
+      event.dispatchDown({ x: 10, y: 10 });
+      event.dispatchMove({ x: 0, y: 0 }); // To start dragging
     };
     const initAutoBoundaryWithSmallElement = () => {
       jest.spyOn(boundaryElement, 'getBoundingClientRect').mockReturnValue({
@@ -433,8 +342,8 @@ describe('Feature - Drag', () => {
         },
       });
 
-      element.dispatchEvent(pointerdownEvent);
-      moveTo(0, 0); // To start dragging
+      event.dispatchDown({ x: 10, y: 10 });
+      event.dispatchMove({ x: 0, y: 0 }); // To start dragging
     };
 
     /**
@@ -479,8 +388,8 @@ describe('Feature - Drag', () => {
         },
       });
 
-      element.dispatchEvent(pointerdownEvent);
-      moveTo(0, 0); // To start dragging
+      event.dispatchDown({ x: 10, y: 10 });
+      event.dispatchMove({ x: 0, y: 0 }); // To start dragging
     };
     const initAutoBoundaryWithBigElement = () => {
       jest.spyOn(boundaryElement, 'getBoundingClientRect').mockReturnValue({
@@ -513,8 +422,8 @@ describe('Feature - Drag', () => {
         },
       });
 
-      element.dispatchEvent(pointerdownEvent);
-      moveTo(0, 0); // To start dragging
+      event.dispatchDown({ x: 10, y: 10 });
+      event.dispatchMove({ x: 0, y: 0 }); // To start dragging
     };
 
     const initAutoBoundaryWithSmallerHeight = () => {
@@ -548,8 +457,8 @@ describe('Feature - Drag', () => {
         },
       });
 
-      element.dispatchEvent(pointerdownEvent);
-      moveTo(0, 0); // To start dragging
+      event.dispatchDown({ x: 10, y: 10 });
+      event.dispatchMove({ x: 0, y: 0 }); // To start dragging
     };
     const initAutoBoundaryWithSmallerWidth = () => {
       jest.spyOn(boundaryElement, 'getBoundingClientRect').mockReturnValue({
@@ -582,8 +491,8 @@ describe('Feature - Drag', () => {
         },
       });
 
-      element.dispatchEvent(pointerdownEvent);
-      moveTo(0, 0); // To start dragging
+      event.dispatchDown({ x: 10, y: 10 });
+      event.dispatchMove({ x: 0, y: 0 }); // To start dragging
     };
 
     beforeEach(() => {
@@ -597,86 +506,86 @@ describe('Feature - Drag', () => {
       initInnerBoundary();
 
       // left
-      moveTo(-300, 0);
+      event.dispatchMove({ x: -300, y: 0 });
       expect(element.style.transform).toContain('translate(-100px, 0px)');
 
       // left-top
-      moveTo(-300, 300);
+      event.dispatchMove({ x: -300, y: 300 });
       expect(element.style.transform).toContain('translate(-100px, 100px)');
 
       // top
-      moveTo(0, 300);
+      event.dispatchMove({ x: 0, y: 300 });
       expect(element.style.transform).toContain('translate(0px, 100px)');
 
       // top-right
-      moveTo(300, 300);
+      event.dispatchMove({ x: 300, y: 300 });
       expect(element.style.transform).toContain('translate(100px, 100px)');
 
       // right
-      moveTo(300, 0);
+      event.dispatchMove({ x: 300, y: 0 });
       expect(element.style.transform).toContain('translate(100px, 0px)');
 
       // right-bottom
-      moveTo(300, 300);
+      event.dispatchMove({ x: 300, y: 300 });
       expect(element.style.transform).toContain('translate(100px, 100px)');
 
       // bottom
-      moveTo(0, 300);
+      event.dispatchMove({ x: 0, y: 300 });
       expect(element.style.transform).toContain('translate(0px, 100px)');
 
       // bottom-left
-      moveTo(-300, 300);
-      expect(element.style.transform).toContain('translate(-100px, 100px)');
+      event.dispatchMove({ x: -300, y: -300 });
+      expect(element.style.transform).toContain('translate(-100px, -100px)');
     });
     it(`should allow movement within the boundary when the draggable element is smaller than the boundary and 'boundaryType' is 'Inner'`, () => {
       initInnerBoundary();
 
       // left
-      moveTo(-50, 0);
+      event.dispatchMove({ x: -50, y: 0 });
       expect(element.style.transform).toContain('translate(-50px, 0px)');
-      moveTo(-100, 0);
+      event.dispatchMove({ x: -100, y: 0 });
       expect(element.style.transform).toContain('translate(-100px, 0px)');
 
       // left-top
-      moveTo(-50, 50);
+      event.dispatchMove({ x: -50, y: 50 });
       expect(element.style.transform).toContain('translate(-50px, 50px)');
-      moveTo(-100, 100);
+      event.dispatchMove({ x: -100, y: 100 });
       expect(element.style.transform).toContain('translate(-100px, 100px)');
 
       // top
-      moveTo(0, 50);
+      event.dispatchMove({ x: 0, y: 50 });
       expect(element.style.transform).toContain('translate(0px, 50px)');
-      moveTo(0, 100);
+      event.dispatchMove({ x: 0, y: 100 });
       expect(element.style.transform).toContain('translate(0px, 100px)');
 
       // top-right
-      moveTo(50, 50);
+      event.dispatchMove({ x: 50, y: 50 });
       expect(element.style.transform).toContain('translate(50px, 50px)');
-      moveTo(100, 100);
+      event.dispatchMove({ x: 100, y: 100 });
       expect(element.style.transform).toContain('translate(100px, 100px)');
 
       // right
-      moveTo(100, 0);
+      event.dispatchMove({ x: 100, y: 0 });
       expect(element.style.transform).toContain('translate(100px, 0px)');
-      moveTo(50, 0);
+      event.dispatchMove({ x: 50, y: 0 });
       expect(element.style.transform).toContain('translate(50px, 0px)');
 
       // right-bottom
-      moveTo(50, 50);
+      event.dispatchMove({ x: 50, y: 50 });
       expect(element.style.transform).toContain('translate(50px, 50px)');
-      moveTo(100, 100);
+      event.dispatchMove({ x: 100, y: 100 });
       expect(element.style.transform).toContain('translate(100px, 100px)');
 
       // bottom
-      moveTo(0, 50);
+      event.dispatchMove({ x: 0, y: 50 });
       expect(element.style.transform).toContain('translate(0px, 50px)');
-      moveTo(0, 100);
+      event.dispatchMove({ x: 0, y: 100 });
       expect(element.style.transform).toContain('translate(0px, 100px)');
 
       // bottom-left
-      moveTo(-50, 50);
+      event.dispatchMove({ x: -50, y: 50 });
       expect(element.style.transform).toContain('translate(-50px, 50px)');
-      moveTo(-100, 100);
+      event.dispatchMove({ x: -100, y: 100 });
       expect(element.style.transform).toContain('translate(-100px, 100px)');
     });
 
@@ -684,86 +593,86 @@ describe('Feature - Drag', () => {
       initOuterBoundary();
 
       // left
-      moveTo(-300, 0);
+      event.dispatchMove({ x: -300, y: 0 });
       expect(element.style.transform).toContain('translate(-100px, 0px)');
 
       // left-top
-      moveTo(-300, 300);
+      event.dispatchMove({ x: -300, y: 300 });
       expect(element.style.transform).toContain('translate(-100px, 100px)');
 
       // top
-      moveTo(0, 300);
+      event.dispatchMove({ x: 0, y: 300 });
       expect(element.style.transform).toContain('translate(0px, 100px)');
 
       // top-right
-      moveTo(300, 300);
+      event.dispatchMove({ x: 300, y: 300 });
       expect(element.style.transform).toContain('translate(100px, 100px)');
 
       // right
-      moveTo(300, 0);
+      event.dispatchMove({ x: 300, y: 0 });
       expect(element.style.transform).toContain('translate(100px, 0px)');
 
       // right-bottom
-      moveTo(300, 300);
+      event.dispatchMove({ x: 300, y: 300 });
       expect(element.style.transform).toContain('translate(100px, 100px)');
 
       // bottom
-      moveTo(0, 300);
+      event.dispatchMove({ x: 0, y: 300 });
       expect(element.style.transform).toContain('translate(0px, 100px)');
 
       // bottom-left
-      moveTo(-300, 300);
+      event.dispatchMove({ x: -300, y: 300 });
       expect(element.style.transform).toContain('translate(-100px, 100px)');
     });
     it(`should allow movement within the boundary when the draggable element is bigger than the boundary and 'boundaryType' is 'Outer'`, () => {
       initOuterBoundary();
 
       // left
-      moveTo(-50, 0);
+      event.dispatchMove({ x: -50, y: 0 });
       expect(element.style.transform).toContain('translate(-50px, 0px)');
-      moveTo(-100, 0);
+      event.dispatchMove({ x: -100, y: 0 });
       expect(element.style.transform).toContain('translate(-100px, 0px)');
 
       // left-top
-      moveTo(-50, 50);
+      event.dispatchMove({ x: -50, y: 50 });
       expect(element.style.transform).toContain('translate(-50px, 50px)');
-      moveTo(-100, 100);
+      event.dispatchMove({ x: -100, y: 100 });
       expect(element.style.transform).toContain('translate(-100px, 100px)');
 
       // top
-      moveTo(0, 50);
+      event.dispatchMove({ x: 0, y: 50 });
       expect(element.style.transform).toContain('translate(0px, 50px)');
-      moveTo(0, 100);
+      event.dispatchMove({ x: 0, y: 100 });
       expect(element.style.transform).toContain('translate(0px, 100px)');
 
       // top-right
-      moveTo(50, 50);
+      event.dispatchMove({ x: 50, y: 50 });
       expect(element.style.transform).toContain('translate(50px, 50px)');
-      moveTo(100, 100);
+      event.dispatchMove({ x: 100, y: 100 });
       expect(element.style.transform).toContain('translate(100px, 100px)');
 
       // right
-      moveTo(100, 0);
+      event.dispatchMove({ x: 100, y: 0 });
       expect(element.style.transform).toContain('translate(100px, 0px)');
-      moveTo(50, 0);
+      event.dispatchMove({ x: 50, y: 0 });
       expect(element.style.transform).toContain('translate(50px, 0px)');
 
       // right-bottom
-      moveTo(50, 50);
+      event.dispatchMove({ x: 50, y: 50 });
       expect(element.style.transform).toContain('translate(50px, 50px)');
-      moveTo(100, 100);
+      event.dispatchMove({ x: 100, y: 100 });
       expect(element.style.transform).toContain('translate(100px, 100px)');
 
       // bottom
-      moveTo(0, 50);
+      event.dispatchMove({ x: 0, y: 50 });
       expect(element.style.transform).toContain('translate(0px, 50px)');
-      moveTo(0, 100);
+      event.dispatchMove({ x: 0, y: 100 });
       expect(element.style.transform).toContain('translate(0px, 100px)');
 
       // bottom-left
-      moveTo(-50, 50);
+      event.dispatchMove({ x: -50, y: 50 });
       expect(element.style.transform).toContain('translate(-50px, 50px)');
-      moveTo(-100, 100);
+      event.dispatchMove({ x: -100, y: 100 });
       expect(element.style.transform).toContain('translate(-100px, 100px)');
     });
 
@@ -771,108 +680,108 @@ describe('Feature - Drag', () => {
       initAutoBoundaryWithSmallElement();
 
       // left
-      moveTo(-300, 0);
+      event.dispatchMove({ x: -300, y: 0 });
       expect(element.style.transform).toContain('translate(-100px, 0px)');
 
       // top
-      moveTo(0, 300);
+      event.dispatchMove({ x: 0, y: 300 });
       expect(element.style.transform).toContain('translate(0px, 100px)');
 
       // right
-      moveTo(300, 0);
+      event.dispatchMove({ x: 300, y: 0 });
       expect(element.style.transform).toContain('translate(100px, 0px)');
 
       // bottom
-      moveTo(0, 300);
+      event.dispatchMove({ x: 0, y: 300 });
       expect(element.style.transform).toContain('translate(0px, 100px)');
     });
     it(`should automatically select 'Outer' boundary constraints when the draggable is larger than the boundary on both axes and 'boundaryType' is 'Auto'`, () => {
       initAutoBoundaryWithBigElement();
 
       // left
-      moveTo(-300, 0);
+      event.dispatchMove({ x: -300, y: 0 });
       expect(element.style.transform).toContain('translate(-100px, 0px)');
 
       // top
-      moveTo(0, 300);
+      event.dispatchMove({ x: 0, y: 300 });
       expect(element.style.transform).toContain('translate(0px, 100px)');
 
       // right
-      moveTo(300, 0);
+      event.dispatchMove({ x: 300, y: 0 });
       expect(element.style.transform).toContain('translate(100px, 0px)');
 
       // bottom
-      moveTo(0, 300);
+      event.dispatchMove({ x: 0, y: 300 });
       expect(element.style.transform).toContain('translate(0px, 100px)');
     });
     it(`should apply 'Inner' vertical and 'Outer' horizontal boundary constraints when boundaryType is 'Auto' and draggable element is shorter in height and wider in width than the boundary`, () => {
       initAutoBoundaryWithSmallerHeight();
 
       // left
-      moveTo(-500, 0);
+      event.dispatchMove({ x: -500, y: 0 });
       expect(element.style.transform).toContain('translate(-100px, 0px)');
 
       // left-top
-      moveTo(-500, 500);
+      event.dispatchMove({ x: -500, y: 500 });
       expect(element.style.transform).toContain('translate(-100px, 100px)');
 
       // top
-      moveTo(0, 500);
+      event.dispatchMove({ x: 0, y: 500 });
       expect(element.style.transform).toContain('translate(0px, 100px)');
 
       // top-right
-      moveTo(500, 500);
+      event.dispatchMove({ x: 500, y: 500 });
       expect(element.style.transform).toContain('translate(100px, 100px)');
 
       // right
-      moveTo(500, 0);
+      event.dispatchMove({ x: 500, y: 0 });
       expect(element.style.transform).toContain('translate(100px, 0px)');
 
       // right-bottom
-      moveTo(500, 500);
+      event.dispatchMove({ x: 500, y: 500 });
       expect(element.style.transform).toContain('translate(100px, 100px)');
 
       // bottom
-      moveTo(0, 500);
+      event.dispatchMove({ x: 0, y: 500 });
       expect(element.style.transform).toContain('translate(0px, 100px)');
 
       // bottom-left
-      moveTo(-500, 500);
+      event.dispatchMove({ x: -500, y: 500 });
       expect(element.style.transform).toContain('translate(-100px, 100px)');
     });
     it(`should apply 'Inner' horizontal and 'Outer' vertical boundary constraints when boundaryType is 'Auto' and draggable element is shorter in width and wider in height than the boundary`, () => {
       initAutoBoundaryWithSmallerWidth();
 
       // left
-      moveTo(-500, 0);
+      event.dispatchMove({ x: -500, y: 0 });
       expect(element.style.transform).toContain('translate(-100px, 0px)');
 
       // left-top
-      moveTo(-500, 500);
+      event.dispatchMove({ x: -500, y: 500 });
       expect(element.style.transform).toContain('translate(-100px, 100px)');
 
       // top
-      moveTo(0, 500);
+      event.dispatchMove({ x: 0, y: 500 });
       expect(element.style.transform).toContain('translate(0px, 100px)');
 
       // top-right
-      moveTo(500, 500);
+      event.dispatchMove({ x: 500, y: 500 });
       expect(element.style.transform).toContain('translate(100px, 100px)');
 
       // right
-      moveTo(500, 0);
+      event.dispatchMove({ x: 500, y: 0 });
       expect(element.style.transform).toContain('translate(100px, 0px)');
 
       // right-bottom
-      moveTo(500, 500);
+      event.dispatchMove({ x: 500, y: 500 });
       expect(element.style.transform).toContain('translate(100px, 100px)');
 
       // bottom
-      moveTo(0, 500);
+      event.dispatchMove({ x: 0, y: 500 });
       expect(element.style.transform).toContain('translate(0px, 100px)');
 
       // bottom-left
-      moveTo(-500, 500);
+      event.dispatchMove({ x: -500, y: 500 });
       expect(element.style.transform).toContain('translate(-100px, 100px)');
     });
 
@@ -916,39 +825,39 @@ describe('Feature - Drag', () => {
         bottom: 700,
       });
 
-      element.dispatchEvent(pointerdownEvent);
-      moveTo(0, 0); // To start dragging
+      event.dispatchDown({ x: 10, y: 10 });
+      event.dispatchMove({ x: 0, y: 0 }); // To start dragging
 
       // left
-      moveTo(-300, 0);
+      event.dispatchMove({ x: -300, y: 0 });
       expect(element.style.transform).toContain('translate(-100px, 0px)');
 
       // left-top
-      moveTo(-300, 300);
+      event.dispatchMove({ x: -300, y: 300 });
       expect(element.style.transform).toContain('translate(-100px, 100px)');
 
       // top
-      moveTo(0, 300);
+      event.dispatchMove({ x: 0, y: 300 });
       expect(element.style.transform).toContain('translate(0px, 100px)');
 
       // top-right
-      moveTo(300, 300);
+      event.dispatchMove({ x: 300, y: 300 });
       expect(element.style.transform).toContain('translate(100px, 100px)');
 
       // right
-      moveTo(300, 0);
+      event.dispatchMove({ x: 300, y: 0 });
       expect(element.style.transform).toContain('translate(100px, 0px)');
 
       // right-bottom
-      moveTo(300, 300);
+      event.dispatchMove({ x: 300, y: 300 });
       expect(element.style.transform).toContain('translate(100px, 100px)');
 
       // bottom
-      moveTo(0, 300);
+      event.dispatchMove({ x: 0, y: 300 });
       expect(element.style.transform).toContain('translate(0px, 100px)');
 
       // bottom-left
-      moveTo(-300, 300);
+      event.dispatchMove({ x: -300, y: 300 });
       expect(element.style.transform).toContain('translate(-100px, 100px)');
     });
     it(`should use '1' bounceFactor and 'Auto' type when the interaction or type has not defined`, () => {
@@ -977,39 +886,39 @@ describe('Feature - Drag', () => {
 
       new Drag(element, { boundary: { elem: boundaryElement } });
 
-      element.dispatchEvent(pointerdownEvent);
-      moveTo(0, 0); // To start dragging
+      event.dispatchDown({ x: 10, y: 10 });
+      event.dispatchMove({ x: 0, y: 0 }); // To start dragging
 
       // left
-      moveTo(-500, 0);
+      event.dispatchMove({ x: -500, y: 0 });
       expect(element.style.transform).toContain('translate(-100px, 0px)');
 
       // left-top
-      moveTo(-500, 500);
+      event.dispatchMove({ x: -500, y: 500 });
       expect(element.style.transform).toContain('translate(-100px, 100px)');
 
       // top
-      moveTo(0, 500);
+      event.dispatchMove({ x: 0, y: 500 });
       expect(element.style.transform).toContain('translate(0px, 100px)');
 
       // top-right
-      moveTo(500, 500);
+      event.dispatchMove({ x: 500, y: 500 });
       expect(element.style.transform).toContain('translate(100px, 100px)');
 
       // right
-      moveTo(500, 0);
+      event.dispatchMove({ x: 500, y: 0 });
       expect(element.style.transform).toContain('translate(100px, 0px)');
 
       // right-bottom
-      moveTo(500, 500);
+      event.dispatchMove({ x: 500, y: 500 });
       expect(element.style.transform).toContain('translate(100px, 100px)');
 
       // bottom
-      moveTo(0, 500);
+      event.dispatchMove({ x: 0, y: 500 });
       expect(element.style.transform).toContain('translate(0px, 100px)');
 
       // bottom-left
-      moveTo(-500, 500);
+      event.dispatchMove({ x: -500, y: 500 });
       expect(element.style.transform).toContain('translate(-100px, 100px)');
     });
 
@@ -1045,39 +954,39 @@ describe('Feature - Drag', () => {
         },
       });
 
-      element.dispatchEvent(pointerdownEvent);
-      moveTo(0, 0); // To start dragging
+      event.dispatchDown({ x: 10, y: 10 });
+      event.dispatchMove({ x: 0, y: 0 }); // To start dragging
 
       // left
-      moveTo(-300, 0);
+      event.dispatchMove({ x: -300, y: 0 });
       expect(element.style.transform).toContain('translate(-250px, 0px)');
 
       // left-top
-      moveTo(-300, 300);
+      event.dispatchMove({ x: -300, y: 300 });
       expect(element.style.transform).toContain('translate(-250px, 250px)');
 
       // top
-      moveTo(0, 300);
+      event.dispatchMove({ x: 0, y: 300 });
       expect(element.style.transform).toContain('translate(0px, 250px)');
 
       // top-right
-      moveTo(300, 300);
+      event.dispatchMove({ x: 300, y: 300 });
       expect(element.style.transform).toContain('translate(250px, 250px)');
 
       // right
-      moveTo(300, 0);
+      event.dispatchMove({ x: 300, y: 0 });
       expect(element.style.transform).toContain('translate(250px, 0px)');
 
       // right-bottom
-      moveTo(300, 300);
+      event.dispatchMove({ x: 300, y: 300 });
       expect(element.style.transform).toContain('translate(250px, 250px)');
 
       // bottom
-      moveTo(0, 300);
+      event.dispatchMove({ x: 0, y: 300 });
       expect(element.style.transform).toContain('translate(0px, 250px)');
 
       // bottom-left
-      moveTo(-300, 300);
+      event.dispatchMove({ x: -300, y: 300 });
       expect(element.style.transform).toContain('translate(-250px, 250px)');
     });
     it(`should calculate and apply bounce effect when the draggable element moves outside boundary and boundaryType is 'Outer'`, () => {
@@ -1112,39 +1021,39 @@ describe('Feature - Drag', () => {
         },
       });
 
-      element.dispatchEvent(pointerdownEvent);
-      moveTo(0, 0); // To start dragging
+      event.dispatchDown({ x: 10, y: 10 });
+      event.dispatchMove({ x: 0, y: 0 }); // To start dragging
 
       // left
-      moveTo(-300, 0);
+      event.dispatchMove({ x: -300, y: 0 });
       expect(element.style.transform).toContain('translate(-250px, 0px)');
 
       // left-top
-      moveTo(-300, 300);
+      event.dispatchMove({ x: -300, y: 300 });
       expect(element.style.transform).toContain('translate(-250px, 250px)');
 
       // top
-      moveTo(0, 300);
+      event.dispatchMove({ x: 0, y: 300 });
       expect(element.style.transform).toContain('translate(0px, 250px)');
 
       // top-right
-      moveTo(300, 300);
+      event.dispatchMove({ x: 300, y: 300 });
       expect(element.style.transform).toContain('translate(250px, 250px)');
 
       // right
-      moveTo(300, 0);
+      event.dispatchMove({ x: 300, y: 0 });
       expect(element.style.transform).toContain('translate(250px, 0px)');
 
       // right-bottom
-      moveTo(300, 300);
+      event.dispatchMove({ x: 300, y: 300 });
       expect(element.style.transform).toContain('translate(250px, 250px)');
 
       // bottom
-      moveTo(0, 300);
+      event.dispatchMove({ x: 0, y: 300 });
       expect(element.style.transform).toContain('translate(0px, 250px)');
 
       // bottom-left
-      moveTo(-300, 300);
+      event.dispatchMove({ x: -300, y: 300 });
       expect(element.style.transform).toContain('translate(-250px, 250px)');
     });
     it(`should calculate and apply bounce effect when the draggable element moves outside boundary and boundaryType is 'Auto' and draggable element is shorter in height and wider in width than the boundary`, () => {
@@ -1179,39 +1088,39 @@ describe('Feature - Drag', () => {
         },
       });
 
-      element.dispatchEvent(pointerdownEvent);
-      moveTo(0, 0); // To start dragging
+      event.dispatchDown({ x: 10, y: 10 });
+      event.dispatchMove({ x: 0, y: 0 }); // To start dragging
 
       // left
-      moveTo(-300, 0);
+      event.dispatchMove({ x: -300, y: 0 });
       expect(element.style.transform).toContain('translate(-250px, 0px)');
 
       // left-top
-      moveTo(-300, 300);
+      event.dispatchMove({ x: -300, y: 300 });
       expect(element.style.transform).toContain('translate(-250px, 250px)');
 
       // top
-      moveTo(0, 300);
+      event.dispatchMove({ x: 0, y: 300 });
       expect(element.style.transform).toContain('translate(0px, 250px)');
 
       // top-right
-      moveTo(300, 300);
+      event.dispatchMove({ x: 300, y: 300 });
       expect(element.style.transform).toContain('translate(250px, 250px)');
 
       // right
-      moveTo(300, 0);
+      event.dispatchMove({ x: 300, y: 0 });
       expect(element.style.transform).toContain('translate(250px, 0px)');
 
       // right-bottom
-      moveTo(300, 300);
+      event.dispatchMove({ x: 300, y: 300 });
       expect(element.style.transform).toContain('translate(250px, 250px)');
 
       // bottom
-      moveTo(0, 300);
+      event.dispatchMove({ x: 0, y: 300 });
       expect(element.style.transform).toContain('translate(0px, 250px)');
 
       // bottom-left
-      moveTo(-300, 300);
+      event.dispatchMove({ x: -300, y: 300 });
       expect(element.style.transform).toContain('translate(-250px, 250px)');
     });
     it(`should calculate and apply bounce effect when the draggable element moves outside boundary and boundaryType is 'Auto' and draggable element is shorter in width and wider in height than the boundary`, () => {
@@ -1246,39 +1155,39 @@ describe('Feature - Drag', () => {
         },
       });
 
-      element.dispatchEvent(pointerdownEvent);
-      moveTo(0, 0); // To start dragging
+      event.dispatchDown({ x: 10, y: 10 });
+      event.dispatchMove({ x: 0, y: 0 }); // To start dragging
 
       // left
-      moveTo(-300, 0);
+      event.dispatchMove({ x: -300, y: 0 });
       expect(element.style.transform).toContain('translate(-250px, 0px)');
 
       // left-top
-      moveTo(-300, 300);
+      event.dispatchMove({ x: -300, y: 300 });
       expect(element.style.transform).toContain('translate(-250px, 250px)');
 
       // top
-      moveTo(0, 300);
+      event.dispatchMove({ x: 0, y: 300 });
       expect(element.style.transform).toContain('translate(0px, 250px)');
 
       // top-right
-      moveTo(300, 300);
+      event.dispatchMove({ x: 300, y: 300 });
       expect(element.style.transform).toContain('translate(250px, 250px)');
 
       // right
-      moveTo(300, 0);
+      event.dispatchMove({ x: 300, y: 0 });
       expect(element.style.transform).toContain('translate(250px, 0px)');
 
       // right-bottom
-      moveTo(300, 300);
+      event.dispatchMove({ x: 300, y: 300 });
       expect(element.style.transform).toContain('translate(250px, 250px)');
 
       // bottom
-      moveTo(0, 300);
+      event.dispatchMove({ x: 0, y: 300 });
       expect(element.style.transform).toContain('translate(0px, 250px)');
 
       // bottom-left
-      moveTo(-300, 300);
+      event.dispatchMove({ x: -300, y: 300 });
       expect(element.style.transform).toContain('translate(-250px, 250px)');
     });
 
@@ -1314,10 +1223,10 @@ describe('Feature - Drag', () => {
         },
       });
 
-      element.dispatchEvent(pointerdownEvent);
-      moveTo(0, 0); // To start dragging
+      event.dispatchDown({ x: 10, y: 10 });
+      event.dispatchMove({ x: 0, y: 0 }); // To start dragging
 
-      moveTo(-300, 300);
+      event.dispatchMove({ x: -300, y: 300 });
       expect(element.style.transform).toContain('translate(-138px, 138px)');
     });
     it(`should apply weaker bounce effect for lower 'bounceFactor values`, () => {
@@ -1352,10 +1261,10 @@ describe('Feature - Drag', () => {
         },
       });
 
-      element.dispatchEvent(pointerdownEvent);
-      moveTo(0, 0); // To start dragging
+      event.dispatchDown({ x: 10, y: 10 });
+      event.dispatchMove({ x: 0, y: 0 }); // To start dragging
 
-      moveTo(-300, 300);
+      event.dispatchMove({ x: -300, y: 300 });
       expect(element.style.transform).toContain('translate(-292px, 292px)');
     });
     it(`should draggable element moving outside the boundary like basic drag without bounce effect when 'bounceFactor' is 0`, () => {
@@ -1390,10 +1299,10 @@ describe('Feature - Drag', () => {
         },
       });
 
-      element.dispatchEvent(pointerdownEvent);
-      moveTo(0, 0); // To start dragging
+      event.dispatchDown({ x: 10, y: 10 });
+      event.dispatchMove({ x: 0, y: 0 }); // To start dragging
 
-      moveTo(-300, 300);
+      event.dispatchMove({ x: -300, y: 300 });
       expect(element.style.transform).toContain('translate(-300px, 300px)');
     });
     it(`should draggable element moving outside the boundary like basic drag without bounce effect when 'bounceFactor' is less than 0`, () => {
@@ -1428,10 +1337,10 @@ describe('Feature - Drag', () => {
         },
       });
 
-      element.dispatchEvent(pointerdownEvent);
-      moveTo(0, 0); // To start dragging
+      event.dispatchDown({ x: 10, y: 10 });
+      event.dispatchMove({ x: 0, y: 0 }); // To start dragging
 
-      moveTo(-300, 300);
+      event.dispatchMove({ x: -300, y: 300 });
       expect(element.style.transform).toContain('translate(-300px, 300px)');
     });
     it(`should prevent the draggable element from moving outside the boundary without bounce effect when 'bounceFactor' is equal to 1`, () => {
@@ -1466,10 +1375,10 @@ describe('Feature - Drag', () => {
         },
       });
 
-      element.dispatchEvent(pointerdownEvent);
-      moveTo(0, 0); // To start dragging
+      event.dispatchDown({ x: 10, y: 10 });
+      event.dispatchMove({ x: 0, y: 0 }); // To start dragging
 
-      moveTo(-300, 300);
+      event.dispatchMove({ x: -300, y: 300 });
       expect(element.style.transform).toContain('translate(-100px, 100px)');
     });
     it(`should prevent the draggable element from moving outside the boundary without bounce effect when 'bounceFactor' is bigger than 1`, () => {
@@ -1504,15 +1413,15 @@ describe('Feature - Drag', () => {
         },
       });
 
-      element.dispatchEvent(pointerdownEvent);
-      moveTo(0, 0); // To start dragging
+      event.dispatchDown({ x: 10, y: 10 });
+      event.dispatchMove({ x: 0, y: 0 }); // To start dragging
 
-      moveTo(-300, 300);
+      event.dispatchMove({ x: -300, y: 300 });
       expect(element.style.transform).toContain('translate(-100px, 100px)');
     });
 
     it(`should animate the element back to the boundary when bounce effect has applied and dragging has finished`, () => {
-      createMockRequestAnimationFrame();
+      mockRequestAnimationFrame();
 
       mockClientRect(boundaryElement, { width: 400, height: 400, left: 400, top: 400 });
       mockClientRect(element, { width: 200, height: 200, left: 500, top: 500 });
@@ -1526,40 +1435,37 @@ describe('Feature - Drag', () => {
       });
 
       // left-top
-      element.dispatchEvent(pointerdownEvent);
-      moveTo(0, 0); // To start dragging
-      moveTo(-300, 300);
-      document.dispatchEvent(pointerupEvent);
+      event.dispatchDown({ x: 10, y: 10 });
+      event.dispatchMove({ x: 0, y: 0 }); // To start dragging
+      event.dispatchMove({ x: -300, y: 300 });
+      event.dispatchUp({ x: 0, y: 0 });
       expect(element.style.transform).toContain('translate(-100px, 100px)');
 
       // top-right
       mockClientRect(element, { width: 200, height: 200, left: 400, top: 600 });
-      mockDOMMatrix({ x: -100, y: 100 });
 
-      element.dispatchEvent(pointerdownEvent);
-      moveTo(0, 0); // To start dragging
-      moveTo(300, 300);
-      document.dispatchEvent(pointerupEvent);
+      event.dispatchDown({ x: 10, y: 10 });
+      event.dispatchMove({ x: 0, y: 0 }); // To start dragging
+      event.dispatchMove({ x: 300, y: 300 });
+      event.dispatchUp({ x: 0, y: 0 });
       expect(element.style.transform).toContain('translate(100px, 100px)');
 
       // right-bottom
       mockClientRect(element, { width: 200, height: 200, left: 600, top: 600 });
-      mockDOMMatrix({ x: 100, y: 100 });
 
-      element.dispatchEvent(pointerdownEvent);
-      moveTo(0, 0); // To start dragging
-      moveTo(300, -300);
-      document.dispatchEvent(pointerupEvent);
+      event.dispatchDown({ x: 10, y: 10 });
+      event.dispatchMove({ x: 0, y: 0 }); // To start dragging
+      event.dispatchMove({ x: 300, y: -300 });
+      event.dispatchUp({ x: 0, y: 0 });
       expect(element.style.transform).toContain('translate(100px, -100px)');
 
       // bottom-left
       mockClientRect(element, { width: 200, height: 200, left: 600, top: 400 });
-      mockDOMMatrix({ x: 100, y: -100 });
 
-      element.dispatchEvent(pointerdownEvent);
-      moveTo(0, 0); // To start dragging
-      moveTo(-300, -300);
-      document.dispatchEvent(pointerupEvent);
+      event.dispatchDown({ x: 10, y: 10 });
+      event.dispatchMove({ x: 0, y: 0 }); // To start dragging
+      event.dispatchMove({ x: -300, y: -300 });
+      event.dispatchUp({ x: 0, y: 0 });
       expect(element.style.transform).toContain('translate(-100px, -100px)');
     });
     it(`should skip boundary concept where the boundary element is removed before start dragging`, () => {
@@ -1607,10 +1513,10 @@ describe('Feature - Drag', () => {
       });
 
       // left-top
-      element.dispatchEvent(pointerdownEvent);
-      moveTo(0, 0); // To start dragging
-      moveTo(-300, 300);
-      document.dispatchEvent(pointerupEvent);
+      event.dispatchDown({ x: 10, y: 10 });
+      event.dispatchMove({ x: 0, y: 0 }); // To start dragging
+      event.dispatchMove({ x: -300, y: 300 });
+      event.dispatchUp({ x: 0, y: 0 });
       expect(element.style.transform).toContain('translate(-300px, 300px)');
     });
   });
@@ -1640,136 +1546,3 @@ describe('Feature - Drag', () => {
     it(`should move the element when the movement exceeds the minMovements threshold`, () => {});
   });
 });
-
-// interface TransformValue {
-//   rotateX: number;
-//   rotateY: number;
-//   rotateZ: number;
-//   scaleX: number;
-//   scaleY: number;
-//   scaleZ: number;
-//   translateX: number;
-//   translateY: number;
-//   translateZ: number;
-// }
-
-function mockClientRect(element: Element, { width, height, left, top }: { width: number; height: number; top: number; left: number }) {
-  jest.spyOn(element, 'getBoundingClientRect').mockReturnValue({
-    ...element.getBoundingClientRect(),
-    width,
-    height,
-    x: left,
-    y: top,
-    left,
-    top,
-    right: left + width,
-    bottom: height + top,
-  });
-}
-function mockDOMMatrix({ x, y }: { x: number; y: number }) {
-  (global as any).DOMMatrix = jest.fn().mockReturnValueOnce({
-    a: 1,
-    b: 0,
-    c: 0,
-    d: 1,
-    e: x,
-    f: y,
-    m11: 1,
-    m12: 0,
-    m13: 0,
-    m14: 0,
-    m21: 0,
-    m22: 1,
-    m23: 0,
-    m24: 0,
-    m31: 0,
-    m32: 0,
-    m33: 1,
-    m34: 0,
-    m41: x,
-    m42: y,
-    m43: 0,
-    m44: 1,
-    is2D: true,
-    isIdentity: false,
-  } as any);
-}
-
-// function getMatrixValue(transform: TransformValue): number[] {
-//   // Convert degrees to radians
-//   const radX = transform.rotateX * Math.PI / 180;
-//   const radY = transform.rotateY * Math.PI / 180;
-//   const radZ = transform.rotateZ * Math.PI / 180;
-//
-//   // Calculate rotation matrices for each axis
-//   const rotationX = [
-//     1, 0, 0, 0,
-//     0, Math.cos(radX), -Math.sin(radX), 0,
-//     0, Math.sin(radX), Math.cos(radX), 0,
-//     0, 0, 0, 1
-//   ];
-//
-//   const rotationY = [
-//     Math.cos(radY), 0, Math.sin(radY), 0,
-//     0, 1, 0, 0,
-//     -Math.sin(radY), 0, Math.cos(radY), 0,
-//     0, 0, 0, 1
-//   ];
-//
-//   const rotationZ = [
-//     Math.cos(radZ), -Math.sin(radZ), 0, 0,
-//     Math.sin(radZ), Math.cos(radZ), 0, 0,
-//     0, 0, 1, 0,
-//     0, 0, 0, 1
-//   ];
-//
-//   // Calculate scale and translation matrices
-//   const scale = [
-//     transform.scaleX, 0, 0, 0,
-//     0, transform.scaleY, 0, 0,
-//     0, 0, transform.scaleZ, 0,
-//     0, 0, 0, 1
-//   ];
-//
-//   const translate = [
-//     1, 0, 0, transform.translateX,
-//     0, 1, 0, transform.translateY,
-//     0, 0, 1, transform.translateZ,
-//     0, 0, 0, 1
-//   ];
-//
-//   // Combine all transformations
-//   // Note: This simplistic approach multiplies the matrices in a fixed order.
-//   // In a real-world scenario, the order of these transformations might matter.
-//   const combinedMatrix = multiplyMatrices(multiplyMatrices(multiplyMatrices(multiplyMatrices(translate, scale), rotationX), rotationY), rotationZ);
-//
-//   // Determine if the transformation is 2D or 3D
-//   const is2D = transform.rotateX === 0 && transform.rotateY === 0 && transform.rotateZ === 0 && transform.translateZ === 0 && transform.scaleZ === 1;
-//
-//   if (is2D) {
-//     // Convert 3D matrix to 2D matrix (assuming no Z-axis transformations)
-//     return [
-//       combinedMatrix[0], combinedMatrix[1], // a, b
-//       combinedMatrix[4], combinedMatrix[5], // c, d
-//       combinedMatrix[12], combinedMatrix[13] // e, f
-//     ];
-//   }
-//
-//   return combinedMatrix;
-// }
-//
-// // Helper function to multiply 4x4 matrices
-// function multiplyMatrices(a: number[], b: number[]): number[] {
-//   const result = new Array(16).fill(0);
-//
-//   for (let row = 0; row < 4; row++) {
-//     for (let col = 0; col < 4; col++) {
-//       for (let i = 0; i < 4; i++) {
-//         result[row * 4 + col] += a[row * 4 + i] * b[i * 4 + col];
-//       }
-//     }
-//   }
-//
-//   return result;
-// }
-//

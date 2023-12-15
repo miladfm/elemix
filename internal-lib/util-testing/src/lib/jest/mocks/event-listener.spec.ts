@@ -1,4 +1,4 @@
-import { mockEventListener, generateCustomEvent, clearCallbacks, getActiveListener } from './event-listener';
+import { mockEventListener, generateCustomEvent, clearListenerCallbacks, getActiveListener } from './event-listener';
 
 describe('Util - mockEventListener', () => {
   let element1: Node;
@@ -177,7 +177,7 @@ describe('Util - generateCustomEvent', () => {
     element1.addEventListener('click', mockCallback);
     element1.addEventListener('click', mockCallback);
     element2.addEventListener('click', mockCallback);
-    clearCallbacks();
+    clearListenerCallbacks();
     element1.dispatchEvent(new Event('click'));
     expect(mockCallback).not.toHaveBeenCalled();
   });

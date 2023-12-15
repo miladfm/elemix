@@ -1,150 +1,43 @@
-import { clearCallbacks, generateCustomEvent, mockEventListener } from '@internal-lib/util-testing';
+import { filter, firstValueFrom, map, Observable, toArray } from 'rxjs';
+import { clearListenerCallbacks, mockEventListener, MockPointerEvent } from '@internal-lib/util-testing';
 import { Gestures } from '../../lib/gestures/gestures';
-import { filter, map, Observable, toArray } from 'rxjs';
-import { DragGesturesEvent, GesturesEventType } from '../../lib/gestures/gestures.model';
-
-type MockPointerEvent = CustomEvent<unknown> & {
-  pageX: number;
-  pageY: number;
-  clientX: number;
-  clientY: number;
-  movementX: number;
-  movementY: number;
-};
-
-let FIRST_POINTER_DOWN: Partial<PointerEvent>;
-let FIRST_POINTER_MOVE: Partial<PointerEvent>;
-let FIRST_ADDITIONAL_POINTER_MOVE: Partial<PointerEvent>;
-let FIRST_POINTER_UP: Partial<PointerEvent>;
-let SECOND_POINTER_DOWN: Partial<PointerEvent>;
-let SECOND_POINTER_MOVE: Partial<PointerEvent>;
-let SECOND_ADDITIONAL_POINTER_MOVE: Partial<PointerEvent>;
-let SECOND_POINTER_UP: Partial<PointerEvent>;
-
-function resetPointerEventData() {
-  FIRST_POINTER_DOWN = {
-    pointerId: 1,
-    pageX: 100,
-    pageY: 400,
-    clientX: 100,
-    clientY: 200,
-    movementX: 0,
-    movementY: 0,
-  };
-  FIRST_POINTER_MOVE = {
-    pointerId: 1,
-    pageX: 150,
-    pageY: 450,
-    clientX: 150,
-    clientY: 250,
-    movementX: 50,
-    movementY: 50,
-  };
-  FIRST_ADDITIONAL_POINTER_MOVE = {
-    pointerId: 1,
-    pageX: 160,
-    pageY: 460,
-    clientX: 160,
-    clientY: 260,
-    movementX: 10,
-    movementY: 10,
-  };
-  FIRST_POINTER_UP = {
-    pointerId: 1,
-    pageX: 200,
-    pageY: 500,
-    clientX: 200,
-    clientY: 300,
-    movementX: 50,
-    movementY: 50,
-  };
-  SECOND_POINTER_DOWN = {
-    pointerId: 2,
-    pageX: 1000,
-    pageY: 4000,
-    clientX: 1000,
-    clientY: 2000,
-    movementX: 0,
-    movementY: 0,
-  };
-  SECOND_POINTER_MOVE = {
-    pointerId: 2,
-    pageX: 1500,
-    pageY: 4500,
-    clientX: 1500,
-    clientY: 2500,
-    movementX: 500,
-    movementY: 500,
-  };
-  SECOND_ADDITIONAL_POINTER_MOVE = {
-    pointerId: 2,
-    pageX: 1600,
-    pageY: 4600,
-    clientX: 1600,
-    clientY: 2600,
-    movementX: 100,
-    movementY: 100,
-  };
-  SECOND_POINTER_UP = {
-    pointerId: 2,
-    pageX: 2000,
-    pageY: 5000,
-    clientX: 2000,
-    clientY: 3000,
-    movementX: 500,
-    movementY: 500,
-  };
-}
+import { GesturesEventType } from '../../lib/gestures/gestures.model';
 
 describe('Feature - Gestures', () => {
   let element: HTMLDivElement;
+  let secondElement: HTMLDivElement;
+  let event: MockPointerEvent;
+  let secondEvent: MockPointerEvent;
+
   let gestures: Gestures;
   let gestureTypesChanges$: Observable<GesturesEventType[]>;
 
-  let firstPointerdownEvent: MockPointerEvent;
-  let firstPointermoveEvent: MockPointerEvent;
-  let firstAdditionalPointermoveEvent: MockPointerEvent;
-  let firstPointerupEvent: MockPointerEvent;
-  let firstPointercancelEvent: MockPointerEvent;
-
-  let secondPointerdownEvent: MockPointerEvent;
-  let secondPointermoveEvent: MockPointerEvent;
-  let secondAdditionalPointermoveEvent: MockPointerEvent;
-  let secondPointerupEvent: MockPointerEvent;
-  let secondPointercancelEvent: MockPointerEvent;
-
   beforeEach(() => {
-    resetPointerEventData();
     element = document.createElement('div');
+    secondElement = document.createElement('div');
+
+    event = new MockPointerEvent({ defaultDownElement: element, defaultCancelElement: element });
+    secondEvent = new MockPointerEvent({
+      defaultDownElement: secondElement,
+      defaultCancelElement: secondElement,
+      pointerId: 1,
+    });
 
     mockEventListener(element);
+    mockEventListener(secondElement);
     mockEventListener(document);
 
-    gestures = new Gestures(element, {
-      minDragMovements: 5,
-    });
+    gestures = new Gestures(element, { minDragMovements: 5 });
 
     gestureTypesChanges$ = gestures.changes$.pipe(
       map((e) => e.type),
       toArray()
     );
-
-    firstPointerdownEvent = generateCustomEvent('pointerdown', FIRST_POINTER_DOWN) as MockPointerEvent;
-    firstPointermoveEvent = generateCustomEvent('pointermove', FIRST_POINTER_MOVE) as MockPointerEvent;
-    firstAdditionalPointermoveEvent = generateCustomEvent('pointermove', FIRST_ADDITIONAL_POINTER_MOVE) as MockPointerEvent;
-    firstPointerupEvent = generateCustomEvent('pointerup', FIRST_POINTER_UP) as MockPointerEvent;
-    firstPointercancelEvent = generateCustomEvent('pointercancel', FIRST_POINTER_UP) as MockPointerEvent;
-
-    secondPointerdownEvent = generateCustomEvent('pointerdown', SECOND_POINTER_DOWN) as MockPointerEvent;
-    secondPointermoveEvent = generateCustomEvent('pointermove', SECOND_POINTER_MOVE) as MockPointerEvent;
-    secondAdditionalPointermoveEvent = generateCustomEvent('pointermove', SECOND_ADDITIONAL_POINTER_MOVE) as MockPointerEvent;
-    secondPointerupEvent = generateCustomEvent('pointerup', SECOND_POINTER_UP) as MockPointerEvent;
-    secondPointercancelEvent = generateCustomEvent('pointercancel', SECOND_POINTER_UP) as MockPointerEvent;
   });
 
   afterEach(() => {
     jest.restoreAllMocks();
-    clearCallbacks();
+    clearListenerCallbacks();
   });
 
   describe('Initialize and Destroy', () => {
@@ -166,7 +59,7 @@ describe('Feature - Gestures', () => {
       gestures.changes$.subscribe();
       jest.clearAllMocks();
 
-      document.dispatchEvent(firstPointerdownEvent);
+      secondEvent.dispatchDown({ x: 0, y: 0 });
 
       expect(element.addEventListener).not.toHaveBeenCalled();
       expect(document.addEventListener).not.toHaveBeenCalled();
@@ -175,7 +68,7 @@ describe('Feature - Gestures', () => {
       gestures.changes$.subscribe();
       jest.clearAllMocks();
 
-      element.dispatchEvent(firstPointerdownEvent);
+      event.dispatchDown({ x: 0, y: 0 });
 
       expect(element.addEventListener).toHaveBeenCalledTimes(1);
       expect(element.addEventListener).toHaveBeenCalledWith('pointercancel', expect.any(Function), undefined);
@@ -189,7 +82,7 @@ describe('Feature - Gestures', () => {
       gestures.changes$.subscribe();
 
       jest.clearAllMocks();
-      element.dispatchEvent(firstPointerdownEvent);
+      event.dispatchDown({ x: 0, y: 0 });
 
       expect(element.addEventListener).toHaveBeenCalledTimes(1);
       expect(element.addEventListener).toHaveBeenCalledWith('pointercancel', expect.any(Function), undefined);
@@ -202,8 +95,8 @@ describe('Feature - Gestures', () => {
       gestures.changes$.subscribe();
       jest.clearAllMocks();
 
-      element.dispatchEvent(firstPointerdownEvent);
-      document.dispatchEvent(firstPointerupEvent);
+      event.dispatchDown({ x: 0, y: 0 });
+      event.dispatchUp({ x: 0, y: 0 });
 
       expect(element.removeEventListener).toHaveBeenCalledTimes(1);
       expect(element.removeEventListener).toHaveBeenCalledWith('pointercancel', expect.any(Function), undefined);
@@ -216,8 +109,8 @@ describe('Feature - Gestures', () => {
       gestures.changes$.subscribe();
       jest.clearAllMocks();
 
-      element.dispatchEvent(firstPointerdownEvent);
-      element.dispatchEvent(firstPointercancelEvent);
+      event.dispatchDown({ x: 0, y: 0 });
+      event.dispatchCancel({ x: 0, y: 0 });
 
       expect(element.removeEventListener).toHaveBeenCalledTimes(1);
       expect(element.removeEventListener).toHaveBeenCalledWith('pointercancel', expect.any(Function), undefined);
@@ -230,8 +123,8 @@ describe('Feature - Gestures', () => {
     it('should not remove and add new listener for `pointermove`, `pointerup` and `pointercancel` when a additional `pointerdown` has fired ', () => {
       gestures.changes$.subscribe();
 
-      element.dispatchEvent(firstPointerdownEvent);
-      element.dispatchEvent(secondPointerdownEvent);
+      event.dispatchDown({ x: 0, y: 0 });
+      secondEvent.dispatchDown({ element, x: 0, y: 0 });
 
       expect(element.removeEventListener).not.toHaveBeenCalled();
 
@@ -247,7 +140,7 @@ describe('Feature - Gestures', () => {
     // Destroy
     it('should remove all listener when destroy has called', () => {
       gestures.changes$.subscribe();
-      element.dispatchEvent(firstPointerdownEvent);
+      event.dispatchDown({ x: 0, y: 0 });
       gestures.destroy();
 
       expect(element.removeEventListener).toHaveBeenCalledTimes(2);
@@ -265,17 +158,17 @@ describe('Feature - Gestures', () => {
         done();
       });
 
-      document.dispatchEvent(firstPointerdownEvent);
+      event.dispatchDown({ x: 0, y: 0 });
+      secondEvent.dispatchDown({ x: 0, y: 0 });
 
-      element.dispatchEvent(secondPointerdownEvent);
-      document.dispatchEvent(firstPointermoveEvent);
-      document.dispatchEvent(firstAdditionalPointermoveEvent);
-      document.dispatchEvent(firstPointerupEvent);
+      secondEvent.dispatchMove({ x: 10, y: 10 });
+      secondEvent.dispatchMove({ x: 20, y: 20 });
+      secondEvent.dispatchUp({ x: 0, y: 0 });
 
-      document.dispatchEvent(firstPointerdownEvent);
-      document.dispatchEvent(firstPointermoveEvent);
-      document.dispatchEvent(firstAdditionalPointermoveEvent);
-      document.dispatchEvent(firstPointerupEvent);
+      secondEvent.dispatchDown({ x: 0, y: 0 });
+      secondEvent.dispatchMove({ x: 10, y: 10 });
+      secondEvent.dispatchMove({ x: 20, y: 20 });
+      secondEvent.dispatchUp({ x: 0, y: 0 });
 
       gestures.destroy();
     });
@@ -288,7 +181,7 @@ describe('Feature - Gestures', () => {
         expect(types).toContainTimes(GesturesEventType.Press, 1);
         done();
       });
-      element.dispatchEvent(firstPointerdownEvent);
+      event.dispatchDown({ x: 0, y: 0 });
       gestures.destroy();
     });
     it('should not dispatch Press event when a new pointerdown event is triggered and active touches length is bigger than 1', (done) => {
@@ -296,8 +189,8 @@ describe('Feature - Gestures', () => {
         expect(types).toContainTimes(GesturesEventType.Press, 1); // Only for firstPointerdownEvent
         done();
       });
-      element.dispatchEvent(firstPointerdownEvent);
-      element.dispatchEvent(secondPointerdownEvent);
+      event.dispatchDown({ x: 0, y: 0 });
+      secondEvent.dispatchDown({ element, x: 0, y: 0 });
       gestures.destroy();
     });
 
@@ -307,7 +200,7 @@ describe('Feature - Gestures', () => {
         expect(types).not.toContain(GesturesEventType.Press);
         done();
       });
-      document.dispatchEvent(firstPointerupEvent);
+      event.dispatchUp({ x: 0, y: 0 });
       gestures.destroy();
     });
     it('should not dispatch PressRelease when pointercancel is triggered and Press has not dispatched jet', (done) => {
@@ -315,7 +208,7 @@ describe('Feature - Gestures', () => {
         expect(types).not.toContain(GesturesEventType.Press);
         done();
       });
-      element.dispatchEvent(firstPointercancelEvent);
+      event.dispatchCancel({ x: 0, y: 0 });
       gestures.destroy();
     });
 
@@ -324,8 +217,8 @@ describe('Feature - Gestures', () => {
         expect(types).toContainTimes(GesturesEventType.PressRelease, 1);
         done();
       });
-      element.dispatchEvent(firstPointerdownEvent);
-      document.dispatchEvent(firstPointerupEvent);
+      event.dispatchDown({ x: 0, y: 0 });
+      event.dispatchUp({ x: 0, y: 0 });
       gestures.destroy();
     });
     it('should dispatch PressRelease when pointercancel is triggered and active touches length is 0', (done) => {
@@ -333,8 +226,8 @@ describe('Feature - Gestures', () => {
         expect(types).toContainTimes(GesturesEventType.PressRelease, 1);
         done();
       });
-      element.dispatchEvent(firstPointerdownEvent);
-      element.dispatchEvent(firstPointercancelEvent);
+      event.dispatchDown({ x: 0, y: 0 });
+      event.dispatchCancel({ x: 0, y: 0 });
       gestures.destroy();
     });
 
@@ -343,9 +236,9 @@ describe('Feature - Gestures', () => {
         expect(types).not.toContainTimes(GesturesEventType.PressRelease);
         done();
       });
-      element.dispatchEvent(firstPointerdownEvent);
-      element.dispatchEvent(secondPointerdownEvent);
-      document.dispatchEvent(secondPointerupEvent);
+      event.dispatchDown({ x: 0, y: 0 });
+      secondEvent.dispatchDown({ element, x: 0, y: 0 });
+      secondEvent.dispatchUp({ x: 0, y: 0 });
       gestures.destroy();
     });
     it('should not dispatch PressRelease event when pointercancel is triggered and active touches length is bigger than 0', (done) => {
@@ -353,9 +246,9 @@ describe('Feature - Gestures', () => {
         expect(types).not.toContainTimes(GesturesEventType.PressRelease);
         done();
       });
-      element.dispatchEvent(firstPointerdownEvent);
-      element.dispatchEvent(secondPointerdownEvent);
-      element.dispatchEvent(secondPointercancelEvent);
+      event.dispatchDown({ x: 0, y: 0 });
+      secondEvent.dispatchDown({ element, x: 0, y: 0 });
+      secondEvent.dispatchCancel({ element, x: 0, y: 0 });
       gestures.destroy();
     });
 
@@ -365,7 +258,7 @@ describe('Feature - Gestures', () => {
         expect(types).toContainTimes(GesturesEventType.DragPress, 1);
         done();
       });
-      element.dispatchEvent(firstPointerdownEvent);
+      event.dispatchDown({ x: 0, y: 0 });
       gestures.destroy();
     });
 
@@ -375,9 +268,9 @@ describe('Feature - Gestures', () => {
         expect(types).not.toContainTimes(GesturesEventType.DragStart, 1);
         done();
       });
-      element.dispatchEvent(firstPointerdownEvent);
-      element.dispatchEvent(secondPointerdownEvent);
-      document.dispatchEvent(firstPointermoveEvent);
+      event.dispatchDown({ x: 0, y: 0 });
+      secondEvent.dispatchDown({ element, x: 0, y: 0 });
+      event.dispatchMove({ x: 10, y: 10 });
       gestures.destroy();
     });
     it('should not dispatch DragStart when pointermove is triggered and DragPress has not dispatched jet', (done) => {
@@ -385,72 +278,57 @@ describe('Feature - Gestures', () => {
         expect(types).not.toContainTimes(GesturesEventType.DragStart, 1);
         done();
       });
-      document.dispatchEvent(firstPointermoveEvent);
+      event.dispatchMove({ x: 10, y: 10 });
       gestures.destroy();
     });
 
     it('should dispatch DragStart when pointermove is triggered, and X-axis movement from DragPress event is bigger than minMovement', (done) => {
-      firstPointermoveEvent.pageX = firstPointerdownEvent.pageX + 5;
-      firstPointermoveEvent.pageY = firstPointerdownEvent.pageY;
-
       gestureTypesChanges$.subscribe((types) => {
         expect(types).toContainTimes(GesturesEventType.DragStart, 1);
         done();
       });
-      element.dispatchEvent(firstPointerdownEvent);
-      document.dispatchEvent(firstPointermoveEvent);
+      event.dispatchDown({ x: 0, y: 0 });
+      event.dispatchMove({ x: 5, y: 0 });
       gestures.destroy();
     });
     it('should not dispatch DragStart when pointermove is triggered and X-axis movement from DragPress event is less than minMovement', (done) => {
-      firstPointermoveEvent.pageX = firstPointerdownEvent.pageX + 4;
-      firstPointermoveEvent.pageY = firstPointerdownEvent.pageY;
-
       gestureTypesChanges$.subscribe((types) => {
         expect(types).not.toContain(GesturesEventType.DragStart);
         done();
       });
-      element.dispatchEvent(firstPointerdownEvent);
-      document.dispatchEvent(firstPointermoveEvent);
+      event.dispatchDown({ x: 0, y: 0 });
+      event.dispatchMove({ x: 4, y: 0 });
       gestures.destroy();
     });
 
     it('should dispatch DragStart when pointermove is triggered, and Y-axis movement from DragPress event is bigger than minMovement', (done) => {
-      firstPointermoveEvent.pageX = firstPointerdownEvent.pageX;
-      firstPointermoveEvent.pageY = firstPointerdownEvent.pageY + 5;
-
       gestureTypesChanges$.subscribe((types) => {
         expect(types).toContainTimes(GesturesEventType.DragStart, 1);
         done();
       });
-      element.dispatchEvent(firstPointerdownEvent);
-      document.dispatchEvent(firstPointermoveEvent);
+      event.dispatchDown({ x: 0, y: 0 });
+      event.dispatchMove({ x: 0, y: 5 });
       gestures.destroy();
     });
     it('should not dispatch DragStart when pointermove is triggered and Y-axis movement from DragPress event is less than minMovement.', (done) => {
-      firstPointermoveEvent.pageX = firstPointerdownEvent.pageX;
-      firstPointermoveEvent.pageY = firstPointerdownEvent.pageY + 4;
-
       gestureTypesChanges$.subscribe((types) => {
         expect(types).not.toContain(GesturesEventType.DragStart);
         done();
       });
-      element.dispatchEvent(firstPointerdownEvent);
-      document.dispatchEvent(firstPointermoveEvent);
+      event.dispatchDown({ x: 0, y: 0 });
+      event.dispatchMove({ x: 0, y: 4 });
       gestures.destroy();
     });
 
     it(`should dispatch DragStart when pointermove is triggered following a ZoomRelease without checking for minMovement`, (done) => {
-      firstPointermoveEvent.pageX = firstPointerdownEvent.pageX + 1;
-      firstPointermoveEvent.pageY = firstPointerdownEvent.pageY;
-
       gestureTypesChanges$.subscribe((types) => {
         expect(types).toContainTimes(GesturesEventType.DragStart, 1);
         done();
       });
-      element.dispatchEvent(firstPointerdownEvent);
-      element.dispatchEvent(secondPointerdownEvent);
-      document.dispatchEvent(secondPointerupEvent);
-      document.dispatchEvent(firstPointermoveEvent);
+      event.dispatchDown({ x: 0, y: 0 });
+      secondEvent.dispatchDown({ element, x: 0, y: 0 });
+      secondEvent.dispatchUp({ x: 0, y: 0 });
+      event.dispatchMove({ x: 4, y: 0 });
       gestures.destroy();
     });
 
@@ -460,13 +338,14 @@ describe('Feature - Gestures', () => {
         expect(types).toContainTimes(GesturesEventType.DragStart, 1); // Only for the firstPointermoveEvent
         done();
       });
-      element.dispatchEvent(firstPointerdownEvent);
-      document.dispatchEvent(firstPointermoveEvent);
-      element.dispatchEvent(secondPointerdownEvent);
-      firstPointermoveEvent.pageX += 10;
-      document.dispatchEvent(firstPointermoveEvent);
-      firstPointermoveEvent.pageX += 10;
-      document.dispatchEvent(firstPointermoveEvent);
+
+      event.dispatchDown({ x: 0, y: 0 });
+      event.dispatchMove({ x: 10, y: 10 });
+
+      secondEvent.dispatchDown({ element, x: 0, y: 0 });
+
+      event.dispatchMove({ x: 20, y: 20 });
+      event.dispatchMove({ x: 30, y: 30 });
       gestures.destroy();
     });
     it('should not dispatch Drag when pointermove is triggered and DragStart has not dispatched jet', (done) => {
@@ -474,12 +353,13 @@ describe('Feature - Gestures', () => {
         expect(types).not.toContain(GesturesEventType.DragStart);
         done();
       });
-      element.dispatchEvent(firstPointerdownEvent);
-      element.dispatchEvent(secondPointerdownEvent);
-      firstPointermoveEvent.pageX += 10;
-      document.dispatchEvent(firstPointermoveEvent);
-      firstPointermoveEvent.pageX += 10;
-      document.dispatchEvent(firstPointermoveEvent);
+
+      event.dispatchDown({ x: 0, y: 0 });
+
+      secondEvent.dispatchDown({ element, x: 0, y: 0 });
+
+      event.dispatchMove({ x: 10, y: 10 });
+      event.dispatchMove({ x: 20, y: 20 });
       gestures.destroy();
     });
 
@@ -489,10 +369,9 @@ describe('Feature - Gestures', () => {
         done();
       });
 
-      element.dispatchEvent(firstPointerdownEvent);
-      document.dispatchEvent(firstPointermoveEvent);
-      firstPointermoveEvent.pageX += 10;
-      document.dispatchEvent(firstPointermoveEvent);
+      event.dispatchDown({ x: 0, y: 0 });
+      event.dispatchMove({ x: 10, y: 10 });
+      event.dispatchMove({ x: 20, y: 20 });
       gestures.destroy();
     });
 
@@ -503,8 +382,8 @@ describe('Feature - Gestures', () => {
         done();
       });
 
-      element.dispatchEvent(firstPointerdownEvent);
-      document.dispatchEvent(firstPointerupEvent);
+      event.dispatchDown({ x: 0, y: 0 });
+      event.dispatchUp({ x: 0, y: 0 });
       gestures.destroy();
     });
     it('should not dispatch DragEnd when pointercancel is triggered and DragStart has not dispatched jet', (done) => {
@@ -513,8 +392,8 @@ describe('Feature - Gestures', () => {
         done();
       });
 
-      element.dispatchEvent(firstPointerdownEvent);
-      element.dispatchEvent(firstPointercancelEvent);
+      event.dispatchDown({ x: 0, y: 0 });
+      event.dispatchCancel({ x: 0, y: 0 });
       gestures.destroy();
     });
 
@@ -523,9 +402,9 @@ describe('Feature - Gestures', () => {
         expect(types).toContainTimes(GesturesEventType.DragEnd, 1);
         done();
       });
-      element.dispatchEvent(firstPointerdownEvent);
-      document.dispatchEvent(firstPointermoveEvent);
-      document.dispatchEvent(firstPointerupEvent);
+      event.dispatchDown({ x: 0, y: 0 });
+      event.dispatchMove({ x: 10, y: 10 });
+      event.dispatchUp({ x: 0, y: 0 });
       gestures.destroy();
     });
     it('should dispatch DragEnd when pointercancel is triggered, and active touches length is 0', (done) => {
@@ -533,9 +412,9 @@ describe('Feature - Gestures', () => {
         expect(types).toContainTimes(GesturesEventType.DragEnd, 1);
         done();
       });
-      element.dispatchEvent(firstPointerdownEvent);
-      document.dispatchEvent(firstPointermoveEvent);
-      element.dispatchEvent(firstPointercancelEvent);
+      event.dispatchDown({ x: 0, y: 0 });
+      event.dispatchMove({ x: 10, y: 10 });
+      event.dispatchCancel({ x: 0, y: 0 });
       gestures.destroy();
     });
 
@@ -544,8 +423,8 @@ describe('Feature - Gestures', () => {
         expect(types).not.toContain(GesturesEventType.DragEnd);
         done();
       });
-      element.dispatchEvent(firstPointerdownEvent);
-      document.dispatchEvent(secondPointerdownEvent);
+      event.dispatchDown({ x: 0, y: 0 });
+      secondEvent.dispatchDown({ x: 0, y: 0 });
       gestures.destroy();
     });
     it('should dispatch DragEnd when pointerdown is triggered and DragStart has already dispatched. (changing the type from drag to zoom)', (done) => {
@@ -553,9 +432,9 @@ describe('Feature - Gestures', () => {
         expect(types).toContainTimes(GesturesEventType.DragEnd, 1);
         done();
       });
-      element.dispatchEvent(firstPointerdownEvent);
-      document.dispatchEvent(firstPointermoveEvent);
-      element.dispatchEvent(secondPointerdownEvent);
+      event.dispatchDown({ x: 0, y: 0 });
+      event.dispatchMove({ x: 10, y: 10 });
+      secondEvent.dispatchDown({ element, x: 0, y: 0 });
       gestures.destroy();
     });
 
@@ -565,9 +444,9 @@ describe('Feature - Gestures', () => {
         expect(types).not.toContain(GesturesEventType.DragRelease);
         done();
       });
-      element.dispatchEvent(firstPointerdownEvent);
-      element.dispatchEvent(secondPointerdownEvent);
-      document.dispatchEvent(secondPointerupEvent);
+      event.dispatchDown({ x: 0, y: 0 });
+      secondEvent.dispatchDown({ element, x: 0, y: 0 });
+      secondEvent.dispatchUp({ x: 0, y: 0 });
       gestures.destroy();
     });
     it('should not dispatch DragRelease when pointercancel is triggered and active touches length is not 0', (done) => {
@@ -575,9 +454,9 @@ describe('Feature - Gestures', () => {
         expect(types).not.toContain(GesturesEventType.DragRelease);
         done();
       });
-      element.dispatchEvent(firstPointerdownEvent);
-      element.dispatchEvent(secondPointerdownEvent);
-      element.dispatchEvent(secondPointercancelEvent);
+      event.dispatchDown({ x: 0, y: 0 });
+      secondEvent.dispatchDown({ element, x: 0, y: 0 });
+      secondEvent.dispatchCancel({ element, x: 0, y: 0 });
       gestures.destroy();
     });
 
@@ -586,7 +465,7 @@ describe('Feature - Gestures', () => {
         expect(types).not.toContain(GesturesEventType.DragRelease);
         done();
       });
-      document.dispatchEvent(firstPointerupEvent);
+      event.dispatchUp({ x: 0, y: 0 });
       gestures.destroy();
     });
     it('should not dispatch DragRelease when pointercancel is triggered and DragPress has not dispatched jet', (done) => {
@@ -594,7 +473,7 @@ describe('Feature - Gestures', () => {
         expect(types).not.toContain(GesturesEventType.DragRelease);
         done();
       });
-      element.dispatchEvent(firstPointercancelEvent);
+      event.dispatchCancel({ x: 0, y: 0 });
       gestures.destroy();
     });
 
@@ -603,9 +482,9 @@ describe('Feature - Gestures', () => {
         expect(types).toContainTimes(GesturesEventType.DragRelease, 1);
         done();
       });
-      element.dispatchEvent(firstPointerdownEvent);
-      document.dispatchEvent(firstPointermoveEvent);
-      document.dispatchEvent(firstPointerupEvent);
+      event.dispatchDown({ x: 0, y: 0 });
+      event.dispatchMove({ x: 10, y: 10 });
+      event.dispatchUp({ x: 0, y: 0 });
       gestures.destroy();
     });
     it('should dispatch DragRelease when pointercancel is triggered and DragPress has already dispatch and active touches length is 0', (done) => {
@@ -613,9 +492,9 @@ describe('Feature - Gestures', () => {
         expect(types).toContainTimes(GesturesEventType.DragRelease, 1);
         done();
       });
-      element.dispatchEvent(firstPointerdownEvent);
-      document.dispatchEvent(firstPointermoveEvent);
-      element.dispatchEvent(firstPointercancelEvent);
+      event.dispatchDown({ x: 0, y: 0 });
+      event.dispatchMove({ x: 10, y: 10 });
+      event.dispatchCancel({ x: 0, y: 0 });
       gestures.destroy();
     });
 
@@ -625,8 +504,8 @@ describe('Feature - Gestures', () => {
         expect(types).toContainTimes(GesturesEventType.ZoomPress, 1);
         done();
       });
-      element.dispatchEvent(firstPointerdownEvent);
-      element.dispatchEvent(secondPointerdownEvent);
+      event.dispatchDown({ x: 0, y: 0 });
+      secondEvent.dispatchDown({ element, x: 0, y: 0 });
       gestures.destroy();
     });
 
@@ -636,8 +515,8 @@ describe('Feature - Gestures', () => {
         expect(types).not.toContain(GesturesEventType.ZoomStart);
         done();
       });
-      element.dispatchEvent(firstPointerdownEvent);
-      document.dispatchEvent(firstPointermoveEvent);
+      event.dispatchDown({ x: 0, y: 0 });
+      event.dispatchMove({ x: 10, y: 10 });
       gestures.destroy();
     });
     it('should not dispatch ZoomStart when pointermove is triggered and ZoomPress has not dispatched jet', (done) => {
@@ -645,8 +524,8 @@ describe('Feature - Gestures', () => {
         expect(types).not.toContain(GesturesEventType.ZoomStart);
         done();
       });
-      element.dispatchEvent(firstPointerdownEvent);
-      document.dispatchEvent(secondPointermoveEvent);
+      event.dispatchDown({ x: 0, y: 0 });
+      secondEvent.dispatchMove({ x: 10, y: 10 });
       gestures.destroy();
     });
 
@@ -655,9 +534,9 @@ describe('Feature - Gestures', () => {
         expect(types).toContainTimes(GesturesEventType.ZoomStart, 1);
         done();
       });
-      element.dispatchEvent(firstPointerdownEvent);
-      element.dispatchEvent(secondPointerdownEvent);
-      document.dispatchEvent(secondPointermoveEvent);
+      event.dispatchDown({ x: 0, y: 0 });
+      secondEvent.dispatchDown({ element, x: 0, y: 0 });
+      event.dispatchMove({ x: 10, y: 10 });
       gestures.destroy();
     });
 
@@ -667,10 +546,9 @@ describe('Feature - Gestures', () => {
         expect(types).not.toContain(GesturesEventType.Zoom);
         done();
       });
-      element.dispatchEvent(firstPointerdownEvent);
-      document.dispatchEvent(firstPointermoveEvent);
-      firstPointermoveEvent.pageX += 10;
-      document.dispatchEvent(firstPointermoveEvent);
+      event.dispatchDown({ x: 0, y: 0 });
+      event.dispatchMove({ x: 10, y: 10 });
+      event.dispatchMove({ x: 20, y: 20 });
       gestures.destroy();
     });
     it('should not dispatch Zoom when pointermove is triggered for second times and ZoomStart has not dispatched jet', (done) => {
@@ -678,10 +556,9 @@ describe('Feature - Gestures', () => {
         expect(types).not.toContain(GesturesEventType.Zoom);
         done();
       });
-      element.dispatchEvent(firstPointerdownEvent);
-      document.dispatchEvent(firstPointermoveEvent);
-      firstPointermoveEvent.pageX += 10;
-      document.dispatchEvent(firstPointermoveEvent);
+      event.dispatchDown({ x: 0, y: 0 });
+      event.dispatchMove({ x: 10, y: 10 });
+      event.dispatchMove({ x: 20, y: 20 });
       gestures.destroy();
     });
 
@@ -690,11 +567,10 @@ describe('Feature - Gestures', () => {
         expect(types).toContainTimes(GesturesEventType.Zoom, 1);
         done();
       });
-      element.dispatchEvent(firstPointerdownEvent);
-      element.dispatchEvent(secondPointerdownEvent);
-      document.dispatchEvent(secondPointermoveEvent);
-      secondPointermoveEvent.pageX += 10;
-      document.dispatchEvent(secondPointermoveEvent);
+      event.dispatchDown({ x: 0, y: 0 });
+      secondEvent.dispatchDown({ element, x: 0, y: 0 });
+      event.dispatchMove({ x: 10, y: 10 });
+      event.dispatchMove({ x: 20, y: 20 });
       gestures.destroy();
     });
 
@@ -704,8 +580,8 @@ describe('Feature - Gestures', () => {
         expect(types).not.toContain(GesturesEventType.ZoomEnd);
         done();
       });
-      element.dispatchEvent(firstPointerdownEvent);
-      document.dispatchEvent(secondPointerupEvent);
+      event.dispatchDown({ x: 0, y: 0 });
+      event.dispatchUp({ x: 0, y: 0 });
       gestures.destroy();
     });
     it('should not dispatch ZoomEnd when pointercancel is triggered and ZoomStart has not dispatched jet', (done) => {
@@ -713,8 +589,8 @@ describe('Feature - Gestures', () => {
         expect(types).not.toContain(GesturesEventType.ZoomEnd);
         done();
       });
-      element.dispatchEvent(firstPointerdownEvent);
-      document.dispatchEvent(secondPointercancelEvent);
+      event.dispatchDown({ x: 0, y: 0 });
+      event.dispatchCancel({ x: 0, y: 0 });
       gestures.destroy();
     });
 
@@ -723,10 +599,10 @@ describe('Feature - Gestures', () => {
         expect(types).toContainTimes(GesturesEventType.ZoomEnd, 1);
         done();
       });
-      element.dispatchEvent(firstPointerdownEvent);
-      element.dispatchEvent(secondPointerdownEvent);
-      document.dispatchEvent(secondPointermoveEvent);
-      document.dispatchEvent(secondPointerupEvent);
+      event.dispatchDown({ x: 0, y: 0 });
+      secondEvent.dispatchDown({ element, x: 0, y: 0 });
+      event.dispatchMove({ x: 10, y: 10 });
+      event.dispatchUp({ x: 0, y: 0 });
       gestures.destroy();
     });
     it('should dispatch ZoomEnd when pointercancel is triggered and ZoomStart has already detached and active touches length is not 2', (done) => {
@@ -734,10 +610,10 @@ describe('Feature - Gestures', () => {
         expect(types).toContainTimes(GesturesEventType.ZoomEnd, 1);
         done();
       });
-      element.dispatchEvent(firstPointerdownEvent);
-      element.dispatchEvent(secondPointerdownEvent);
-      document.dispatchEvent(secondPointermoveEvent);
-      element.dispatchEvent(secondPointercancelEvent);
+      event.dispatchDown({ x: 0, y: 0 });
+      secondEvent.dispatchDown({ element, x: 0, y: 0 });
+      event.dispatchMove({ x: 10, y: 10 });
+      event.dispatchCancel({ x: 0, y: 0 });
       gestures.destroy();
     });
 
@@ -747,8 +623,8 @@ describe('Feature - Gestures', () => {
         expect(types).not.toContain(GesturesEventType.ZoomRelease);
         done();
       });
-      element.dispatchEvent(firstPointerdownEvent);
-      document.dispatchEvent(firstPointerupEvent);
+      event.dispatchDown({ x: 0, y: 0 });
+      event.dispatchUp({ x: 0, y: 0 });
       gestures.destroy();
     });
     it('should not dispatch ZoomRelease when pointercancel is triggered and active touches length is not 1', (done) => {
@@ -756,8 +632,8 @@ describe('Feature - Gestures', () => {
         expect(types).not.toContain(GesturesEventType.ZoomRelease);
         done();
       });
-      element.dispatchEvent(firstPointerdownEvent);
-      element.dispatchEvent(firstPointercancelEvent);
+      event.dispatchDown({ x: 0, y: 0 });
+      event.dispatchCancel({ x: 0, y: 0 });
       gestures.destroy();
     });
 
@@ -766,8 +642,8 @@ describe('Feature - Gestures', () => {
         expect(types).not.toContain(GesturesEventType.ZoomRelease);
         done();
       });
-      element.dispatchEvent(firstPointerdownEvent);
-      document.dispatchEvent(firstPointerupEvent);
+      event.dispatchDown({ x: 0, y: 0 });
+      event.dispatchUp({ x: 0, y: 0 });
       gestures.destroy();
     });
     it('should not dispatch ZoomRelease when pointercancel is triggered and ZoomPress has not dispatched jet', (done) => {
@@ -775,8 +651,8 @@ describe('Feature - Gestures', () => {
         expect(types).not.toContain(GesturesEventType.ZoomRelease);
         done();
       });
-      element.dispatchEvent(firstPointerdownEvent);
-      element.dispatchEvent(firstPointercancelEvent);
+      event.dispatchDown({ x: 0, y: 0 });
+      event.dispatchCancel({ x: 0, y: 0 });
       gestures.destroy();
     });
 
@@ -785,9 +661,9 @@ describe('Feature - Gestures', () => {
         expect(types).toContainTimes(GesturesEventType.ZoomRelease, 1);
         done();
       });
-      element.dispatchEvent(firstPointerdownEvent);
-      element.dispatchEvent(secondPointerdownEvent);
-      document.dispatchEvent(secondPointerupEvent);
+      event.dispatchDown({ x: 0, y: 0 });
+      secondEvent.dispatchDown({ element, x: 0, y: 0 });
+      event.dispatchUp({ x: 0, y: 0 });
       gestures.destroy();
     });
     it('should dispatch ZoomRelease when pointercancel is triggered and active touches length is 1', (done) => {
@@ -795,9 +671,9 @@ describe('Feature - Gestures', () => {
         expect(types).toContainTimes(GesturesEventType.ZoomRelease, 1);
         done();
       });
-      element.dispatchEvent(firstPointerdownEvent);
-      element.dispatchEvent(secondPointerdownEvent);
-      element.dispatchEvent(secondPointercancelEvent);
+      event.dispatchDown({ x: 0, y: 0 });
+      secondEvent.dispatchDown({ element, x: 0, y: 0 });
+      event.dispatchCancel({ x: 0, y: 0 });
       gestures.destroy();
     });
 
@@ -819,18 +695,16 @@ describe('Feature - Gestures', () => {
         done();
       });
 
-      element.dispatchEvent(firstPointerdownEvent); // Press, DragPress
-      document.dispatchEvent(firstPointermoveEvent); // DragStart
-      firstPointermoveEvent.pageX += 10;
-      document.dispatchEvent(firstPointermoveEvent); // Drag
+      event.dispatchDown({ x: 0, y: 0 }); // Press, DragPress
+      event.dispatchMove({ x: 10, y: 10 }); // DragStart
+      event.dispatchMove({ x: 20, y: 20 }); // Drag
 
-      element.dispatchEvent(secondPointerdownEvent); // DragEnd, ZoomPress
-      document.dispatchEvent(secondPointermoveEvent); // ZoomStart
-      secondPointermoveEvent.pageX += 10;
-      document.dispatchEvent(secondPointermoveEvent); // Zoom
-      document.dispatchEvent(secondPointerupEvent); // ZoomEnd, ZoomRelease
+      secondEvent.dispatchDown({ element, x: 0, y: 0 }); // DragEnd, ZoomPress
+      event.dispatchMove({ x: 10, y: 10 }); // ZoomStart
+      event.dispatchMove({ x: 20, y: 20 }); // Zoom
+      event.dispatchUp({ x: 0, y: 0 }); // ZoomEnd, ZoomRelease
 
-      document.dispatchEvent(firstPointerupEvent); // DragRelease, PressRelease
+      secondEvent.dispatchUp({ x: 0, y: 0 }); // DragRelease, PressRelease
       gestures.destroy();
     });
     it('should dispatch all event in correct order when the gesture process completed', (done) => {
@@ -852,18 +726,16 @@ describe('Feature - Gestures', () => {
         done();
       });
 
-      element.dispatchEvent(firstPointerdownEvent); // Press, DragPress
-      document.dispatchEvent(firstPointermoveEvent); // DragStart
-      firstPointermoveEvent.pageX += 10;
-      document.dispatchEvent(firstPointermoveEvent); // Drag
+      event.dispatchDown({ x: 0, y: 0 }); // Press, DragPress
+      event.dispatchMove({ x: 10, y: 10 }); // DragStart
+      event.dispatchMove({ x: 10, y: 10 }); // Drag
 
-      element.dispatchEvent(secondPointerdownEvent); // DragEnd, ZoomPress
-      document.dispatchEvent(secondPointermoveEvent); // ZoomStart
-      secondPointermoveEvent.pageX += 10;
-      document.dispatchEvent(secondPointermoveEvent); // Zoom
-      document.dispatchEvent(secondPointerupEvent); // ZoomEnd, ZoomRelease
+      secondEvent.dispatchDown({ element, x: 0, y: 0 }); // DragEnd, ZoomPress
+      event.dispatchMove({ x: 20, y: 20 }); // ZoomStart
+      event.dispatchMove({ x: 30, y: 30 }); // Zoom
+      event.dispatchUp({ x: 0, y: 0 }); // ZoomEnd, ZoomRelease
 
-      document.dispatchEvent(firstPointerupEvent); // DragRelease, PressRelease
+      secondEvent.dispatchUp({ x: 0, y: 0 }); // DragRelease, PressRelease
       gestures.destroy();
     });
 
@@ -888,346 +760,371 @@ describe('Feature - Gestures', () => {
       });
 
       // First cycle
-      element.dispatchEvent(firstPointerdownEvent); // Press, DragPress
-      document.dispatchEvent(firstPointermoveEvent); // DragStart
-      firstPointermoveEvent.pageX += 10;
-      document.dispatchEvent(firstPointermoveEvent); // Drag
+      event.dispatchDown({ x: 0, y: 0 }); // Press, DragPress
+      event.dispatchMove({ x: 10, y: 10 }); // DragStart
+      event.dispatchMove({ x: 20, y: 20 }); // Drag
 
-      element.dispatchEvent(secondPointerdownEvent); // DragEnd, ZoomPress
-      document.dispatchEvent(secondPointermoveEvent); // ZoomStart
-      secondPointermoveEvent.pageX += 10;
-      document.dispatchEvent(secondPointermoveEvent); // Zoom
-      document.dispatchEvent(secondPointerupEvent); // ZoomEnd, ZoomRelease
+      secondEvent.dispatchDown({ element, x: 0, y: 0 }); // DragEnd, ZoomPress
+      event.dispatchMove({ x: 30, y: 30 }); // ZoomStart
+      event.dispatchMove({ x: 40, y: 40 }); // Zoom
 
-      document.dispatchEvent(firstPointerupEvent); // DragRelease, PressRelease
+      event.dispatchUp({ x: 0, y: 0 });
+      secondEvent.dispatchUp({ x: 0, y: 0 }); // DragRelease, PressRelease
 
       // Second cycle
-      element.dispatchEvent(firstPointerdownEvent); // Press, DragPress
-      document.dispatchEvent(firstPointermoveEvent); // DragStart
-      firstPointermoveEvent.pageX += 10;
-      document.dispatchEvent(firstPointermoveEvent); // Drag
+      event.dispatchDown({ x: 0, y: 0 }); // Press, DragPress
+      event.dispatchMove({ x: 10, y: 10 }); // DragStart
+      event.dispatchMove({ x: 20, y: 20 }); // Drag
 
-      element.dispatchEvent(secondPointerdownEvent); // DragEnd, ZoomPress
-      document.dispatchEvent(secondPointermoveEvent); // ZoomStart
-      secondPointermoveEvent.pageX += 10;
-      document.dispatchEvent(secondPointermoveEvent); // Zoom
-      document.dispatchEvent(secondPointerupEvent); // ZoomEnd, ZoomRelease
+      secondEvent.dispatchDown({ element, x: 0, y: 0 }); // DragEnd, ZoomPress
+      event.dispatchMove({ x: 30, y: 30 }); // ZoomStart
+      event.dispatchMove({ x: 40, y: 40 }); // Zoom
 
-      document.dispatchEvent(firstPointerupEvent); // DragRelease, PressRelease
+      event.dispatchUp({ x: 0, y: 0 });
+      secondEvent.dispatchUp({ x: 0, y: 0 }); // DragRelease, PressRelease
 
       gestures.destroy();
     });
   });
 
   describe('Event Data', () => {
-    it('should return the correct PressEvent when Press has dispatched', (done) => {
-      gestures.changes$.pipe(filter((e) => e.type === GesturesEventType.Press)).subscribe((e) => {
-        expect(e).toEqual({
-          type: GesturesEventType.Press,
-          pageX: firstPointerdownEvent.pageX,
-          pageY: firstPointerdownEvent.pageY,
-          clientX: firstPointerdownEvent.clientX,
-          clientY: firstPointerdownEvent.clientY,
-
-          event: firstPointerdownEvent,
-        });
-        done();
-      });
-      element.dispatchEvent(firstPointerdownEvent);
+    it('should return the correct PressEvent when Press has dispatched', async () => {
+      const gesturesEvent = firstValueFrom(gestures.changes$.pipe(filter((e) => e.type === GesturesEventType.Press)));
+      const downEvent = event.dispatchDown({ x: 0, y: 0, clientX: 0, clientY: 0 });
       gestures.destroy();
+
+      expect(await gesturesEvent).toEqual({
+        type: GesturesEventType.Press,
+        pageX: 0,
+        pageY: 0,
+        clientX: 0,
+        clientY: 0,
+        event: downEvent,
+      });
     });
-    it('should return the correct PressReleaseEvent when PressRelease has dispatched', (done) => {
-      gestures.changes$.pipe(filter((e) => e.type === GesturesEventType.PressRelease)).subscribe((e) => {
-        expect(e).toEqual({
-          type: GesturesEventType.PressRelease,
-          pageX: firstPointerupEvent.pageX,
-          pageY: firstPointerupEvent.pageY,
-          clientX: firstPointerupEvent.clientX,
-          clientY: firstPointerupEvent.clientY,
-
-          event: firstPointerupEvent,
-        });
-        done();
-      });
-      element.dispatchEvent(firstPointerdownEvent);
-      document.dispatchEvent(firstPointerupEvent);
+    it('should return the correct PressReleaseEvent when PressRelease has dispatched', async () => {
+      const gesturesEvent = firstValueFrom(gestures.changes$.pipe(filter((e) => e.type === GesturesEventType.PressRelease)));
+      event.dispatchDown({ x: 0, y: 0 });
+      const eventUp = event.dispatchUp({ x: 0, y: 0, clientX: 0, clientY: 0 });
       gestures.destroy();
+
+      expect(await gesturesEvent).toEqual({
+        type: GesturesEventType.PressRelease,
+        pageX: 0,
+        pageY: 0,
+        clientX: 0,
+        clientY: 0,
+        event: eventUp,
+      });
     });
 
-    it('should return the correct DragPress event data when DragPress has dispatched', (done) => {
-      gestures.changes$.pipe(filter((e) => e.type === GesturesEventType.DragPress)).subscribe((e) => {
-        expect(e).toEqual({
-          type: GesturesEventType.DragPress,
-
-          pageX: firstPointerdownEvent.pageX,
-          pageY: firstPointerdownEvent.pageY,
-          clientX: firstPointerdownEvent.clientX,
-          clientY: firstPointerdownEvent.clientY,
-          movementX: firstPointerdownEvent.movementX,
-          movementY: firstPointerdownEvent.movementY,
-
-          movementXFromPress: 0,
-          movementYFromPress: 0,
-          movementXFromStart: null,
-          movementYFromStart: null,
-
-          event: firstPointerdownEvent,
-        });
-        done();
+    it('should return the correct DragPress event data when DragPress has dispatched', async () => {
+      const gesturesEvent = firstValueFrom(gestures.changes$.pipe(filter((e) => e.type === GesturesEventType.DragPress)));
+      const downEvent = event.dispatchDown({
+        x: 10,
+        y: 10,
+        clientX: 20,
+        clientY: 20,
+        movementX: 11,
+        movementY: 11,
       });
-      element.dispatchEvent(firstPointerdownEvent);
       gestures.destroy();
+
+      expect(await gesturesEvent).toEqual({
+        type: GesturesEventType.DragPress,
+        pageX: 10,
+        pageY: 10,
+        clientX: 20,
+        clientY: 20,
+        movementX: 11,
+        movementY: 11,
+        movementXFromPress: 0,
+        movementYFromPress: 0,
+        movementXFromStart: null,
+        movementYFromStart: null,
+        event: downEvent,
+      });
     });
-    it('should return the correct DragStart event data when DragStart has dispatched', (done) => {
-      gestures.changes$.pipe(filter((e) => e.type === GesturesEventType.DragStart)).subscribe((e) => {
-        expect(e).toEqual({
-          type: GesturesEventType.DragStart,
-
-          pageX: firstPointermoveEvent.pageX,
-          pageY: firstPointermoveEvent.pageY,
-          clientX: firstPointermoveEvent.clientX,
-          clientY: firstPointermoveEvent.clientY,
-          movementX: firstPointermoveEvent.movementX,
-          movementY: firstPointermoveEvent.movementY,
-
-          movementXFromPress: 50,
-          movementYFromPress: 50,
-          movementXFromStart: 0,
-          movementYFromStart: 0,
-
-          event: firstPointermoveEvent,
-        });
-        done();
+    it('should return the correct DragStart event data when DragStart has dispatched', async () => {
+      const gesturesEvent = firstValueFrom(gestures.changes$.pipe(filter((e) => e.type === GesturesEventType.DragStart)));
+      event.dispatchDown({ x: 0, y: 0 });
+      const moveEvent = event.dispatchMove({
+        x: 10,
+        y: 10,
+        clientX: 20,
+        clientY: 20,
+        movementX: 11,
+        movementY: 11,
       });
-      element.dispatchEvent(firstPointerdownEvent);
-      document.dispatchEvent(firstPointermoveEvent);
       gestures.destroy();
+
+      expect(await gesturesEvent).toEqual({
+        type: GesturesEventType.DragStart,
+        pageX: 10,
+        pageY: 10,
+        clientX: 20,
+        clientY: 20,
+        movementX: 11,
+        movementY: 11,
+        movementXFromPress: 10,
+        movementYFromPress: 10,
+        movementXFromStart: 0,
+        movementYFromStart: 0,
+        event: moveEvent,
+      });
     });
-    it('should return the correct Drag event data when Drag has dispatched', (done) => {
-      gestures.changes$.pipe(filter((e) => e.type === GesturesEventType.Drag)).subscribe((e: DragGesturesEvent) => {
-        expect(e).toEqual({
-          type: GesturesEventType.Drag,
-
-          pageX: firstAdditionalPointermoveEvent.pageX,
-          pageY: firstAdditionalPointermoveEvent.pageY,
-          clientX: firstAdditionalPointermoveEvent.clientX,
-          clientY: firstAdditionalPointermoveEvent.clientY,
-          movementX: firstAdditionalPointermoveEvent.movementX,
-          movementY: firstAdditionalPointermoveEvent.movementY,
-
-          movementXFromPress: 60,
-          movementYFromPress: 60,
-          movementXFromStart: 10,
-          movementYFromStart: 10,
-
-          event: firstAdditionalPointermoveEvent,
-        });
-        done();
+    it('should return the correct Drag event data when Drag has dispatched', async () => {
+      const gesturesEvent = firstValueFrom(gestures.changes$.pipe(filter((e) => e.type === GesturesEventType.Drag)));
+      event.dispatchDown({ x: 0, y: 0 });
+      event.dispatchMove({ x: 10, y: 10 });
+      const moveEvent = event.dispatchMove({
+        x: 30,
+        y: 30,
+        clientX: 40,
+        clientY: 40,
+        movementX: 11,
+        movementY: 11,
       });
-
-      element.dispatchEvent(firstPointerdownEvent);
-      document.dispatchEvent(firstPointermoveEvent);
-      document.dispatchEvent(firstAdditionalPointermoveEvent);
       gestures.destroy();
+
+      expect(await gesturesEvent).toEqual({
+        type: GesturesEventType.Drag,
+        pageX: 30,
+        pageY: 30,
+        clientX: 40,
+        clientY: 40,
+        movementX: 11,
+        movementY: 11,
+        movementXFromPress: 30,
+        movementYFromPress: 30,
+        movementXFromStart: 20,
+        movementYFromStart: 20,
+        event: moveEvent,
+      });
     });
-    it('should return the correct DragEnd event data when DragEnd has dispatched', (done) => {
-      gestures.changes$.pipe(filter((e) => e.type === GesturesEventType.DragEnd)).subscribe((e: DragGesturesEvent) => {
-        expect(e).toEqual({
-          type: GesturesEventType.DragEnd,
-
-          pageX: firstPointerupEvent.pageX,
-          pageY: firstPointerupEvent.pageY,
-          clientX: firstPointerupEvent.clientX,
-          clientY: firstPointerupEvent.clientY,
-          movementX: firstPointerupEvent.movementX,
-          movementY: firstPointerupEvent.movementY,
-
-          movementXFromPress: 100,
-          movementYFromPress: 100,
-          movementXFromStart: 50,
-          movementYFromStart: 50,
-
-          event: firstPointerupEvent,
-        });
-        done();
+    it('should return the correct DragEnd event data when DragEnd has dispatched', async () => {
+      const gesturesEvent = firstValueFrom(gestures.changes$.pipe(filter((e) => e.type === GesturesEventType.DragEnd)));
+      event.dispatchDown({ x: 0, y: 0 });
+      event.dispatchMove({ x: 10, y: 10 });
+      const upEvent = event.dispatchUp({
+        x: 20,
+        y: 20,
+        clientX: 30,
+        clientY: 30,
+        movementX: 11,
+        movementY: 11,
       });
-
-      element.dispatchEvent(firstPointerdownEvent);
-      document.dispatchEvent(firstPointermoveEvent);
-      document.dispatchEvent(firstPointerupEvent);
       gestures.destroy();
+
+      expect(await gesturesEvent).toEqual({
+        type: GesturesEventType.DragEnd,
+        pageX: 20,
+        pageY: 20,
+        clientX: 30,
+        clientY: 30,
+        movementX: 11,
+        movementY: 11,
+        movementXFromPress: 20,
+        movementYFromPress: 20,
+        movementXFromStart: 10,
+        movementYFromStart: 10,
+        event: upEvent,
+      });
     });
-    it('should return the correct DragRelease event data when DragRelease has dispatched', (done) => {
-      gestures.changes$.pipe(filter((e) => e.type === GesturesEventType.DragRelease)).subscribe((e: DragGesturesEvent) => {
-        expect(e).toEqual({
-          type: GesturesEventType.DragRelease,
-
-          pageX: firstPointerupEvent.pageX,
-          pageY: firstPointerupEvent.pageY,
-          clientX: firstPointerupEvent.clientX,
-          clientY: firstPointerupEvent.clientY,
-          movementX: firstPointerupEvent.movementX,
-          movementY: firstPointerupEvent.movementY,
-
-          movementXFromPress: 100,
-          movementYFromPress: 100,
-          movementXFromStart: 50,
-          movementYFromStart: 50,
-
-          event: firstPointerupEvent,
-        });
-        done();
+    it('should return the correct DragRelease event data when DragRelease has dispatched', async () => {
+      const gesturesEvent = firstValueFrom(gestures.changes$.pipe(filter((e) => e.type === GesturesEventType.DragRelease)));
+      event.dispatchDown({ x: 0, y: 0 });
+      event.dispatchMove({ x: 10, y: 10 });
+      const upEvent = event.dispatchUp({
+        x: 20,
+        y: 20,
+        clientX: 30,
+        clientY: 30,
+        movementX: 11,
+        movementY: 11,
       });
-
-      element.dispatchEvent(firstPointerdownEvent);
-      document.dispatchEvent(firstPointermoveEvent);
-      document.dispatchEvent(firstPointerupEvent);
       gestures.destroy();
+
+      expect(await gesturesEvent).toEqual({
+        type: GesturesEventType.DragRelease,
+        pageX: 20,
+        pageY: 20,
+        clientX: 30,
+        clientY: 30,
+        movementX: 11,
+        movementY: 11,
+        movementXFromPress: 20,
+        movementYFromPress: 20,
+        movementXFromStart: 10,
+        movementYFromStart: 10,
+        event: upEvent,
+      });
     });
 
-    it('should return the correct ZoomPress event data when ZoomPress has dispatched', (done) => {
-      gestures.changes$.pipe(filter((e) => e.type === GesturesEventType.ZoomPress)).subscribe((e: DragGesturesEvent) => {
-        expect(e).toEqual({
-          type: GesturesEventType.ZoomPress,
-
-          distance: 3710.8,
-          scaleFactorFromPress: 1,
-
-          centerPageX: 550,
-          centerPageY: 2200,
-          centerClientX: 550,
-          centerClientY: 1100,
-          centerMovementX: 0,
-          centerMovementY: 0,
-
-          centerMovementXFromPress: 0,
-          centerMovementYFromPress: 0,
-
-          event: secondPointerdownEvent,
-        });
-        done();
+    it('should return the correct ZoomPress event data when ZoomPress has dispatched', async () => {
+      const gesturesEvent = firstValueFrom(gestures.changes$.pipe(filter((e) => e.type === GesturesEventType.ZoomPress)));
+      event.dispatchDown({ x: 0, y: 0 });
+      const secondEventDown = secondEvent.dispatchDown({
+        element,
+        x: 10,
+        y: 10,
+        clientX: 20,
+        clientY: 20,
+        movementX: 0,
+        movementY: 0,
       });
-
-      element.dispatchEvent(firstPointerdownEvent);
-      element.dispatchEvent(secondPointerdownEvent);
       gestures.destroy();
+
+      expect(await gesturesEvent).toEqual({
+        type: GesturesEventType.ZoomPress,
+
+        distance: 14.14,
+        scaleFactorFromPress: 1,
+
+        centerPageX: 5,
+        centerPageY: 5,
+        centerClientX: 10,
+        centerClientY: 10,
+        centerMovementX: 0,
+        centerMovementY: 0,
+
+        centerMovementXFromPress: 0,
+        centerMovementYFromPress: 0,
+        event: secondEventDown,
+      });
     });
-    it('should return the correct ZoomStart event data when ZoomStart has dispatched', (done) => {
-      gestures.changes$.pipe(filter((e) => e.type === GesturesEventType.ZoomStart)).subscribe((e: DragGesturesEvent) => {
-        expect(e).toEqual({
-          type: GesturesEventType.ZoomStart,
-
-          distance: 4332.44,
-          scaleFactorFromPress: 1.17,
-
-          centerPageX: 800,
-          centerPageY: 2450,
-          centerClientX: 800,
-          centerClientY: 1350,
-          centerMovementX: 250,
-          centerMovementY: 250,
-
-          centerMovementXFromPress: 250,
-          centerMovementYFromPress: 250,
-
-          event: secondPointermoveEvent,
-        });
-        done();
+    it('should return the correct ZoomStart event data when ZoomStart has dispatched', async () => {
+      const gesturesEvent = firstValueFrom(gestures.changes$.pipe(filter((e) => e.type === GesturesEventType.ZoomStart)));
+      event.dispatchDown({ x: 0, y: 0 });
+      secondEvent.dispatchDown({ element, x: 10, y: 10 });
+      const eventMove = event.dispatchMove({
+        x: 20,
+        y: 20,
+        clientX: 30,
+        clientY: 30,
+        movementX: 20,
+        movementY: 20,
       });
-
-      element.dispatchEvent(firstPointerdownEvent);
-      element.dispatchEvent(secondPointerdownEvent);
-      document.dispatchEvent(secondPointermoveEvent);
       gestures.destroy();
+
+      expect(await gesturesEvent).toEqual({
+        type: GesturesEventType.ZoomStart,
+
+        distance: 14.14,
+        scaleFactorFromPress: 1,
+
+        centerPageX: 15,
+        centerPageY: 15,
+        centerClientX: 20,
+        centerClientY: 20,
+        centerMovementX: 10,
+        centerMovementY: 10,
+
+        centerMovementXFromPress: 10,
+        centerMovementYFromPress: 10,
+        event: eventMove,
+      });
     });
-    it('should return the correct Zoom event data when Zoom has dispatched', (done) => {
-      gestures.changes$.pipe(filter((e) => e.type === GesturesEventType.Zoom)).subscribe((e: DragGesturesEvent) => {
-        expect(e).toEqual({
-          type: GesturesEventType.Zoom,
-
-          distance: 4459.82,
-          scaleFactorFromPress: 1.2,
-
-          centerPageX: 850,
-          centerPageY: 2500,
-          centerClientX: 850,
-          centerClientY: 1400,
-          centerMovementX: 50,
-          centerMovementY: 50,
-
-          centerMovementXFromPress: 300,
-          centerMovementYFromPress: 300,
-
-          event: secondAdditionalPointermoveEvent,
-        });
-        done();
+    it('should return the correct Zoom event data when Zoom has dispatched', async () => {
+      const gesturesEvent = firstValueFrom(gestures.changes$.pipe(filter((e) => e.type === GesturesEventType.Zoom)));
+      event.dispatchDown({ x: 0, y: 0 });
+      secondEvent.dispatchDown({ element, x: 10, y: 10 });
+      secondEvent.dispatchMove({ x: 20, y: 20 });
+      const eventMove = event.dispatchMove({
+        x: 40,
+        y: 40,
+        clientX: 50,
+        clientY: 50,
+        movementX: 40,
+        movementY: 40,
       });
-
-      element.dispatchEvent(firstPointerdownEvent);
-      element.dispatchEvent(secondPointerdownEvent);
-      document.dispatchEvent(secondPointermoveEvent);
-      document.dispatchEvent(secondAdditionalPointermoveEvent);
       gestures.destroy();
+
+      expect(await gesturesEvent).toEqual({
+        type: GesturesEventType.Zoom,
+
+        distance: 28.28,
+        scaleFactorFromPress: 2,
+
+        centerPageX: 30,
+        centerPageY: 30,
+        centerClientX: 35,
+        centerClientY: 35,
+        centerMovementX: 20,
+        centerMovementY: 20,
+
+        centerMovementXFromPress: 25,
+        centerMovementYFromPress: 25,
+        event: eventMove,
+      });
     });
-    it('should return the correct ZoomEnd event data when ZoomEnd has dispatched', (done) => {
-      gestures.changes$.pipe(filter((e) => e.type === GesturesEventType.ZoomEnd)).subscribe((e: DragGesturesEvent) => {
-        expect(e).toEqual({
-          type: GesturesEventType.ZoomEnd,
-
-          distance: 4976.95,
-          scaleFactorFromPress: 1.34,
-
-          centerPageX: 1050,
-          centerPageY: 2700,
-          centerClientX: 1050,
-          centerClientY: 1600,
-          centerMovementX: 250,
-          centerMovementY: 250,
-
-          centerMovementXFromPress: 500,
-          centerMovementYFromPress: 500,
-
-          event: secondPointerupEvent,
-        });
-        done();
+    it('should return the correct ZoomEnd event data when ZoomEnd has dispatched', async () => {
+      const gesturesEvent = firstValueFrom(gestures.changes$.pipe(filter((e) => e.type === GesturesEventType.ZoomEnd)));
+      event.dispatchDown({ x: 0, y: 0 });
+      secondEvent.dispatchDown({ element, x: 10, y: 10 });
+      secondEvent.dispatchMove({ x: 20, y: 20 });
+      event.dispatchMove({ x: 40, y: 40 });
+      const eventUp = event.dispatchUp({
+        x: 50,
+        y: 50,
+        clientX: 60,
+        clientY: 60,
+        movementX: 10,
+        movementY: 10,
       });
-
-      element.dispatchEvent(firstPointerdownEvent);
-      element.dispatchEvent(secondPointerdownEvent);
-      document.dispatchEvent(secondPointermoveEvent);
-      document.dispatchEvent(secondAdditionalPointermoveEvent);
-      document.dispatchEvent(secondPointerupEvent);
       gestures.destroy();
+
+      expect(await gesturesEvent).toEqual({
+        type: GesturesEventType.ZoomEnd,
+
+        distance: 42.43,
+        scaleFactorFromPress: 3,
+
+        centerPageX: 35,
+        centerPageY: 35,
+        centerClientX: 40,
+        centerClientY: 40,
+        centerMovementX: 5,
+        centerMovementY: 5,
+
+        centerMovementXFromPress: 30,
+        centerMovementYFromPress: 30,
+        event: eventUp,
+      });
     });
-    it('should return the correct ZoomRelease event data when ZoomRelease has dispatched', (done) => {
-      gestures.changes$.pipe(filter((e) => e.type === GesturesEventType.ZoomRelease)).subscribe((e: DragGesturesEvent) => {
-        expect(e).toEqual({
-          type: GesturesEventType.ZoomRelease,
-
-          distance: 4976.95,
-          scaleFactorFromPress: 1.34,
-
-          centerPageX: 1050,
-          centerPageY: 2700,
-          centerClientX: 1050,
-          centerClientY: 1600,
-          centerMovementX: 250,
-          centerMovementY: 250,
-
-          centerMovementXFromPress: 500,
-          centerMovementYFromPress: 500,
-
-          event: secondPointerupEvent,
-        });
-        done();
+    it('should return the correct ZoomRelease event data when ZoomRelease has dispatched', async () => {
+      const gesturesEvent = firstValueFrom(gestures.changes$.pipe(filter((e) => e.type === GesturesEventType.ZoomRelease)));
+      event.dispatchDown({ x: 0, y: 0 });
+      secondEvent.dispatchDown({ element, x: 10, y: 10 });
+      secondEvent.dispatchMove({ x: 20, y: 20 });
+      event.dispatchMove({ x: 40, y: 40 });
+      const eventUp = event.dispatchUp({
+        x: 50,
+        y: 50,
+        clientX: 60,
+        clientY: 60,
+        movementX: 10,
+        movementY: 10,
       });
-
-      element.dispatchEvent(firstPointerdownEvent);
-      element.dispatchEvent(secondPointerdownEvent);
-      document.dispatchEvent(secondPointermoveEvent);
-      document.dispatchEvent(secondAdditionalPointermoveEvent);
-      document.dispatchEvent(secondPointerupEvent);
       gestures.destroy();
+
+      expect(await gesturesEvent).toEqual({
+        type: GesturesEventType.ZoomRelease,
+
+        distance: 42.43,
+        scaleFactorFromPress: 3,
+
+        centerPageX: 35,
+        centerPageY: 35,
+        centerClientX: 40,
+        centerClientY: 40,
+        centerMovementX: 5,
+        centerMovementY: 5,
+
+        centerMovementXFromPress: 30,
+        centerMovementYFromPress: 30,
+        event: eventUp,
+      });
     });
   });
 });

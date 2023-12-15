@@ -1,4 +1,4 @@
-import { createMockRequestAnimationFrame } from './create-mock-request-animation-frame';
+import { mockBasicRequestAnimationFrame, mockClientRect, mockRequestAnimationFrame } from './mock-request-animation-frame';
 
 function getMockRequestAnimationFrameCallback(duration: number, onCallback?: (timeStamp: number) => void) {
   let startTime: number;
@@ -23,29 +23,29 @@ function getMockRequestAnimationFrameCallback(duration: number, onCallback?: (ti
 describe('Util - mockRequestAnimationFrame', () => {
   it('should invoke the callback once when frame count is 1', () => {
     const mockCallback = jest.fn();
-    const { mockRequestAnimationFrame } = createMockRequestAnimationFrame({ frames: 1 });
+    const { mockRequestAnimationFrameFn } = mockRequestAnimationFrame({ frames: 1 });
 
     window.requestAnimationFrame(mockCallback);
 
     expect(mockCallback).toHaveBeenCalledTimes(1);
-    expect(mockRequestAnimationFrame).toHaveBeenCalledTimes(1);
+    expect(mockRequestAnimationFrameFn).toHaveBeenCalledTimes(1);
   });
 
   it('should return 0 for getLastTime and frameDuration when frame count is 1', () => {
-    const { getLastTime, frameDuration } = createMockRequestAnimationFrame({ frames: 1 });
+    const { getLastTime, frameDuration } = mockRequestAnimationFrame({ frames: 1 });
     window.requestAnimationFrame(jest.fn());
     expect(getLastTime()).toEqual(0);
     expect(frameDuration).toEqual(0);
   });
 
   it('should throw an error when duration is less than frame count', () => {
-    expect(() => createMockRequestAnimationFrame({ frames: 10, duration: 5 })).toThrow(
+    expect(() => mockRequestAnimationFrame({ frames: 10, duration: 5 })).toThrow(
       'The duration in `mockRequestAnimationFrame` cannot be less than frames.'
     );
   });
 
   it('should sequentially execute the requestAnimationFrame callback based on provided frame count', () => {
-    createMockRequestAnimationFrame({ frames: 100 });
+    mockRequestAnimationFrame({ frames: 100 });
     const mockCallback = getMockRequestAnimationFrameCallback(100);
 
     window.requestAnimationFrame(mockCallback);
@@ -67,14 +67,14 @@ describe('Util - mockRequestAnimationFrame', () => {
       })
     );
 
-    createMockRequestAnimationFrame({ frames, duration });
+    mockRequestAnimationFrame({ frames, duration });
     window.requestAnimationFrame(mockCallback);
 
     expect(mockCallback).toHaveBeenCalledTimes(frames);
   });
 
   it('should use a default duration of 100 when none is provided', () => {
-    const { frameDuration } = createMockRequestAnimationFrame({ frames: 3 });
+    const { frameDuration } = mockRequestAnimationFrame({ frames: 3 });
     const mockCallback = getMockRequestAnimationFrameCallback(100);
     window.requestAnimationFrame(mockCallback);
 
@@ -82,7 +82,7 @@ describe('Util - mockRequestAnimationFrame', () => {
   });
 
   it('should use default values for frames if not specified', () => {
-    createMockRequestAnimationFrame();
+    mockRequestAnimationFrame();
     const mockCallback = getMockRequestAnimationFrameCallback(100);
 
     window.requestAnimationFrame(mockCallback);
@@ -91,26 +91,26 @@ describe('Util - mockRequestAnimationFrame', () => {
   });
 
   it('should return the correct frameDuration based on the provided frame count', () => {
-    const { frameDuration } = createMockRequestAnimationFrame({ frames: 5 });
+    const { frameDuration } = mockRequestAnimationFrame({ frames: 5 });
     expect(frameDuration).toEqual(25);
   });
 
   it('should return unique frame IDs for consecutive window.requestAnimationFrame calls', () => {
-    createMockRequestAnimationFrame({ frames: 2 });
+    mockRequestAnimationFrame({ frames: 2 });
     const frameID1 = window.requestAnimationFrame(jest.fn());
     const frameID2 = window.requestAnimationFrame(jest.fn());
     expect(frameID1).not.toEqual(frameID2);
   });
 
   it('should return the correct getCurrentTime function based on the provided frame count', () => {
-    const { getLastTime } = createMockRequestAnimationFrame();
+    const { getLastTime } = mockRequestAnimationFrame();
     const mockCallback = getMockRequestAnimationFrameCallback(100);
     window.requestAnimationFrame(mockCallback);
     expect(getLastTime()).toEqual(100);
   });
 
   it('should return different getLastFrameID values for each frame', () => {
-    const { getLastFrameID } = createMockRequestAnimationFrame();
+    const { getLastFrameID } = mockRequestAnimationFrame();
     window.requestAnimationFrame(jest.fn());
     const firstFrameID = getLastFrameID();
     window.requestAnimationFrame(jest.fn());
@@ -129,7 +129,7 @@ describe('Util - mockRequestAnimationFrame', () => {
     });
     const mockCallback = getMockRequestAnimationFrameCallback(100);
 
-    createMockRequestAnimationFrame({ frames: 3, beforeEachFrame: mockBeforeEachFrame });
+    mockRequestAnimationFrame({ frames: 3, beforeEachFrame: mockBeforeEachFrame });
     window.requestAnimationFrame(mockCallback);
 
     expect(mockBeforeEachFrame).toHaveBeenCalledTimes(3);
@@ -138,20 +138,20 @@ describe('Util - mockRequestAnimationFrame', () => {
   it('should stop executing requestAnimationFrame callbacks based on provided stopOnFrames value', () => {
     const mockCallback = getMockRequestAnimationFrameCallback(100);
 
-    createMockRequestAnimationFrame({ frames: 3, stopOnFrames: 2 });
+    mockRequestAnimationFrame({ frames: 3, stopOnFrames: 2 });
     window.requestAnimationFrame(mockCallback);
 
     expect(mockCallback).toHaveBeenCalledTimes(2);
   });
 
   it('should return the mock function for cancelAnimationFrame', () => {
-    const { mockCancelAnimationFrame } = createMockRequestAnimationFrame();
-    expect(mockCancelAnimationFrame.mock).toBeDefined();
+    const { mockCancelAnimationFrameFn } = mockRequestAnimationFrame();
+    expect(mockCancelAnimationFrameFn.mock).toBeDefined();
   });
 
   it('should return the mock function for requestAnimationFrame', () => {
-    const { mockRequestAnimationFrame } = createMockRequestAnimationFrame();
-    expect(mockRequestAnimationFrame.mock).toBeDefined();
+    const { mockRequestAnimationFrameFn } = mockRequestAnimationFrame();
+    expect(mockRequestAnimationFrameFn.mock).toBeDefined();
   });
 
   it('should cease callback invocation when cancelAnimationFrame is called', () => {
@@ -162,11 +162,39 @@ describe('Util - mockRequestAnimationFrame', () => {
       }
     });
 
-    createMockRequestAnimationFrame({ frames: 6, beforeEachFrame: mockBeforeEachFrame });
+    mockRequestAnimationFrame({ frames: 6, beforeEachFrame: mockBeforeEachFrame });
 
     window.requestAnimationFrame(mockCallback);
 
     expect(mockCallback).toBeCalledTimes(2);
     expect(mockBeforeEachFrame).toBeCalledTimes(3);
+  });
+});
+
+describe('Util - mockBasicRequestAnimationFrame', () => {
+  it(`should mock requestAnimationFrame when the mock function has called`, () => {
+    mockBasicRequestAnimationFrame();
+    const mockFn = jest.fn();
+    const id = requestAnimationFrame(mockFn);
+
+    expect(typeof id).toBe('number');
+    expect(mockFn).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('Util - mockClientRect', () => {
+  it(`should return the mock client rect value the the getBoundingClientRect called`, () => {
+    const element = document.createElement('div');
+    mockClientRect(element, { width: 100, height: 200, top: 10, left: 20 });
+    expect(element.getBoundingClientRect()).toMatchObject({
+      width: 100,
+      height: 200,
+      x: 20,
+      y: 10,
+      left: 20,
+      top: 10,
+      right: 120,
+      bottom: 210,
+    });
   });
 });

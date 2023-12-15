@@ -53,16 +53,16 @@ export function getActiveListener(element: Node, event?: string): number {
   return count;
 }
 
-export function generateCustomEvent(name: string, data: Record<string, any> = {}): CustomEvent & Record<string, any> {
+export function generateCustomEvent<T extends Record<string, any>>(name: string, data: T = {} as T): CustomEvent & T {
   const customEvent = new CustomEvent(name) as CustomEvent & Record<string, any>;
 
   for (const key in data) {
     customEvent[key] = data[key];
   }
 
-  return customEvent;
+  return customEvent as CustomEvent & T;
 }
 
-export function clearCallbacks() {
+export function clearListenerCallbacks() {
   events.clear();
 }

@@ -33,12 +33,12 @@ interface MockRequestAnimationFrameOutput {
   /**
    * The mock function for cancelAnimationFrame
    */
-  mockCancelAnimationFrame: jest.SpyInstance;
+  mockCancelAnimationFrameFn: jest.SpyInstance;
 
   /**
    * The mock function for requestAnimationFrame
    */
-  mockRequestAnimationFrame: jest.SpyInstance;
+  mockRequestAnimationFrameFn: jest.SpyInstance;
 
   /**
    * The calculated duration of each frame in milliseconds.
@@ -77,7 +77,7 @@ interface MockRequestAnimationFrameOutput {
  * @example
  * const { frameDuration, getLastTime, getLastFrameID } = mockRequestAnimationFrame({ frames: 5, duration: 200 });
  */
-export function createMockRequestAnimationFrame({
+export function mockRequestAnimationFrame({
   frames = 2,
   duration = 100,
   beforeEachFrame,
@@ -93,10 +93,10 @@ export function createMockRequestAnimationFrame({
   let lastTimestamp = 0;
   let lastFrameID = 0;
   let hasCancelAnimationFrameCalled = false;
-  const mockCancelAnimationFrame = jest.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {
+  const mockCancelAnimationFrameFn = jest.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {
     hasCancelAnimationFrameCalled = true;
   });
-  const mockRequestAnimationFrame = jest.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => {
+  const mockRequestAnimationFrameFn = jest.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => {
     lastFrameID = Math.round(Math.random() * 1000000);
 
     if (frameCounter < stopOnFrames && !hasCancelAnimationFrameCalled) {
@@ -114,10 +114,34 @@ export function createMockRequestAnimationFrame({
   });
 
   return {
-    mockCancelAnimationFrame,
-    mockRequestAnimationFrame,
+    mockCancelAnimationFrameFn,
+    mockRequestAnimationFrameFn,
     frameDuration,
     getLastTime: () => lastTimestamp,
     getLastFrameID: () => lastFrameID,
   };
+}
+
+export function mockBasicRequestAnimationFrame() {
+  jest.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => {
+    cb(1);
+    return 0;
+  });
+}
+
+export function mockClientRect(
+  element: Element,
+  { width, height, left, top }: { width: number; height: number; top: number; left: number }
+) {
+  jest.spyOn(element, 'getBoundingClientRect').mockReturnValue({
+    ...element.getBoundingClientRect(),
+    width,
+    height,
+    x: left,
+    y: top,
+    left,
+    top,
+    right: left + width,
+    bottom: height + top,
+  });
 }
