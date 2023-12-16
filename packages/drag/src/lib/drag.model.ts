@@ -12,6 +12,12 @@ export interface DragOptions {
    * of the draggable element in relation to a specified boundary.
    */
   boundary?: DragBoundary;
+
+  /**
+   * The minimum movements in pixels that the draggable element must be moved
+   * along either the x or y axis to initiate the dragging process.
+   */
+  minMovements: number;
 }
 
 export interface DragBoundary {

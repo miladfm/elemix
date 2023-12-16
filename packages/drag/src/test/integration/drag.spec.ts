@@ -1542,7 +1542,52 @@ describe('Feature - Drag', () => {
   });
 
   describe('MinMovement Dragging', () => {
-    it(`should not the element when the movement is less than the defined minMovements threshold`, () => {});
-    it(`should move the element when the movement exceeds the minMovements threshold`, () => {});
+    let events$: Observable<DragGesturesEventType[]>;
+
+    beforeEach(() => {
+      drag = new Drag(element, { minMovements: 10 });
+
+      events$ = drag.events$.pipe(
+        map((e) => e.type),
+        toArray()
+      );
+    });
+
+    it(`should not start dragging when the x axis movement is less than the defined minMovements threshold`, (done) => {
+      events$.subscribe((types) => {
+        expect(types).not.toContain(GesturesEventType.DragStart);
+        done();
+      });
+      event.dispatchDown({ x: 0, y: 0 });
+      event.dispatchMove({ x: 9, y: 0 });
+      drag.destroy();
+    });
+    it(`should not start dragging when the y axis movement is less than the defined minMovements threshold`, (done) => {
+      events$.subscribe((types) => {
+        expect(types).not.toContain(GesturesEventType.DragStart);
+        done();
+      });
+      event.dispatchDown({ x: 0, y: 0 });
+      event.dispatchMove({ x: 0, y: 9 });
+      drag.destroy();
+    });
+    it(`should start dragging when the x axis movement is bigger than the defined minMovements threshold`, (done) => {
+      events$.subscribe((types) => {
+        expect(types).toContain(GesturesEventType.DragStart);
+        done();
+      });
+      event.dispatchDown({ x: 0, y: 0 });
+      event.dispatchMove({ x: 10, y: 0 });
+      drag.destroy();
+    });
+    it(`should start dragging when the y axis movement is bigger than the defined minMovements threshold`, (done) => {
+      events$.subscribe((types) => {
+        expect(types).toContain(GesturesEventType.DragStart);
+        done();
+      });
+      event.dispatchDown({ x: 0, y: 0 });
+      event.dispatchMove({ x: 0, y: 10 });
+      drag.destroy();
+    });
   });
 });

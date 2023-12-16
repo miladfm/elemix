@@ -7,12 +7,13 @@ export const createBasicDrag = (args: DragStoryType) => {
   wrapper.className = 'draggable-wrapper';
 
   const element = document.createElement('div');
-  element.className = 'draggable-element';
+  element.className = 'draggable-element draggable-element--inner';
 
   wrapper.appendChild(element);
 
   const drag = new Drag(element, {
     movementDirection: args.movementDirection,
+    minMovements: args.minMovements,
   });
 
   drag.events$.subscribe((event) => {
@@ -49,20 +50,20 @@ export const createBoundaryDrag = (args: DragStoryType) => {
   wrapper.appendChild(boundary);
   boundary.appendChild(element);
 
-  const drag = new Drag(element, {
-    movementDirection: args.movementDirection,
-    boundary: {
-      elem: boundary,
-      type: args.boundaryType,
-      bounceFactor: args.bounceFactor,
+  document.addEventListener('DOMContentLoaded', function () {
+    const drag = new Drag(element, {
+      movementDirection: args.movementDirection,
+      minMovements: args.minMovements,
+      boundary: {
+        elem: boundary,
+        type: args.boundaryType,
+        bounceFactor: args.bounceFactor,
+      },
+    });
 
-      bounceIntensity: args.bounceIntensity,
-      dampeningFactor: args.dampeningFactor,
-    } as any,
-  });
-
-  drag.events$.subscribe((event) => {
-    args.onPress(event);
+    drag.events$.subscribe((event) => {
+      args.onPress(event);
+    });
   });
 
   return wrapper;

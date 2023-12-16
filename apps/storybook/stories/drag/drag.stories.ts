@@ -4,6 +4,7 @@ import { DragBoundaryType, MovementDirection } from '@elemix/drag';
 
 export interface DragStoryType {
   movementDirection: MovementDirection;
+  minMovements: number;
   onPress: any;
   boundaryType: DragBoundaryType;
   bounceFactor: number;
@@ -19,6 +20,7 @@ const meta: Meta<DragStoryType> = {
   argTypes: {
     onPress: { action: 'OnPress', table: { disable: true } },
     movementDirection: { control: { type: 'select' }, options: Object.values(MovementDirection) },
+    minMovements: { control: { type: 'number' } },
   },
   args: {},
 };
@@ -28,6 +30,7 @@ export default meta;
 export const Basic: Story = {
   args: {
     movementDirection: MovementDirection.Both,
+    minMovements: 0,
   },
   render: (args) => createBasicDrag(args),
 };
@@ -36,16 +39,12 @@ export const Boundary: Story = {
   argTypes: {
     boundaryType: { control: { type: 'select' }, options: Object.values(DragBoundaryType) },
     bounceFactor: { control: { type: 'range', min: 0, max: 1, step: 0.01 } },
-
-    bounceIntensity: { control: { type: 'range', min: 0, max: 1, step: 0.01 } },
-    dampeningFactor: { control: { type: 'range', min: 0, max: 1, step: 0.01 } },
   },
   args: {
     movementDirection: MovementDirection.Both,
+    minMovements: 0,
     boundaryType: DragBoundaryType.Inner,
     bounceFactor: 1,
-    bounceIntensity: 0.5,
-    dampeningFactor: 0.5,
   },
   render: (args) => createBoundaryDrag(args),
 };

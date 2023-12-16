@@ -16,6 +16,7 @@ import { BoundaryPositionAdjuster } from './drag-boundary-position-adjusters';
 
 const DEFAULT_OPTIONS: DragOptions = {
   movementDirection: MovementDirection.Both,
+  minMovements: 0,
 };
 
 const DRAG_GESTURES_TYPE = [
@@ -62,7 +63,9 @@ export class Drag {
   constructor(selector: DomSelector, options: Partial<DragOptions> = {}) {
     this.options = { ...DEFAULT_OPTIONS, ...options };
     this.element = new Dom(selector);
-    this.gesture = new Gestures(this.element);
+    this.gesture = new Gestures(this.element, {
+      minDragMovements: this.options.minMovements,
+    });
     this.animation = new Animation(this.element);
 
     this.setPositionAdjuster();

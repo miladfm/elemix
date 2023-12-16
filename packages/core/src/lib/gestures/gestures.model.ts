@@ -34,6 +34,10 @@ export type ZoomGesturesEventType =
   | GesturesEventType.ZoomRelease;
 
 export interface GesturesOptions {
+  /**
+   * The minimum movements in pixels that the pointer event must be moved
+   * along either the x or y axis to initiate the dragging process.
+   */
   minDragMovements: number;
 }
 
