@@ -1,4 +1,4 @@
-import { createMockRequestAnimationFrame } from '@internal-lib/util-testing';
+import { mockRequestAnimationFrame } from '@internal-lib/util-testing';
 
 import { Animation } from '../../lib/animation/animation';
 import { AnimationProperties } from '../../lib/animation/animation.model';
@@ -84,7 +84,7 @@ describe('Feature - Animation', () => {
       );
     });
     it('should invoke the callback method during animate', async () => {
-      createMockRequestAnimationFrame({ frames: 3 });
+      mockRequestAnimationFrame({ frames: 3 });
       const animation = new Animation(divElement);
       const mockCallback = jest.fn();
       animation.addValueChangeListener(mockCallback);
@@ -413,10 +413,10 @@ describe('Feature - Animation', () => {
     });
     it('should apply all style changes to DOM element at next animation frame when apply method has called', () => {
       const animation = new Animation(divElement);
-      const { mockRequestAnimationFrame } = createMockRequestAnimationFrame({ stopOnFrames: 1 });
+      const { mockCancelAnimationFrameFn } = mockRequestAnimationFrame({ stopOnFrames: 1 });
       animation.setTranslate({ x: 10, y: 10 }).setDimension({ width: 200, height: 50 }).setScale(2).setOpacity(0.5).flipX().apply();
 
-      expect(mockRequestAnimationFrame).toHaveBeenCalledTimes(1);
+      expect(mockCancelAnimationFrameFn).toHaveBeenCalledTimes(1);
       expect(divElement.style.transform).toEqual('translate(10px, 10px) rotateX(180deg) rotateY(0deg) scale(2, 2)');
       expect(divElement.style.width).toEqual('200px');
       expect(divElement.style.height).toEqual('50px');
@@ -424,10 +424,10 @@ describe('Feature - Animation', () => {
     });
     it('should only apply specified style changes and not affect other properties at next animation frame when apply method is called', () => {
       const animation = new Animation(divElement);
-      const { mockRequestAnimationFrame } = createMockRequestAnimationFrame({ stopOnFrames: 1 });
+      const { mockCancelAnimationFrameFn } = mockRequestAnimationFrame({ stopOnFrames: 1 });
       animation.setTranslate({ x: 10, y: 10 }).setOpacity(0.5).apply();
 
-      expect(mockRequestAnimationFrame).toHaveBeenCalledTimes(1);
+      expect(mockCancelAnimationFrameFn).toHaveBeenCalledTimes(1);
       expect(divElement.style.transform).toEqual('translate(10px, 10px) rotateX(0deg) rotateY(0deg) scale(1, 1)');
       expect(divElement.style.width).toEqual('');
       expect(divElement.style.height).toEqual('');
@@ -447,13 +447,13 @@ describe('Feature - Animation', () => {
 
     it('should resolve a promise with true when ongoing animation has completed', async () => {
       const animation = new Animation(divElement);
-      createMockRequestAnimationFrame({ frames: 2 });
+      mockRequestAnimationFrame({ frames: 2 });
       const animatePromise = animation.setTranslate({ x: 500 }).animate();
       await expect(animatePromise).resolves.toEqual(true);
     });
     it('should resolve a promise with false when ongoing animation has stopped', async () => {
       const animation = new Animation(divElement);
-      createMockRequestAnimationFrame({ stopOnFrames: 1 });
+      mockRequestAnimationFrame({ stopOnFrames: 1 });
       const animatePromise = animation.setTranslate({ x: 500 }).animate();
       animation.stopAnimation();
       await expect(animatePromise).resolves.toEqual(false);
@@ -464,7 +464,7 @@ describe('Feature - Animation', () => {
 
       const mockCancelAnimationFrame = jest.spyOn(window, 'cancelAnimationFrame');
       const mockClearTimeout = jest.spyOn(global, 'clearTimeout');
-      createMockRequestAnimationFrame({ stopOnFrames: 1 });
+      mockRequestAnimationFrame({ stopOnFrames: 1 });
 
       animation.stopAnimation();
 
@@ -475,7 +475,7 @@ describe('Feature - Animation', () => {
       const mockCancelAnimationFrame = jest.spyOn(window, 'cancelAnimationFrame');
       const mockClearTimeout = jest.spyOn(global, 'clearTimeout');
       const animation = new Animation(divElement);
-      createMockRequestAnimationFrame({
+      mockRequestAnimationFrame({
         frames: 6,
         beforeEachFrame: (_, frame) => {
           if (frame === 4) {
@@ -489,7 +489,7 @@ describe('Feature - Animation', () => {
       expect(mockCancelAnimationFrame).toHaveBeenCalledTimes(1);
     });
     it('should cancel any existing animations before starting a new one', () => {
-      const { getLastFrameID } = createMockRequestAnimationFrame({ stopOnFrames: 1 });
+      const { getLastFrameID } = mockRequestAnimationFrame({ stopOnFrames: 1 });
       jest.spyOn(window, 'cancelAnimationFrame');
       const animation = new Animation(divElement);
 
@@ -502,7 +502,7 @@ describe('Feature - Animation', () => {
     });
 
     it('should update DOM attributes consistently during the animation', async () => {
-      createMockRequestAnimationFrame({
+      mockRequestAnimationFrame({
         frames: 3,
         beforeEachFrame: (_, frame) => {
           if (frame === 2) {
@@ -537,7 +537,7 @@ describe('Feature - Animation', () => {
     it('should complete the animation within the specified duration', async () => {
       // const { getTotalDuration, frameDuration } = mockRequestAnimationFrameWithFPS(100);
       const duration = 150;
-      const { frameDuration, getLastTime } = createMockRequestAnimationFrame({ frames: 45, duration });
+      const { frameDuration, getLastTime } = mockRequestAnimationFrame({ frames: 45, duration });
       const animation = new Animation(divElement);
 
       await animation.setDimension({ width: 100 }).animate({ duration });
@@ -555,7 +555,7 @@ describe('Feature - Animation', () => {
     });
     it('should update DOM attributes according to the provided easing functions', async () => {
       const mockEaseIn = jest.fn().mockImplementation((progress) => progress * progress);
-      createMockRequestAnimationFrame({
+      mockRequestAnimationFrame({
         frames: 3,
         beforeEachFrame: (_, frame) => {
           if (frame === 2) {

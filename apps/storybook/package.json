@@ -21,6 +21,9 @@
     "react-dom": "^18.2.0",
     "storybook": "^7.6.3",
     "tsconfig-paths-webpack-plugin": "^4.1.0",
+    "storybook-dark-mode": "^3.0.3",
+    "@storybook/manager-api": "^7.6.5",
+    "@storybook/theming": "^7.6.5",
     "webpack": "^5.89.0"
   },
   "type": "commonjs"

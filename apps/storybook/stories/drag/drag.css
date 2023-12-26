@@ -21,18 +21,17 @@ body {
   align-items: center;
   width: 300px;
   height: 300px;
-  border: 1px solid #c6c6c6;
-  background-color: #f1f1f1;
+  border: 1px solid #b6b4b4;
   border-radius: 6px;
 }
 
 .draggable-element {
   flex-shrink: 0;
 
-  box-shadow: rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 2px 6px 2px;
   cursor: pointer;
   border-radius: 6px;
-  background-color: #fff;
+  background-color: #8b40ee;
+  opacity: 0.5;
 }
 
 .draggable-element--inner {
@@ -43,7 +42,6 @@ body {
 .draggable-element--outer {
   width: 400px;
   height: 400px;
-  opacity: 0.5;
 }
 
 .draggable-element--auto {

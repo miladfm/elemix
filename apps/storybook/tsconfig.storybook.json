@@ -5,6 +5,7 @@
   },
   "exclude": ["src/**/*.spec.ts", "src/**/*.test.ts"],
   "include": [
+    "../../@types/index.d.ts",
     "stories/**/*.stories.ts",
     "stories/**/*.stories.js",
     "stories/**/*.stories.jsx",
