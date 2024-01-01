@@ -1,13 +1,8 @@
 import { Preview } from '@storybook/html';
-import { themes } from '@storybook/theming';
-import { dark, light } from './theme';
+import { DocsContainer } from '../components/docs-container';
+import { DocPage } from '../components/docs-page';
 
 const parameters: Record<string, any> = {
-  darkMode: {
-    dark: { ...dark, default: true },
-    light: { ...themes.normal, ...light },
-    stylePreview: true,
-  },
   backgrounds: {
     disable: true,
     grid: {
@@ -17,6 +12,14 @@ const parameters: Record<string, any> = {
   viewMode: 'docs',
   previewTabs: {
     canvas: { hidden: false },
+  },
+  docs: {
+    // source: {
+    //   excludeDecorators: true,
+    //   type: 'source',
+    // },
+    container: DocsContainer,
+    page: DocPage,
   },
   viewport: {
     viewports: {},
@@ -36,6 +39,8 @@ const parameters: Record<string, any> = {
   },
   actions: { argTypesRegex: '^on[A-Z].*' },
   controls: {
+    // disable: true,
+    // expanded: true,
     matchers: {
       color: /(background|color)$/i,
       date: /Date$/i,
@@ -45,4 +50,15 @@ const parameters: Record<string, any> = {
 
 export default {
   parameters,
+  // decorators: [
+  //   (story) => {
+  //     const storyResult = story({test: 'Elemix'});
+  //
+  //     const elem = document.createElement('div');
+  //     elem.style.padding = '24px';
+  //     elem.style.background = 'red';
+  //     elem.appendChild(storyResult);
+  //     return elem;
+  //   }
+  // ]
 } satisfies Preview;

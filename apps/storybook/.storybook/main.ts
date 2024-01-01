@@ -27,6 +27,7 @@ function registerTsPaths(options: { configFile: string; config: Configuration })
 
 const config: StorybookConfig = {
   stories: ['../stories/**/*.mdx', '../stories/**/*.stories.@(js|jsx|mjs|ts|tsx)'],
+  staticDirs: [{ from: '../images', to: 'images' }],
   addons: [
     '@storybook/addon-links',
     {
@@ -36,7 +37,7 @@ const config: StorybookConfig = {
         outline: false,
       },
     },
-    'storybook-dark-mode',
+    // 'storybook-dark-mode',
   ],
   framework: {
     name: '@storybook/html-webpack5',
@@ -46,10 +47,9 @@ const config: StorybookConfig = {
       },
     },
   },
-  // eslint-disable-next-line @typescript-eslint/no-shadow
-  webpackFinal: (config) => {
-    registerTsPaths({ config, configFile: tsConfigPath });
-    return config;
+  webpackFinal: (webpackConfig) => {
+    registerTsPaths({ config: webpackConfig, configFile: tsConfigPath });
+    return webpackConfig;
   },
 };
 

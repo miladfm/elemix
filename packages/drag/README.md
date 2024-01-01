@@ -1,11 +1,18 @@
-# drag
+<div style="display: flex; justify-content: center; align-content: center">
+    <img src="images/drag-banner.svg" width="100%" style="max-width: 950px; text-align: center; margin: 0px auto 48px auto" />
+</div>
 
-This library was generated with [Nx](https://nx.dev).
+# Installation
+Run the following command from the root of your project
 
-## Building
+```
+npm install @elemix/drag
+```
 
-Run `nx build drag` to build the library.
+# Basic usage
 
-## Running unit tests
+```
+import { Drag } from '@elemix/drag';
 
-Run `nx test drag` to execute the unit tests via [Jest](https://jestjs.io).
+new Drag(element);
+```

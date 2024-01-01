@@ -1,8 +1,9 @@
 import './drag.css';
 import { DragStoryType } from './drag.stories';
 import { Drag, DragBoundaryType } from '@elemix/drag';
+import { StoryContext } from '@storybook/html';
 
-export const createBasicDrag = (args: DragStoryType) => {
+export const createBasicDrag = (args: DragStoryType, _context: StoryContext<DragStoryType>) => {
   const wrapper = document.createElement('div');
   wrapper.className = 'draggable-wrapper';
 

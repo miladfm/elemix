@@ -1,5 +1,5 @@
 import { create } from '@storybook/theming';
-import logo from './assets/logo.svg';
+import logo from '../images/logo.svg';
 
 export const light = create({
   base: 'light',
@@ -52,40 +52,40 @@ export const dark = create({
   brandUrl: 'https://github.com/miladfm/elemix',
   brandImage: logo,
 
-  colorPrimary: '#8d40ee',
-  colorSecondary: '#8d40ee',
+  colorPrimary: '#21C55D',
+  colorSecondary: '#21C55D',
 
   // UI
-  appBg: '#151a2d',
-  appContentBg: '#151a2d',
-  appBorderColor: '#484b5a',
+  appBg: '#151517',
+  appContentBg: '#151517', // Controller BG
+  appBorderColor: 'hsla(0,0%,100%,.1)', // All borders
 
   // Text colors
-  textColor: '#b8bac0',
-  textInverseColor: '#0c0f1a',
+  textColor: '#a1a1aa',
+  textInverseColor: 'blue',
 
   // Toolbar default and active colors
-  barTextColor: '#7e8291',
-  barSelectedColor: '#8d40ee', // Selected controller tab
-  barBg: '#252a3b',
+  barTextColor: '#F4F4F5', // Controller: toolbar text, icon and reset icon
+  barSelectedColor: '#21C55D', // Selected controller tab
+  barBg: '#151517',
 
-  buttonBg: '#151a2d',
-  buttonBorder: '#626672',
+  buttonBg: '#151517',
+  buttonBorder: 'hsla(0,0%,100%,.1)',
 
   // BIZARRE
   booleanBg: '#151a2d',
   booleanSelectedBg: '#2d1c51',
 
   // Form colors
-  inputBg: '#151a2d',
-  inputBorder: '#626672',
-  inputTextColor: '#b8bac0',
-  inputBorderRadius: 4,
+  inputBg: '#151517',
+  inputBorder: 'hsla(0,0%,100%,.1)',
+  inputTextColor: '#e4e4e7',
+  inputBorderRadius: 6,
 
-  appPreviewBg: 'transparent', // The default value of the story background and will be overridden after the Theme has applied
+  appPreviewBg: '#151517', // The default value of the story background and will be overridden after the Theme has applied
   appBorderRadius: 4, // Toolbar menu overlay radius
   fontBase: 'Nunito Sans, sans-serif',
   fontCode: 'Nunito Sans, sans-serif',
-  textMutedColor: '#798186', // Font color of sidenav title and search box text
+  textMutedColor: '#a1a1aa', // Font color of sidenav title and search box text
   barHoverColor: '#fff',
 });

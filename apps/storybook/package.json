@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "scripts": {
     "storybook": "storybook dev -p 6006 --debug-webpack",
+    "compodoc": "compodoc -p '../../tsconfig.json' -e 'json' -d './tmp'",
     "build-storybook": "storybook build"
   },
   "dependencies": {
@@ -10,20 +11,24 @@
     "rxjs": "7.8.1"
   },
   "devDependencies": {
+    "@compodoc/compodoc": "^1.1.23",
+    "@storybook/addon-docs": "^7.6.6",
     "@storybook/addon-essentials": "7.6.3",
     "@storybook/addon-interactions": "7.6.3",
     "@storybook/addon-links": "7.6.3",
+    "@storybook/addons": "^7.6.6",
     "@storybook/blocks": "7.6.3",
-    "@storybook/html": "7.6.3",
+    "@storybook/html": "^7.6.6",
     "@storybook/html-webpack5": "7.6.3",
+    "@storybook/manager-api": "^7.6.5",
     "@storybook/test": "7.6.3",
+    "@storybook/theming": "^7.6.5",
+    "@types/react": "^18.2.46",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "storybook": "^7.6.3",
-    "tsconfig-paths-webpack-plugin": "^4.1.0",
     "storybook-dark-mode": "^3.0.3",
-    "@storybook/manager-api": "^7.6.5",
-    "@storybook/theming": "^7.6.5",
+    "tsconfig-paths-webpack-plugin": "^4.1.0",
     "webpack": "^5.89.0"
   },
   "type": "commonjs"

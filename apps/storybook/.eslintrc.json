@@ -8,7 +8,9 @@
     },
     {
       "files": ["*.ts", "*.tsx"],
-      "rules": {}
+      "rules": {
+        "max-lines-per-function": ["off"]
+      }
     },
     {
       "files": ["*.js", "*.jsx"],

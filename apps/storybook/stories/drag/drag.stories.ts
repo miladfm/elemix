@@ -1,6 +1,7 @@
 import { Meta, StoryObj } from '@storybook/html';
 import { createBasicDrag, createBoundaryDrag } from './drag';
 import { DragBoundaryType, MovementDirection } from '@elemix/drag';
+import README from '../../../../packages/drag/README.md';
 
 export interface DragStoryType {
   movementDirection: MovementDirection;
@@ -16,23 +17,53 @@ export interface DragStoryType {
 type Story = StoryObj<DragStoryType>;
 
 const meta: Meta<DragStoryType> = {
-  title: 'Drag/Basic',
+  title: 'Drag',
+  tags: ['autodocs'],
   argTypes: {
     onPress: { action: 'OnPress', table: { disable: true } },
-    movementDirection: { control: { type: 'select' }, options: Object.values(MovementDirection) },
-    minMovements: { control: { type: 'number' } },
+    movementDirection: {
+      control: 'select',
+      options: Object.values(MovementDirection),
+      description: 'Overwritten description',
+      name: 'Test Name',
+      type: 'string',
+    },
+    minMovements: { control: 'number', description: 'Overwritten description', defaultValue: 0 },
+    // label: {
+    //   name: 'ABXDE ',
+    //   description: 'XYZ Label',
+    //   control: { type: 'text' },
+    //   table: { type: { summary: 'The label contents', } }
+    // },
   },
   args: {},
+  parameters: {
+    componentSubtitle:
+      'A tiny drag and drop library enabling any DOM element to be draggable via mouse or touch - simply click or tap the handle and hold.',
+    docs: {
+      overviewMarkdown: README,
+      apiRefPath: 'packages/drag/src/lib/drag.model.ts',
+      source: {
+        code: 'DEFAULT SOURCE CODE',
+      },
+      description: {
+        component: 'description component',
+      },
+    },
+  },
 };
 
 export default meta;
 
+/**
+ * This is the basic component
+ */
 export const Basic: Story = {
   args: {
     movementDirection: MovementDirection.Both,
     minMovements: 0,
   },
-  render: (args) => createBasicDrag(args),
+  render: (args, context) => createBasicDrag(args, context),
 };
 
 export const Boundary: Story = {
@@ -45,6 +76,22 @@ export const Boundary: Story = {
     minMovements: 0,
     boundaryType: DragBoundaryType.Inner,
     bounceFactor: 1,
+  },
+  parameters: {
+    docs: {
+      source: {
+        language: 'js',
+        code: `
+import { Drag } from '@elemix/drag';
+
+new Drag(element, {
+  boundary: {
+    elem: '.boundary'
+  },
+});
+        `,
+      },
+    },
   },
   render: (args) => createBoundaryDrag(args),
 };

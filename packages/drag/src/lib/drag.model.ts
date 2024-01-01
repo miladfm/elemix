@@ -15,11 +15,15 @@ export interface DragOptions {
 
   /**
    * The minimum movements in pixels that the draggable element must be moved
-   * along either the x or y axis to initiate the dragging process.
+   *
+   * @default 1
    */
   minMovements: number;
 }
 
+/**
+ * Test document Test document Test document Test document Test document Test document Test document Test document Test document Test document Test document Test document Test document Test document
+ */
 export interface DragBoundary {
   /**
    * Identifies the boundary element. This element is the reference within which or around which
@@ -44,7 +48,7 @@ export interface DragBoundary {
    * and a slower dampening, leading to a longer-lasting bounce effect. Conversely, a higher value
    * results in a subtler bounce and quicker settling.
    *
-   * The default value is 1 (No bounce effect)
+   * @default 1 - No bounce effect
    */
   bounceFactor?: number;
 }
@@ -95,11 +99,39 @@ export enum DragBoundaryType {
   Auto = 'auto',
 }
 
+/**
+ * Hooks providing customizable behavior at different stages of a drag operation.
+ * These functions allow for additional processing or side effects in response to drag events.
+ */
 export interface DragPositionAdjusterHooks {
+  /**
+   * Called when the drag gesture is initially detected, typically on a mousedown or touchstart event.
+   * This hook allows for preliminary processing or setup when the user first interacts with the draggable element.
+   */
   onPress?(event: DragGesturesEvent, option?: DragOptions): void;
+
+  /**
+   * Called when the drag operation officially starts, usually after the draggable element has moved beyond a certain threshold.
+   * This hook is useful for setting up state or performing actions that are specific to the start of a drag motion.
+   */
   onStart?(event: DragGesturesEvent, option?: DragOptions): void;
+
+  /**
+   * The core function that adjusts the position of the draggable element.
+   * This function is called repeatedly during the drag operation and is responsible for calculating the new position of the element based on the drag events and configuration.
+   */
   adjuster(nextPosition: Coordinate, config?: DragPositionAdjusterConfig): Coordinate;
+
+  /**
+   * Called when the drag operation is ending, typically on a mouseup or touchend event.
+   * This hook is useful for performing cleanup or finalization tasks at the end of a drag.
+   */
   onEnd?(event: DragGesturesEvent, option?: DragOptions): void;
+
+  /**
+   * Called when the user releases the draggable element, signaling the completion of the drag operation.
+   * This hook differs from `onEnd` in that it specifically handles the release action, which may involve additional considerations like dropping the element onto a target.
+   */
   onRelease?(event: DragGesturesEvent, option?: DragOptions): void;
 }
 

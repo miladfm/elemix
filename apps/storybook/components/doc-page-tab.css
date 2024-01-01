@@ -1,0 +1,50 @@
+.tab-toolbar__wrapper {
+    height: 48px;
+    position: relative;
+    display: flex;
+    width: fit-content;
+    align-items: center;
+    margin: 250px auto 0px auto;
+    padding: 0px 12px;
+    background-color: rgba(6,17,24,.16);
+    border: 1px solid rgba(166,216,221,.08);
+    border-radius: 999px;
+    box-sizing: border-box;
+}
+
+.tab-toolbar__tab-svg {
+    stroke: currentColor;
+}
+
+.tab-toolbar__wrapper .tab-toolbar__tab {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0px 16px;
+    color: rgba(202, 236, 241, 0.7);
+    cursor: pointer;
+}
+
+.tab-toolbar__wrapper .tab-toolbar__tab:hover,
+.tab-toolbar__wrapper .tab-toolbar__tab.tab-toolbar__tab--selected {
+    color: rgb(202, 236, 241);
+}
+
+.tab-toolbar__wrapper .tab-toolbar__tab:not(:first-child) {
+    margin-left: 4px;
+}
+
+.tab-toolbar__wrapper .tab-toolbar__tab .tap-toolbar__tab-text {
+    margin-left: 10px;
+    white-space: nowrap;
+}
+
+.tab-toolbar__wrapper .tap-toolbar__indicator {
+    background-color: rgba(166, 216, 221, 0.15);
+    position: absolute;
+    height: 38px;
+    pointer-events: none;
+    opacity: 0;
+    touch-action: none;
+    transition: all 0.15s cubic-bezier(.4,0,.2,1);
+}
