@@ -1,4 +1,4 @@
-name: Publish Storybook
+name: "Publish Storybook"
 
 on: workflow_dispatch
 
