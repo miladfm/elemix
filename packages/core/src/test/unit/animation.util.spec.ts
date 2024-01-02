@@ -18,7 +18,7 @@ describe('Util - getTransform2dValue', () => {
 
   it('should return a transformation that includes both custom scale and rotate values when they are provided', () => {
     const result = getTransform2dValue({ scaleX: 2, scaleY: 3, rotateX: 30, rotateY: 40 });
-    expect(result).toBe('translate(0px, 0px) scale(1, 1) scaleX(2) scaleY(3) rotateY(40deg) rotateX(30deg)');
+    expect(result).toBe('translate(0px, 0px) rotateX(30deg) rotateY(40deg) scale(1, 1) scaleX(2) scaleY(3)');
   });
 
   it('should return a transformation that ignores null or undefined values when they are provided', () => {

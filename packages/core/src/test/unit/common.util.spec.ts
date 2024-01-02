@@ -1,4 +1,4 @@
-import { deepClone, deepmerge, getObjectDiff, isImage } from '../../lib/common/common.util';
+import { deepClone, deepmerge, getObjectDiff, isClassRef, isImage } from '../../lib/common/common.util';
 
 describe('Util - deepClone', () => {
   it('should return the primitive type as is when a primitive type is provided', () => {
@@ -132,5 +132,51 @@ describe('Util - isImage', () => {
 
   it('should return false when passed undefined', () => {
     expect(isImage(undefined)).toBe(false);
+  });
+});
+
+describe('Util - isClassRef', () => {
+  it('should return true for a class constructor', () => {
+    class MyClass {}
+    expect(isClassRef(MyClass)).toBe(true);
+  });
+
+  it('should return false for a function not using class syntax', () => {
+    function notAClass() {}
+    expect(isClassRef(notAClass)).toBe(false);
+  });
+
+  it('should return true for an anonymous class', () => {
+    const AnonymousClass = class {};
+    expect(isClassRef(AnonymousClass)).toBe(true);
+  });
+
+  it('should return false for an arrow function', () => {
+    const arrowFunction = () => {};
+    expect(isClassRef(arrowFunction)).toBe(false);
+  });
+
+  it('should return false for a string', () => {
+    expect(isClassRef('string')).toBe(false);
+  });
+
+  it('should return false for a number', () => {
+    expect(isClassRef(42)).toBe(false);
+  });
+
+  it('should return false for null', () => {
+    expect(isClassRef(null)).toBe(false);
+  });
+
+  it('should return false for an array', () => {
+    expect(isClassRef([])).toBe(false);
+  });
+
+  it('should return false for an object', () => {
+    expect(isClassRef({})).toBe(false);
+  });
+
+  it('should return false for undefined', () => {
+    expect(isClassRef(undefined)).toBe(false);
   });
 });

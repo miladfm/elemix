@@ -4,11 +4,11 @@ import { isNotNullish } from '../common/ensure.util';
 export function getTransform2dValue({ x = 0, y = 0, scale = 1, scaleX, scaleY, rotateX, rotateY }: Partial<TransformProperty>): string {
   const transformations = [
     `translate(${x}px, ${y}px)`,
+    isNotNullish(rotateX) ? `rotateX(${rotateX}deg)` : '',
+    isNotNullish(rotateY) ? `rotateY(${rotateY}deg)` : '',
     `scale(${scale}, ${scale})`,
     isNotNullish(scaleX) ? `scaleX(${scaleX})` : '',
     isNotNullish(scaleY) ? `scaleY(${scaleY})` : '',
-    isNotNullish(rotateY) ? `rotateY(${rotateY}deg)` : '',
-    isNotNullish(rotateX) ? `rotateX(${rotateX}deg)` : '',
   ];
 
   return transformations.filter(Boolean).join(' ');

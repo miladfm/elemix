@@ -1,5 +1,5 @@
 import { isObject } from './ensure.util';
-import { AnyObject, DeepPartial } from './common.model';
+import { AnyObject, Class, DeepPartial } from './common.model';
 
 export function deepClone<T>(obj: T): T {
   if (obj === null || typeof obj !== 'object') {
@@ -23,9 +23,9 @@ export function deepClone<T>(obj: T): T {
   return objCopy;
 }
 
-export function deepmerge<T extends AnyObject>(target: T, source: DeepPartial<T>): T {
+export function deepmerge<T>(target: T, source: DeepPartial<T>): T {
   if (isObject(target) && isObject(source)) {
-    const output: AnyObject = { ...target };
+    const output: AnyObject = deepClone(target);
 
     for (const key in source) {
       const sourceValue = source[key];
@@ -54,12 +54,15 @@ export function getObjectDiff<T extends AnyObject>(obj1: T, obj2: T): Partial<T>
 
   for (const key in obj1) {
     if (Object.hasOwn(obj2, key)) {
-      if (typeof obj1[key] === 'object' && typeof obj2[key] === 'object') {
+      const areBothObjects = typeof obj1[key] === 'object' && typeof obj2[key] === 'object';
+      const isDifferent = obj1[key] !== obj2[key];
+
+      if (areBothObjects) {
         const nestedDiff = getObjectDiff(obj1[key], obj2[key]);
         if (Object.keys(nestedDiff).length > 0) {
           diff[key] = nestedDiff;
         }
-      } else if (obj1[key] !== obj2[key]) {
+      } else if (isDifferent) {
         diff[key] = obj2[key];
       }
     } else {
@@ -78,4 +81,8 @@ export function getObjectDiff<T extends AnyObject>(obj1: T, obj2: T): Partial<T>
 
 export function isImage(element: unknown): element is HTMLImageElement {
   return element instanceof HTMLImageElement;
+}
+
+export function isClassRef<T>(func: any): func is Class<T> {
+  return typeof func === 'function' && /^class\s/.test(Function.prototype.toString.call(func));
 }

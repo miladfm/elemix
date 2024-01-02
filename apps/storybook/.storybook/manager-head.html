@@ -1,0 +1,64 @@
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,500;6..12,700&display=swap" rel="stylesheet">
+
+<style type="text/css">
+    .sidebar-item,
+    .search-result-item {
+        padding: 6px 8px !important;
+        font-size: 14px !important;
+        font-weight: 600 !important;
+        line-height: normal;
+        display: flex;
+        align-items: center !important;
+        border-radius: 6px;
+    }
+
+    .sidebar-item svg,
+    .search-result-item svg {
+        display: none;
+        color: inherit;
+    }
+
+    .sidebar-item a,
+    .search-result-item a {
+        font-size: inherit;
+        padding-top: 0px !important;
+        padding-bottom: 0px !important;
+        padding-left: 12px !important;
+    }
+
+    div.sidebar-item,
+    div.search-result-item {
+        margin: 6px 24px;
+    }
+
+    button.sidebar-item,
+    button.search-result-item {
+        margin: 6px 12px;
+        width: calc(100% - 24px);
+    }
+
+    div.sidebar-item[data-selected="true"],
+    div.search-result-item[data-selected="true"] {
+        background: hsla(0,0%,100%,.1) !important;
+    }
+
+    .sidebar-item:hover,
+    .search-result-item:hover,
+    .sidebar-item:focus,
+    .search-result-item:focus {
+        background: hsla(0,0%,100%,.05) !important;
+    }
+
+    sidebar-item[data-selected="true"]:hover,
+    search-result-item[data-selected="true"]:hover,
+    sidebar-item[data-selected="true"]:focus,
+    search-result-item[data-selected="true"]:focus {
+        background: hsla(0,0%,100%,.1) !important;
+    }
+
+    .sidebar-container {
+        background: rgba(0,0,0,.2);
+    }
+</style>

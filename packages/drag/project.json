@@ -1,0 +1,37 @@
+{
+  "name": "drag",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/drag/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:swc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/drag",
+        "main": "packages/drag/src/index.ts",
+        "tsConfig": "packages/drag/tsconfig.lib.json",
+        "assets": ["packages/drag/*.md"]
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs drag {args.ver} {args.tag}",
+      "dependsOn": ["build"]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/drag/**/*.ts", "packages/drag/package.json"]
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "packages/drag/jest.config.ts"
+      }
+    }
+  },
+  "tags": []
+}

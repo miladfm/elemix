@@ -1,7 +1,6 @@
 import { domSelector } from './dom.util';
 import { toStr } from '../common/ensure.util';
 import { CssStylesKey, Dimensions } from '../common/common.model';
-import { parseElementTransform } from './dom-parse-transform.util';
 
 export type DomType = HTMLElement | SVGSVGElement;
 export type DomSelector = Dom<DomType> | HTMLElement | string | Node;
@@ -50,10 +49,6 @@ export class Dom<T extends DomType = HTMLElement> {
       width: this.width,
       height: this.height,
     };
-  }
-
-  public getTransform() {
-    return parseElementTransform(this.nativeElement);
   }
 
   public getOpacity() {

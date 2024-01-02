@@ -7,11 +7,22 @@
       "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
       "extends": [],
       "rules": {
+        "@typescript-eslint/no-unused-vars": [
+          "error",
+          {
+            "vars": "all",
+            "varsIgnorePattern": "^_",
+            "args": "after-used",
+            "argsIgnorePattern": "^_",
+            "ignoreRestSiblings": true,
+            "caughtErrors": "none"
+          }
+        ],
         "@nx/enforce-module-boundaries": [
           "error",
           {
             "enforceBuildableLibDependency": true,
-            "allow": [],
+            "allow": ["../../../../packages/drag/README.md"],
             "depConstraints": [
               {
                 "sourceTag": "*",
@@ -26,28 +37,27 @@
       "files": ["*.ts", "*.tsx"],
       "extends": ["plugin:@nx/typescript"],
       "rules": {
+        "@typescript-eslint/no-explicit-any": "off",
         "indent": ["error", 2, { "SwitchCase": 1 }],
         "constructor-super": ["error"],
         "semi": ["error", "always"],
         "camelcase": ["error"],
         "arrow-body-style": ["error", "as-needed"],
-        "complexity": ["error", { "max": 10 }],
+        "complexity": ["error", { "max": 12 }],
         "curly": ["error"],
         "default-case-last": ["error"],
         "default-param-last": ["error"],
         "dot-notation": "error",
         "eqeqeq": ["error"],
         "func-name-matching": ["error"],
-        "max-classes-per-file": ["error", 1],
         "max-depth": ["error", 4],
         "max-lines": ["error", { "max": 400, "skipBlankLines": true, "skipComments": true }],
         "max-lines-per-function": ["error", { "max": 65, "skipComments": true }],
         "max-nested-callbacks": ["error", 3],
-        "max-params": ["error", 3],
+        "max-params": ["error", 4],
         "max-statements": ["error", 18],
         "no-alert": ["error"],
         "no-console": ["error"],
-        "no-confusing-arrow": ["error"],
         "no-empty-function": ["error"],
         "no-eval": ["error"],
         "no-extend-native": ["error"],
@@ -55,7 +65,6 @@
         "no-mixed-operators": ["error"],
         "no-multi-assign": ["error"],
         "no-param-reassign": ["error"],
-        "no-return-assign": ["error"],
         "no-script-url": ["error"],
         "no-shadow": "off",
         "@typescript-eslint/no-shadow": ["error"],
@@ -76,6 +85,7 @@
         "jest": true
       },
       "rules": {
+        "dot-notation": "off",
         "max-lines-per-function": ["off"],
         "no-empty-function": ["off"],
         "@typescript-eslint/ban-ts-comment": ["off"],

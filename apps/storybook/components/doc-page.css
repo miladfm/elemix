@@ -1,0 +1,65 @@
+.doc__wrapper {
+    padding: 0 24px 200px 24px !important;
+}
+
+.doc__wrapper * {
+    box-sizing: border-box;
+    margin: 0;
+}
+
+.doc__header {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-content: center;
+}
+
+
+.doc__header > * {
+    text-align: center;
+    margin-bottom: 24px !important;
+}
+
+.doc__tabs {
+    margin-top: 64px !important;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    z-index: 1;
+}
+
+.tab-toolbar__wrapper {
+    margin: 0 auto 32px auto !important;
+}
+
+.doc__tabs-bg {
+    position: absolute;
+    top: -50px;
+    left: 0;
+    filter: blur(64px);
+    touch-action: none;
+    pointer-events: none;
+    z-index: -1;
+}
+
+
+.doc__table-wrapper {
+    margin-bottom: 86px !important;
+}
+
+.doc__table-header {
+    margin-top: 48px !important;
+}
+
+.doc__table {
+    width: 100%;
+}
+
+.doc__table--center {
+    text-align: center;
+}
+
+.doc__example-wrapper h2 {
+    margin: 0 !important;
+}

@@ -1,0 +1,31 @@
+name: "Publish Storybook"
+
+on: workflow_dispatch
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '16.x'
+
+      - name: Install Dependencies
+        uses: ./.github/actions/pnpm-install
+
+      - name: Build Storybook
+        run: npx nx run storybook:build-storybook
+
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@4.1.4
+        with:
+          branch: gh-pages
+          folder: dist/storybook/storybook
+          token: ${{ secrets.GITHUB_TOKEN }}

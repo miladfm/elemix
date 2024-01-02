@@ -55,10 +55,11 @@ it('should throw an error message for invalid duration', async () => {
 ```
 
 ##### Testing Internal State Changes
+
 ```javascript
 it('should set isAnimating to false when the animation completes', async () => {
   const animation = new Animation(divElement);
-  createMockRequestAnimationFrame({ frames: 2 });
+  mockRequestAnimationFrame({ frames: 2 });
   await animation.animate();
   expect(animation.isAnimating).toEqual(false);
 });
@@ -90,9 +91,10 @@ Integration tests validate that different units of the application work together
 #### Examples
 
 ##### Testing Multiple Calls to Animate Method
+
 ```javascript
 it('should terminate any existing animation before starting a new one', () => {
-  const { getLastFrameID } = createMockRequestAnimationFrame({ stopOnFrames: 1});
+  const { getLastFrameID } = mockRequestAnimationFrame({ stopOnFrames: 1 });
   jest.spyOn(window, 'cancelAnimationFrame');
   const animation = new Animation(divElement);
 
