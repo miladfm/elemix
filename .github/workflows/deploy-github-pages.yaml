@@ -1,9 +1,9 @@
 name: Build and Publish Storybook to GitHub Pages
 
 on:
-  push:
-    branches:
-      - feat/drag
+#  push:
+#    branches:
+#      - feat/drag
   workflow_dispatch:
 
 permissions:
@@ -25,7 +25,7 @@ jobs:
         uses: ./.github/actions/pnpm-install
 
       - name: Build Storybook
-        run: nx run storybook:build-storybook
+        run: npx nx run storybook:build-storybook
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@4.1.4
