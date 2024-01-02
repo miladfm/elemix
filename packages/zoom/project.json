@@ -1,0 +1,37 @@
+{
+  "name": "zoom",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/zoom/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:swc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/zoom",
+        "main": "packages/zoom/src/index.ts",
+        "tsConfig": "packages/zoom/tsconfig.lib.json",
+        "assets": ["packages/zoom/*.md"]
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs zoom {args.ver} {args.tag}",
+      "dependsOn": ["build"]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/zoom/**/*.ts", "packages/zoom/package.json"]
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "packages/zoom/jest.config.ts"
+      }
+    }
+  },
+  "tags": []
+}
