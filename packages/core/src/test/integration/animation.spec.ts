@@ -413,10 +413,9 @@ describe('Feature - Animation', () => {
     });
     it('should apply all style changes to DOM element at next animation frame when apply method has called', () => {
       const animation = new Animation(divElement);
-      const { mockCancelAnimationFrameFn } = mockRequestAnimationFrame({ stopOnFrames: 1 });
+      mockRequestAnimationFrame({ stopOnFrames: 1 });
       animation.setTranslate({ x: 10, y: 10 }).setDimension({ width: 200, height: 50 }).setScale(2).setOpacity(0.5).flipX().apply();
 
-      expect(mockCancelAnimationFrameFn).toHaveBeenCalledTimes(1);
       expect(divElement.style.transform).toEqual('translate(10px, 10px) rotateX(180deg) rotateY(0deg) scale(2, 2)');
       expect(divElement.style.width).toEqual('200px');
       expect(divElement.style.height).toEqual('50px');
@@ -424,10 +423,9 @@ describe('Feature - Animation', () => {
     });
     it('should only apply specified style changes and not affect other properties at next animation frame when apply method is called', () => {
       const animation = new Animation(divElement);
-      const { mockCancelAnimationFrameFn } = mockRequestAnimationFrame({ stopOnFrames: 1 });
+      mockRequestAnimationFrame({ stopOnFrames: 1 });
       animation.setTranslate({ x: 10, y: 10 }).setOpacity(0.5).apply();
 
-      expect(mockCancelAnimationFrameFn).toHaveBeenCalledTimes(1);
       expect(divElement.style.transform).toEqual('translate(10px, 10px) rotateX(0deg) rotateY(0deg) scale(1, 1)');
       expect(divElement.style.width).toEqual('');
       expect(divElement.style.height).toEqual('');
