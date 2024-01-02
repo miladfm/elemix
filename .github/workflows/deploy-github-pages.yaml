@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - feat/drag
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -23,8 +24,12 @@ jobs:
       - name: Install Dependencies
         uses: ./.github/actions/pnpm-install
 
-      - uses: bitovi/github-actions-storybook-to-github-pages@v1.0.1
+      - name: Build Storybook
+        run: nx run storybook:build-storybook
+
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@4.1.4
         with:
-          build_command: nx run storybook:build-storybook
-          path: dist/storybook/storybook
-          checkout: false
+          branch: gh-pages
+          folder: dist/storybook/storybook
+          token: ${{ secrets.GITHUB_TOKEN }}
