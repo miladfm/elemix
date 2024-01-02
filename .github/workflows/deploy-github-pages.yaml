@@ -1,10 +1,6 @@
-name: Build and Publish Storybook to GitHub Pages
+name: Publish Storybook
 
-on:
-#  push:
-#    branches:
-#      - feat/drag
-  workflow_dispatch:
+on: workflow_dispatch
 
 permissions:
   contents: read
