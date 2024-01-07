@@ -22,7 +22,7 @@
           "error",
           {
             "enforceBuildableLibDependency": true,
-            "allow": ["../../../../packages/drag/README.md"],
+            "allow": [".*/README.md"],
             "depConstraints": [
               {
                 "sourceTag": "*",

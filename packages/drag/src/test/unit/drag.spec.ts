@@ -39,8 +39,6 @@ describe('drag', () => {
     expect(() => {
       drag.disable();
       drag.disable();
-    }).not.toThrowError();
+    }).not.toThrow();
   });
-
-  it('', () => {});
 });

@@ -1,1 +1,1 @@
-export * from './lib/zoom';
+export { PinchZoom } from './lib/pinch-zoom/pinch-zoom';

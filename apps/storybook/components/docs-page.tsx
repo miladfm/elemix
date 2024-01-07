@@ -7,16 +7,21 @@ import compoDocJson from '../tmp/documentation.json';
 import { CompoDocInterface, DocsConfig, StorybookParameters } from './doc-page.model';
 import { createMarkup, renderDefaultValue, renderMethodValue } from './doc-page.util';
 
-
 export const DocPage = (_arg: unknown) => {
-
   const context = React.useContext(DocsContext);
   const [selectedTabIndex, setSelectedTabIndex] = useState(0);
 
   const compoDoc = compoDocJson.interfaces as CompoDocInterface[];
   const parameters = context.storyById().parameters as StorybookParameters;
   const docs: DocsConfig = parameters.docs;
-  const pageInterfaces = compoDoc.filter((property) => property.file.endsWith(docs.apiRefPath));
+  const apiRefPath = typeof docs.apiRefPath === 'string' ? [docs.apiRefPath] : docs.apiRefPath;
+  const pageInterfaces = compoDoc
+    .filter((property) => apiRefPath.some((apiPath) => property.file.endsWith(apiPath)))
+    .sort((a, b) => {
+      const aIndex = apiRefPath.findIndex((apiPath) => a.file.endsWith(apiPath));
+      const bIndex = apiRefPath.findIndex((apiPath) => b.file.endsWith(apiPath));
+      return aIndex - bIndex;
+    });
 
   // DEBUG
   // debugger;
@@ -53,64 +58,66 @@ export const DocPage = (_arg: unknown) => {
         )}
         {selectedTabIndex === 1 && (
           <>
-            <div>
-              {pageInterfaces.map((item) => (
-                <div className="doc__table-wrapper" key={item.id}>
-                  <h3>{item.name}</h3>
-                  <div dangerouslySetInnerHTML={createMarkup(item.description)}></div>
+            {pageInterfaces.map((item) => (
+              <>
+                {(item.properties.length > 0 || item.methods.length > 0) && (
+                  <div className="doc__table-wrapper" key={item.id}>
+                    <h3>{item.name}</h3>
+                    <div dangerouslySetInnerHTML={createMarkup(item.description)}></div>
 
-                  {item.properties.length > 0 && (
-                    <>
-                      <h4 className="doc__table-header">Properties</h4>
-                      <table className="doc__table">
-                        <thead>
-                          <tr>
-                            <th>Name</th>
-                            <th>Type</th>
-                            <th>Description</th>
-                            <th>Default Value</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {item.properties.map((prop) => (
-                            <tr key={prop.name}>
-                              <td>{prop.name}</td>
-                              <td className="doc__table--center">{prop.type}</td>
-                              <td dangerouslySetInnerHTML={createMarkup(prop.description)} />
-                              <td className="doc__table--center" dangerouslySetInnerHTML={createMarkup(renderDefaultValue(prop))} />
+                    {item.properties.length > 0 && (
+                      <>
+                        <h4 className="doc__table-header">Properties</h4>
+                        <table className="doc__table">
+                          <thead>
+                            <tr>
+                              <th>Name</th>
+                              <th>Type</th>
+                              <th>Description</th>
+                              <th>Default Value</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </>
-                  )}
+                          </thead>
+                          <tbody>
+                            {item.properties.map((prop) => (
+                              <tr key={prop.name}>
+                                <td>{prop.name}</td>
+                                <td className="doc__table--center">{prop.type}</td>
+                                <td dangerouslySetInnerHTML={createMarkup(prop.description)} />
+                                <td className="doc__table--center" dangerouslySetInnerHTML={createMarkup(renderDefaultValue(prop))} />
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </>
+                    )}
 
-                  {item.methods.length > 0 && (
-                    <>
-                      <h4 className="doc__table-header">Methods</h4>
-                      <table className="doc__table">
-                        <thead>
-                          <tr>
-                            <th>Name</th>
-                            <th>Type</th>
-                            <th>Description</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {item.methods.map((prop) => (
-                            <tr key={prop.name}>
-                              <td>{prop.name}</td>
-                              <td dangerouslySetInnerHTML={createMarkup(renderMethodValue(prop))} />
-                              <td dangerouslySetInnerHTML={createMarkup(prop.description)} />
+                    {item.methods.length > 0 && (
+                      <>
+                        <h4 className="doc__table-header">Methods</h4>
+                        <table className="doc__table">
+                          <thead>
+                            <tr>
+                              <th>Name</th>
+                              <th>Type</th>
+                              <th>Description</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </>
-                  )}
-                </div>
-              ))}
-            </div>
+                          </thead>
+                          <tbody>
+                            {item.methods.map((prop) => (
+                              <tr key={prop.name}>
+                                <td>{prop.name}</td>
+                                <td dangerouslySetInnerHTML={createMarkup(renderMethodValue(prop))} />
+                                <td dangerouslySetInnerHTML={createMarkup(prop.description)} />
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </>
+                    )}
+                  </div>
+                )}
+              </>
+            ))}
           </>
         )}
         {selectedTabIndex === 2 && (

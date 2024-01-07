@@ -43,6 +43,7 @@ describe('Feature - Drag', () => {
     // Enable
     it(`should not listen to 'pointerdown' more than one when the enabled method has called more than one times`, () => {
       drag.enable();
+      drag.enable();
       expect(element.addEventListener).toHaveBeenCalledTimes(1);
       expect(element.addEventListener).toHaveBeenCalledWith('pointerdown', expect.any(Function), undefined);
       expect(document.addEventListener).not.toHaveBeenCalled();
