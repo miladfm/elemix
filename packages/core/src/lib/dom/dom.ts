@@ -22,7 +22,7 @@ export class Dom<T extends DomType = HTMLElement> {
     this.nativeElement = _target;
   }
 
-  public setStyleImmediately<Key extends CssStylesKey>(key: Key, value: CSSStyleDeclaration[Key]) {
+  public setStyleImmediately<Key extends CssStylesKey>(key: Key, value: CSSStyleDeclaration[Key] | number) {
     this.nativeElement.style[key] = toStr(value);
   }
 

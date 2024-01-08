@@ -2,10 +2,14 @@ import { Animation, Dom, DomType, Gestures, GesturesEvent, GesturesEventType, Tr
 
 import { ZoomAdjuster, ZoomAdjusterConfig, ZoomAdjusterHooks } from '../zoom.model';
 import { Observable, Subject, Subscription } from 'rxjs';
-import { pinchZoomScaleAdjuster } from './pinch-zoom-scale-adjusters';
+import { PinchZoomCoreAdjuster } from './pinch-zoom-scale-adjusters';
 import { PinchZoomOptions } from './pinch-zoom.model';
 
-const DEFAULT_OPTIONS: PinchZoomOptions = {};
+const DEFAULT_OPTIONS: PinchZoomOptions = {
+  minScale: 0,
+  maxScale: Infinity,
+  bounceFactor: 0.9,
+};
 
 const PINCH_ZOOM_GESTURES_TYPE = [
   GesturesEventType.ZoomPress,
@@ -65,7 +69,7 @@ export class PinchZoom {
   }
 
   private setZoomAdjuster() {
-    this.zoomAdjuster = [pinchZoomScaleAdjuster];
+    this.zoomAdjuster = [new PinchZoomCoreAdjuster(this.element)];
   }
 
   public enable() {
@@ -120,13 +124,24 @@ export class PinchZoom {
     }
   }
 
-  // eslint-disable-next-line no-empty-function
-  private handlePinchZoomPress(_event: ZoomGesturesEvent) {}
+  private handlePinchZoomPress(event: ZoomGesturesEvent) {
+    this.zoomAdjuster.forEach((positionAdjuster) => {
+      if (typeof positionAdjuster !== 'function' && positionAdjuster.onPress) {
+        positionAdjuster.onPress(event, this.options);
+      }
+    });
+  }
 
-  private handlePinchZoomStart(_event: ZoomGesturesEvent) {
+  private handlePinchZoomStart(event: ZoomGesturesEvent) {
     this.isZooming = true;
     this.translateOnStart = { ...this.animation.value.transform };
-    this.startEvent = _event;
+    this.startEvent = event;
+
+    this.zoomAdjuster.forEach((positionAdjuster) => {
+      if (typeof positionAdjuster !== 'function' && positionAdjuster.onStart) {
+        positionAdjuster.onStart(event, this.options);
+      }
+    });
   }
 
   private async handlePinchZoom(event: ZoomGesturesEvent) {
@@ -158,12 +173,23 @@ export class PinchZoom {
     await this.animation.setScale(next.scale).setTranslate(next).apply();
   }
 
-  private handlePinchZoomEnd(_event: ZoomGesturesEvent) {
+  private handlePinchZoomEnd(event: ZoomGesturesEvent) {
     this.isZooming = false;
+
+    this.zoomAdjuster.forEach((positionAdjuster) => {
+      if (typeof positionAdjuster !== 'function' && positionAdjuster.onEnd) {
+        positionAdjuster.onEnd(event, this.options);
+      }
+    });
   }
 
-  // eslint-disable-next-line no-empty-function
-  private handlePinchZoomRelease(_event: ZoomGesturesEvent) {}
+  private handlePinchZoomRelease(event: ZoomGesturesEvent) {
+    this.zoomAdjuster.forEach((positionAdjuster) => {
+      if (typeof positionAdjuster !== 'function' && positionAdjuster.onRelease) {
+        positionAdjuster.onRelease(event, this.options);
+      }
+    });
+  }
 
   private isPinchZoomGesture(event: GesturesEvent): event is ZoomGesturesEvent {
     return PINCH_ZOOM_GESTURES_TYPE.includes(event.type);

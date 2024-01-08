@@ -16,7 +16,11 @@ export const createBasicZoom = (args: ZoomStoryType, _context: StoryContext<Zoom
   element.appendChild(img);
   wrapper.appendChild(element);
 
-  const pinchZoom = new PinchZoom(element, {});
+  const pinchZoom = new PinchZoom(element, {
+    minScale: args.minScale,
+    maxScale: args.maxScale,
+    bounceFactor: args.bounceFactor,
+  });
 
   pinchZoom.events$.subscribe((event) => {
     args.onEvents(event);

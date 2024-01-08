@@ -1,5 +1,11 @@
 import { PinchZoom } from '../../lib/pinch-zoom/pinch-zoom';
-import { getActiveListener, mockBasicRequestAnimationFrame, mockEventListener, MockPointerEvent } from '@internal-lib/util-testing';
+import {
+  getActiveListener,
+  mockBasicRequestAnimationFrame,
+  mockEventListener,
+  MockPointerEvent,
+  mockRequestAnimationFrame,
+} from '@internal-lib/util-testing';
 import { map, Observable, toArray } from 'rxjs';
 import { GesturesEventType, ZoomGesturesEventType } from '@elemix/core';
 
@@ -180,8 +186,8 @@ describe('Feature - Zoom', () => {
       firstEvent.dispatchMove({ x: 5, y: 5 });
       firstEvent.dispatchMove({ x: 0, y: 0 });
       secondEvent.dispatchMove({ x: 30, y: 30 });
-      expect(element.style.transform).toContain('translate(-17.5px, -17.5px)');
-      expect(element.style.transform).toContain('scale(2, 2)');
+      expect(element.style.transform).toContain('translate(-25px, -25px)');
+      expect(element.style.transform).toContain('scale(3, 3)');
     });
     it(`should correctly update the element's position during multiple pinch-zoom interactions`, () => {
       // First pinch zoom process
@@ -200,8 +206,8 @@ describe('Feature - Zoom', () => {
       firstEvent.dispatchMove({ x: 30, y: 30 });
       secondEvent.dispatchMove({ x: 20, y: 40 });
 
-      expect(element.style.transform).toContain('translate(15px, 40px)');
-      expect(element.style.transform).toContain('scale(0.5, 0.5)');
+      expect(element.style.transform).toContain('translate(26.25px, 58.75px)');
+      expect(element.style.transform).toContain('scale(0.75, 0.75)');
     });
     it(`should prevent zooming if a zoom start event has not been fired`, () => {
       firstEvent.dispatchMove({ x: 5, y: 5 });
@@ -228,8 +234,8 @@ describe('Feature - Zoom', () => {
       thirdEvent.dispatchMove({ x: 25, y: 25 });
       fourthEvent.dispatchMove({ x: 40, y: 40 });
 
-      expect(element.style.transform).toContain('translate(-17.5px, -17.5px)');
-      expect(element.style.transform).toContain('scale(2, 2)');
+      expect(element.style.transform).toContain('translate(-25px, -25px)');
+      expect(element.style.transform).toContain('scale(3, 3)');
 
       expect(secondElement.style.transform).toContain('translate(10px, 10px)');
       expect(secondElement.style.transform).toContain('scale(0.5, 0.5)');
@@ -244,10 +250,143 @@ describe('Feature - Zoom', () => {
       firstEvent.dispatchMove({ x: 0, y: 0 });
       secondEvent.dispatchMove({ x: 30, y: 30 });
 
-      expect(element.style.transform).toContain('translate(-17.5px, -17.5px)');
-      expect(element.style.transform).toContain('scale(2, 2)');
+      expect(element.style.transform).toContain('translate(-25px, -25px)');
+      expect(element.style.transform).toContain('scale(3, 3)');
 
       expect(secondElement.style.transform).toEqual('');
+    });
+  });
+
+  describe('Bounce Pinch Zoom', () => {
+    // Min
+    it(`should apply the min scale without bounce effect when minScale is set and bounceFactor equals 1`, () => {
+      pinchZoom = new PinchZoom(element, { minScale: 1, bounceFactor: 1 });
+
+      firstEvent.dispatchDown({ x: 10, y: 10 });
+      secondEvent.dispatchDown({ x: 50, y: 50 });
+      firstEvent.dispatchMove({ x: 15, y: 15 });
+      firstEvent.dispatchMove({ x: 20, y: 20 });
+      secondEvent.dispatchMove({ x: 40, y: 30 });
+
+      expect(element.style.transform).toContain('translate(0px, -5px)');
+      expect(element.style.transform).toContain('scale(1, 1)');
+    });
+    it(`should not enforce min scale limit when minScale is set and bounceFactor equals 0`, () => {
+      pinchZoom = new PinchZoom(element, { minScale: 1, bounceFactor: 0 });
+
+      firstEvent.dispatchDown({ x: 10, y: 10 });
+      secondEvent.dispatchDown({ x: 50, y: 50 });
+      firstEvent.dispatchMove({ x: 15, y: 15 });
+      firstEvent.dispatchMove({ x: 20, y: 20 });
+      secondEvent.dispatchMove({ x: 40, y: 30 });
+
+      expect(element.style.transform).toContain('translate(19.5px, 14.5px)');
+      expect(element.style.transform).toContain('scale(0.4, 0.4)');
+    });
+    it(`should continue zooming out with bounce effect when scale is below minScale and bounceFactor is between 0 and 1`, () => {
+      pinchZoom = new PinchZoom(element, { minScale: 1, bounceFactor: 0.6 });
+
+      firstEvent.dispatchDown({ x: 10, y: 10 });
+      secondEvent.dispatchDown({ x: 50, y: 50 });
+      firstEvent.dispatchMove({ x: 15, y: 15 });
+      firstEvent.dispatchMove({ x: 20, y: 20 });
+      secondEvent.dispatchMove({ x: 40, y: 30 });
+
+      expect(element.style.transform).toContain('translate(12.48px, 7.48px)');
+      expect(element.style.transform).toContain('scale(0.616, 0.616)');
+    });
+    it(`should animate back to minimum scale when zooming ends below minScale and bounceFactor is between 0 and 1`, () => {
+      mockRequestAnimationFrame();
+      pinchZoom = new PinchZoom(element, { minScale: 1, bounceFactor: 0.6 });
+
+      firstEvent.dispatchDown({ x: 10, y: 10 });
+      secondEvent.dispatchDown({ x: 50, y: 50 });
+      firstEvent.dispatchMove({ x: 15, y: 15 });
+      firstEvent.dispatchMove({ x: 20, y: 20 });
+      secondEvent.dispatchMove({ x: 40, y: 30 });
+
+      jest.clearAllMocks();
+      firstEvent.dispatchUp({ x: 20, y: 20 });
+      secondEvent.dispatchUp({ x: 40, y: 30 });
+
+      expect(element.style.transform).toContain('translate(0px, -5px)');
+      expect(element.style.transform).toContain('scale(1, 1)');
+      expect(window.requestAnimationFrame).toHaveBeenCalled();
+    });
+
+    // Max
+    it(`should apply the max scale without bounce effect when maxScale is set and bounceFactor equals 1`, () => {
+      pinchZoom = new PinchZoom(element, { maxScale: 2, bounceFactor: 1 });
+
+      firstEvent.dispatchDown({ x: 50, y: 50 });
+      secondEvent.dispatchDown({ x: 60, y: 60 });
+      firstEvent.dispatchMove({ x: 40, y: 40 });
+      firstEvent.dispatchMove({ x: 30, y: 30 });
+      secondEvent.dispatchMove({ x: 70, y: 80 });
+
+      expect(element.style.transform).toContain('translate(-55px, -50px)');
+      expect(element.style.transform).toContain('scale(2, 2)');
+    });
+    it(`should not enforce max scale limit when maxScale is set and bounceFactor equals 0`, () => {
+      pinchZoom = new PinchZoom(element, { maxScale: 2, bounceFactor: 0 });
+
+      firstEvent.dispatchDown({ x: 50, y: 50 });
+      secondEvent.dispatchDown({ x: 60, y: 60 });
+      firstEvent.dispatchMove({ x: 40, y: 40 });
+      firstEvent.dispatchMove({ x: 30, y: 30 });
+      secondEvent.dispatchMove({ x: 70, y: 80 });
+
+      expect(element.style.transform).toContain('translate(-181.5px, -176.5px)');
+      expect(element.style.transform).toContain('scale(4.53, 4.53)');
+    });
+    it(`should continue zooming in with bounce effect when scale exceeds maxScale and bounceFactor is between 0 and 1`, () => {
+      pinchZoom = new PinchZoom(element, { maxScale: 2, bounceFactor: 0.6 });
+
+      firstEvent.dispatchDown({ x: 50, y: 50 });
+      secondEvent.dispatchDown({ x: 60, y: 60 });
+      firstEvent.dispatchMove({ x: 40, y: 40 });
+      firstEvent.dispatchMove({ x: 30, y: 30 });
+      secondEvent.dispatchMove({ x: 70, y: 80 });
+
+      expect(element.style.transform).toContain('translate(-135.96px, -130.96px)');
+      expect(element.style.transform).toContain('scale(3.6192, 3.6192)');
+    });
+    it(`should animate back to maximum scale when zooming ends above maxScale and bounceFactor is between 0 and 1 `, () => {
+      mockRequestAnimationFrame();
+      pinchZoom = new PinchZoom(element, { maxScale: 2, bounceFactor: 0.6 });
+
+      firstEvent.dispatchDown({ x: 50, y: 50 });
+      secondEvent.dispatchDown({ x: 60, y: 60 });
+      firstEvent.dispatchMove({ x: 40, y: 40 });
+      firstEvent.dispatchMove({ x: 30, y: 30 });
+      secondEvent.dispatchMove({ x: 70, y: 80 });
+
+      jest.clearAllMocks();
+      firstEvent.dispatchUp({ x: 30, y: 30 });
+      secondEvent.dispatchUp({ x: 70, y: 80 });
+
+      expect(element.style.transform).toContain('translate(-55px, -50px)');
+      expect(element.style.transform).toContain('scale(2, 2)');
+      expect(window.requestAnimationFrame).toHaveBeenCalled();
+    });
+
+    it(`should not animate to any scale when zooming ends within the range of minScale and maxScale`, () => {
+      mockRequestAnimationFrame();
+      pinchZoom = new PinchZoom(element, { minScale: 1, maxScale: 2, bounceFactor: 0.6 });
+
+      firstEvent.dispatchDown({ x: 50, y: 50 });
+      secondEvent.dispatchDown({ x: 60, y: 60 });
+      firstEvent.dispatchMove({ x: 48, y: 48 });
+      firstEvent.dispatchMove({ x: 45, y: 45 });
+      secondEvent.dispatchMove({ x: 62, y: 64 });
+
+      jest.clearAllMocks();
+      firstEvent.dispatchUp({ x: 45, y: 45 });
+      secondEvent.dispatchUp({ x: 62, y: 64 });
+
+      expect(element.style.transform).toContain('translate(-44.7px, -43.7px)');
+      expect(element.style.transform).toContain('scale(1.8, 1.8)');
+      expect(window.requestAnimationFrame).not.toHaveBeenCalled();
     });
   });
 });

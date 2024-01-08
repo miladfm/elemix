@@ -1,23 +1,66 @@
-import { ZoomAdjusterConfig, ZoomAdjusterResult } from '../zoom.model';
+import { ZoomAdjusterConfig, ZoomAdjusterHooks, ZoomAdjusterResult } from '../zoom.model';
+import { Animation, clamp, Coordinate, DomSelector, getBounceEffectValue, TransformProperty, ZoomGesturesEvent } from '@elemix/core';
+import { PinchZoomOptions } from './pinch-zoom.model';
 
-export function pinchZoomScaleAdjuster(next: ZoomAdjusterResult, config: ZoomAdjusterConfig): ZoomAdjusterResult {
-  if (!config.event.scaleFactorFromPress || !config.event.centerMovementXFromPress || !config.event.centerMovementYFromPress) {
-    return next;
+export class PinchZoomCoreAdjuster implements ZoomAdjusterHooks {
+  private animation: Animation;
+  private startCenterOffset: Coordinate | null;
+  private translateOnStart: TransformProperty | null;
+
+  constructor(element: DomSelector) {
+    this.animation = Animation.getOrCreateInstance(element);
   }
 
-  const scale = config.translateOnStart.scale * config.event.scaleFactorFromPress;
+  onStart(event: ZoomGesturesEvent) {
+    this.startCenterOffset = {
+      x: event.centerOffsetX,
+      y: event.centerOffsetY,
+    };
+    this.translateOnStart = this.animation.value.transform;
+  }
 
-  const translationDelta = getZoomTranslationDelta(
-    scale,
-    config.translateOnStart.scale,
-    config.startEvent.centerOffsetX,
-    config.startEvent.centerOffsetY
-  );
+  adjuster(next: ZoomAdjusterResult, config: ZoomAdjusterConfig): ZoomAdjusterResult {
+    if (!config.event.scaleFactorFromPress) {
+      return next;
+    }
 
-  const x = config.translateOnStart.x + config.event.centerMovementXFromPress + translationDelta.x;
-  const y = config.translateOnStart.y + config.event.centerMovementYFromPress + translationDelta.y;
+    const pinchScale = config.translateOnStart.scale * config.event.scaleFactorFromPress;
+    const scale = getBounceEffectValue(pinchScale, config.option.minScale, config.option.maxScale, config.option.bounceFactor);
+    const { x, y } = this.getTranslate(scale, config.event) ?? {};
 
-  return { x, y, scale };
+    return {
+      scale,
+      x: x ?? next.x,
+      y: y ?? next.y,
+    };
+  }
+
+  onEnd(event: ZoomGesturesEvent, option: PinchZoomOptions): void {
+    const scale = this.animation.value.transform.scale;
+    const clampScale = clamp(scale, [option.minScale, option.maxScale]);
+
+    if (clampScale === scale) {
+      return;
+    }
+
+    const { x, y } = this.getTranslate(clampScale, event) ?? {};
+    this.animation.setScale(clampScale).setTranslate({ x, y }).animate();
+
+    this.startCenterOffset = null;
+    this.translateOnStart = null;
+  }
+
+  private getTranslate(scale: number, event: ZoomGesturesEvent): Coordinate | null {
+    if (!this.translateOnStart || !this.startCenterOffset) {
+      return null;
+    }
+
+    const translationDelta = getZoomTranslationDelta(scale, this.translateOnStart.scale, this.startCenterOffset);
+    const x = this.translateOnStart.x + event.centerMovementXFromPress! + translationDelta.x;
+    const y = this.translateOnStart.y + event.centerMovementYFromPress! + translationDelta.y;
+
+    return { x, y };
+  }
 }
 
 /**
@@ -25,7 +68,7 @@ export function pinchZoomScaleAdjuster(next: ZoomAdjusterResult, config: ZoomAdj
  * This function plays a crucial role in creating a zoom effect that is both natural and centered around the user's pinch gesture.
  *
  * The function performs the following steps:
- * 1- Identifying the translation origin, which is the pinch center ('centerOffsetX' and 'centerOffsetY'). This origin point,
+ * 1- Identifying the translation origin, which is the pinch center ('centerOffset'). This origin point,
  *   representing the center of pointer events at the start of zooming, should remain constant throughout the zoom process.
  *   Keeping this origin unchanged is vital; any alterations during zooming can cause the element to shift unexpectedly,
  *   leading to a jarring user experience.
@@ -37,10 +80,10 @@ export function pinchZoomScaleAdjuster(next: ZoomAdjusterResult, config: ZoomAdj
  *
  * Through these steps, the function effectively maintains the focal point of the zoom, enhancing the natural feel and responsiveness of the scaling action.
  */
-function getZoomTranslationDelta(scale: number, scaleOnStart: number, centerOffsetX: number, centerOffsetY: number) {
+function getZoomTranslationDelta(scale: number, scaleOnStart: number, centerOffset: Coordinate) {
   const scaleChange = scale - scaleOnStart;
-  const x = -(centerOffsetX * scaleChange);
-  const y = -(centerOffsetY * scaleChange);
+  const x = -(centerOffset.x * scaleChange);
+  const y = -(centerOffset.y * scaleChange);
 
   return { x, y };
 }

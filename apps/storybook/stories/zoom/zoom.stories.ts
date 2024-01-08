@@ -3,6 +3,9 @@ import { createBasicZoom } from './zoom';
 import README from '../../../../packages/zoom/src/lib/pinch-zoom/README.md';
 
 export interface ZoomStoryType {
+  bounceFactor: number;
+  minScale: number;
+  maxScale: number;
   onEvents: (e: unknown) => void;
 }
 
@@ -13,6 +16,9 @@ const meta: Meta<ZoomStoryType> = {
   tags: ['autodocs'],
   argTypes: {
     onEvents: { action: 'OnEvents', table: { disable: true } },
+    minScale: { control: { type: 'number' } },
+    maxScale: { control: { type: 'number' } },
+    bounceFactor: { control: { type: 'range', min: 0, max: 1, step: 0.01 } },
     // label: {
     //   name: 'ABXDE ',
     //   description: 'XYZ Label',
@@ -42,7 +48,11 @@ export default meta;
  * This is the basic component
  */
 export const Basic: Story = {
-  args: {},
+  args: {
+    minScale: 1,
+    maxScale: 2,
+    bounceFactor: 0.9,
+  },
   parameters: {
     docs: {
       source: {
