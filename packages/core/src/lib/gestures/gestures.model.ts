@@ -79,6 +79,8 @@ export interface ZoomGesturesEvent {
   centerPageY: number;
   centerClientX: number;
   centerClientY: number;
+  centerOffsetX: number;
+  centerOffsetY: number;
   centerMovementX: number;
   centerMovementY: number;
 

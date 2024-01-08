@@ -8,6 +8,7 @@ export interface ZoomAdjusterResult {
 }
 
 export interface ZoomAdjusterConfig {
+  startEvent: ZoomGesturesEvent;
   translateOnStart: TransformProperty;
   event: ZoomGesturesEvent;
   option: PinchZoomOptions;

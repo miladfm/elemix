@@ -970,6 +970,8 @@ describe('Feature - Gestures', () => {
         y: 10,
         clientX: 20,
         clientY: 20,
+        offsetX: 30,
+        offsetY: 30,
         movementX: 0,
         movementY: 0,
       });
@@ -985,6 +987,8 @@ describe('Feature - Gestures', () => {
         centerPageY: 5,
         centerClientX: 10,
         centerClientY: 10,
+        centerOffsetX: 15,
+        centerOffsetY: 15,
         centerMovementX: 0,
         centerMovementY: 0,
 
@@ -1002,6 +1006,8 @@ describe('Feature - Gestures', () => {
         y: 20,
         clientX: 30,
         clientY: 30,
+        offsetX: 40,
+        offsetY: 40,
         movementX: 20,
         movementY: 20,
       });
@@ -1017,6 +1023,8 @@ describe('Feature - Gestures', () => {
         centerPageY: 15,
         centerClientX: 20,
         centerClientY: 20,
+        centerOffsetX: 25,
+        centerOffsetY: 25,
         centerMovementX: 10,
         centerMovementY: 10,
 
@@ -1035,6 +1043,8 @@ describe('Feature - Gestures', () => {
         y: 40,
         clientX: 50,
         clientY: 50,
+        offsetX: 60,
+        offsetY: 60,
         movementX: 40,
         movementY: 40,
       });
@@ -1050,6 +1060,8 @@ describe('Feature - Gestures', () => {
         centerPageY: 30,
         centerClientX: 35,
         centerClientY: 35,
+        centerOffsetX: 40,
+        centerOffsetY: 40,
         centerMovementX: 20,
         centerMovementY: 20,
 
@@ -1069,6 +1081,8 @@ describe('Feature - Gestures', () => {
         y: 50,
         clientX: 60,
         clientY: 60,
+        offsetX: 70,
+        offsetY: 70,
         movementX: 10,
         movementY: 10,
       });
@@ -1084,6 +1098,8 @@ describe('Feature - Gestures', () => {
         centerPageY: 35,
         centerClientX: 40,
         centerClientY: 40,
+        centerOffsetX: 45,
+        centerOffsetY: 45,
         centerMovementX: 5,
         centerMovementY: 5,
 
@@ -1103,6 +1119,8 @@ describe('Feature - Gestures', () => {
         y: 50,
         clientX: 60,
         clientY: 60,
+        offsetX: 70,
+        offsetY: 70,
         movementX: 10,
         movementY: 10,
       });
@@ -1118,6 +1136,8 @@ describe('Feature - Gestures', () => {
         centerPageY: 35,
         centerClientX: 40,
         centerClientY: 40,
+        centerOffsetX: 45,
+        centerOffsetY: 45,
         centerMovementX: 5,
         centerMovementY: 5,
 

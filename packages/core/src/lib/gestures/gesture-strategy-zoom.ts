@@ -125,6 +125,8 @@ export class ZoomGestureStrategy extends GestureStrategyBase {
       centerPageY,
       centerClientX: average(params.eventList.map((e) => e.clientX)),
       centerClientY: average(params.eventList.map((e) => e.clientY)),
+      centerOffsetX: average(params.eventList.map((e) => e.offsetX)),
+      centerOffsetY: average(params.eventList.map((e) => e.offsetY)),
       centerMovementX: average(params.eventList.map((e) => e.movementX)),
       centerMovementY: average(params.eventList.map((e) => e.movementY)),
 

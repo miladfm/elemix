@@ -10,6 +10,10 @@ export const createBasicZoom = (args: ZoomStoryType, _context: StoryContext<Zoom
   const element = document.createElement('div');
   element.className = 'zoom-element';
 
+  const img = document.createElement('img');
+  img.setAttribute('src', '/images/number-grid-1-40.jpeg');
+
+  element.appendChild(img);
   wrapper.appendChild(element);
 
   const pinchZoom = new PinchZoom(element, {});

@@ -5,13 +5,15 @@ export function pinchZoomScaleAdjuster(next: ZoomAdjusterResult, config: ZoomAdj
     return next;
   }
 
-  const translationDelta = getPinchZoomTranslationDelta(
-    config.event.scaleFactorFromPress,
-    config.event.centerClientX,
-    config.event.centerClientY
+  const scale = config.translateOnStart.scale * config.event.scaleFactorFromPress;
+
+  const translationDelta = getZoomTranslationDelta(
+    scale,
+    config.translateOnStart.scale,
+    config.startEvent.centerOffsetX,
+    config.startEvent.centerOffsetY
   );
 
-  const scale = config.translateOnStart.scale * config.event.scaleFactorFromPress;
   const x = config.translateOnStart.x + config.event.centerMovementXFromPress + translationDelta.x;
   const y = config.translateOnStart.y + config.event.centerMovementYFromPress + translationDelta.y;
 
@@ -19,24 +21,26 @@ export function pinchZoomScaleAdjuster(next: ZoomAdjusterResult, config: ZoomAdj
 }
 
 /**
- * Calculate the movement of the element based on the pinch center and scale change.
- * The goal is to adjust the element's position so that the pinch center remains visually stationary during scaling.
+ * Calculates the translation offset required to maintain a stationary pinch center during scaling.
+ * This function plays a crucial role in creating a zoom effect that is both natural and centered around the user's pinch gesture.
  *
- * This creates a natural zoom effect centered around the user's fingers
- * 'centerClientX' and 'centerY' are the positions of the pinch center before scaling.
- * The term 'scaledCenterClientX' or '(centerClientX * scaleFactorFromStart)' calculates the new position of the pinch center after scaling.
- * By subtracting this new position from the original 'centerClientX', we find the distance the center has moved due to scaling
+ * The function performs the following steps:
+ * 1- Identifying the translation origin, which is the pinch center ('centerOffsetX' and 'centerOffsetY'). This origin point,
+ *   representing the center of pointer events at the start of zooming, should remain constant throughout the zoom process.
+ *   Keeping this origin unchanged is vital; any alterations during zooming can cause the element to shift unexpectedly,
+ *   leading to a jarring user experience.
+ * 2- Calculating the scale change. This is achieved by comparing the new scale ('scale') with the initial scale at the start of zooming ('scaleOnStart').
+ *   The scale change reflects how much the element has been zoomed in or out relative to its initial state.
+ * 3- Computing the translation offset. This offset is essential for ensuring the pinch center remains stationary as the scale changes.
+ *   It is determined by multiplying the negative of the scale change with the coordinates of the translation origin.
+ *   This calculation ensures that the zoom effect is anchored around the pinch center, providing a smooth and intuitive user interaction.
  *
- * However, since scaling is around the transform origin, the movement is effectively doubled.
- * Dividing by 2 corrects this, yielding the actual distance to translate the element.
- * This ensures that the scaling origin aligns with the center of the fingers.
+ * Through these steps, the function effectively maintains the focal point of the zoom, enhancing the natural feel and responsiveness of the scaling action.
  */
-function getPinchZoomTranslationDelta(scaleFactor: number, centerClientX: number, centerClientY: number) {
-  const scaledCenterClientX = centerClientX * scaleFactor;
-  const scaledCenterClientY = centerClientY * scaleFactor;
-
-  const x = (centerClientX - scaledCenterClientX) / 2;
-  const y = (centerClientY - scaledCenterClientY) / 2;
+function getZoomTranslationDelta(scale: number, scaleOnStart: number, centerOffsetX: number, centerOffsetY: number) {
+  const scaleChange = scale - scaleOnStart;
+  const x = -(centerOffsetX * scaleChange);
+  const y = -(centerOffsetY * scaleChange);
 
   return { x, y };
 }

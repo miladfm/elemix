@@ -43,6 +43,7 @@ export class PinchZoom {
   private animation: Animation;
   private gestureChangesSub: Subscription | null = null;
 
+  private startEvent: ZoomGesturesEvent | null;
   private translateOnStart: TransformProperty | null;
   private zoomAdjuster: (ZoomAdjuster | ZoomAdjusterHooks)[];
 
@@ -125,14 +126,16 @@ export class PinchZoom {
   private handlePinchZoomStart(_event: ZoomGesturesEvent) {
     this.isZooming = true;
     this.translateOnStart = { ...this.animation.value.transform };
+    this.startEvent = _event;
   }
 
   private async handlePinchZoom(event: ZoomGesturesEvent) {
-    if (!this.translateOnStart) {
+    if (!this.translateOnStart || !this.startEvent) {
       return;
     }
 
     const adjusterConfig: ZoomAdjusterConfig = {
+      startEvent: this.startEvent,
       translateOnStart: this.translateOnStart,
       event,
       option: this.options,

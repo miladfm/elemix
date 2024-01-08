@@ -15,9 +15,6 @@ body {
 }
 
 .zoom-element {
-  width: 250px;
-  height: 250px;
-
   flex-shrink: 0;
 
   border-radius: 6px;

@@ -29,21 +29,21 @@ describe('Feature - Zoom', () => {
     it(`should 'isEnabled' be true when pinch-zoom functionality is initialized`, () => {
       expect(pinchZoom.isEnable).toEqual(true);
     });
-    it(`should only listen to 'pointerdown' when pinch-zoom functionality is initialized`, () => {
+    it(`should only listen to 'pointerdown' event when pinch-zoom is initialized`, () => {
       expect(element.addEventListener).toHaveBeenCalledTimes(1);
       expect(element.addEventListener).toHaveBeenCalledWith('pointerdown', expect.any(Function), undefined);
       expect(document.addEventListener).not.toHaveBeenCalled();
     });
 
     // Enable
-    it(`should not listen to 'pointerdown' more than one when the enabled method has called more than one times`, () => {
+    it(`should not listen to 'pointerdown' more than once when the enabled method has called more than one times`, () => {
       pinchZoom.enable();
       pinchZoom.enable();
       expect(element.addEventListener).toHaveBeenCalledTimes(1);
       expect(element.addEventListener).toHaveBeenCalledWith('pointerdown', expect.any(Function), undefined);
       expect(document.addEventListener).not.toHaveBeenCalled();
     });
-    it(`should only listen to 'pointerdown' once when the enabled method has called`, () => {
+    it(`should listen to 'pointerdown' only once when the enable method is called`, () => {
       pinchZoom.disable();
       jest.clearAllMocks();
       pinchZoom.enable();
@@ -51,13 +51,13 @@ describe('Feature - Zoom', () => {
       expect(element.addEventListener).toHaveBeenCalledWith('pointerdown', expect.any(Function), undefined);
       expect(document.addEventListener).not.toHaveBeenCalled();
     });
-    it(`should 'isEnabled' be true when when the enabled method has called`, () => {
+    it(`should 'isEnabled' be true when the enabled method has called`, () => {
       pinchZoom.enable();
       expect(pinchZoom.isEnable).toEqual(true);
     });
 
     // Disabled
-    it(`should 'isEnabled' be false when when the disabled method has called`, () => {
+    it(`should 'isEnabled' be false when the disabled method has called`, () => {
       pinchZoom.disable();
       expect(pinchZoom.isEnable).toEqual(false);
     });
@@ -163,27 +163,47 @@ describe('Feature - Zoom', () => {
       pinchZoom = new PinchZoom(element);
     });
 
-    it(`should 'isZooming' be false when the element is no pinch-zoom begins`, () => {
+    it(`should 'isZooming' be false when no pinch-zoom action has begun on the element`, () => {
       firstEvent.dispatchDown({ x: 10, y: 10 });
       secondEvent.dispatchDown({ x: 20, y: 20 });
       expect(pinchZoom.isZooming).toEqual(false);
     });
-    it(`should 'isZooming' be true when the element is begins with pinch-zoom`, () => {
+    it(`should 'isZooming' be true when pinch-zoom action begins on the element`, () => {
       firstEvent.dispatchDown({ x: 10, y: 10 });
       secondEvent.dispatchDown({ x: 20, y: 20 });
       firstEvent.dispatchMove({ x: 0, y: 0 });
       expect(pinchZoom.isZooming).toEqual(true);
     });
-    it(`should update the element's position correctly when it is pinch zooming`, () => {
+    it(`should correctly update the element's position during pinch zooming`, () => {
       firstEvent.dispatchDown({ x: 10, y: 10 });
       secondEvent.dispatchDown({ x: 20, y: 20 });
       firstEvent.dispatchMove({ x: 5, y: 5 });
       firstEvent.dispatchMove({ x: 0, y: 0 });
       secondEvent.dispatchMove({ x: 30, y: 30 });
-      expect(element.style.transform).toContain('translate(-10px, -10px)');
+      expect(element.style.transform).toContain('translate(-17.5px, -17.5px)');
       expect(element.style.transform).toContain('scale(2, 2)');
     });
-    it(`should not allow zooming when zoom start has not fired`, () => {
+    it(`should correctly update the element's position during multiple pinch-zoom interactions`, () => {
+      // First pinch zoom process
+      firstEvent.dispatchDown({ x: 10, y: 10 });
+      secondEvent.dispatchDown({ x: 20, y: 20 });
+      firstEvent.dispatchMove({ x: 5, y: 5 });
+      firstEvent.dispatchMove({ x: 0, y: 0 });
+      secondEvent.dispatchMove({ x: 30, y: 30 });
+      firstEvent.dispatchUp({ x: 0, y: 0 });
+      secondEvent.dispatchUp({ x: 30, y: 30 });
+
+      // Seconds pinch zoom process
+      firstEvent.dispatchDown({ x: 50, y: 10 });
+      secondEvent.dispatchDown({ x: 10, y: 50 });
+      firstEvent.dispatchMove({ x: 40, y: 20 });
+      firstEvent.dispatchMove({ x: 30, y: 30 });
+      secondEvent.dispatchMove({ x: 20, y: 40 });
+
+      expect(element.style.transform).toContain('translate(15px, 40px)');
+      expect(element.style.transform).toContain('scale(0.5, 0.5)');
+    });
+    it(`should prevent zooming if a zoom start event has not been fired`, () => {
       firstEvent.dispatchMove({ x: 5, y: 5 });
       firstEvent.dispatchMove({ x: 0, y: 0 });
       secondEvent.dispatchMove({ x: 30, y: 30 });
@@ -208,10 +228,10 @@ describe('Feature - Zoom', () => {
       thirdEvent.dispatchMove({ x: 25, y: 25 });
       fourthEvent.dispatchMove({ x: 40, y: 40 });
 
-      expect(element.style.transform).toContain('translate(-10px, -10px)');
+      expect(element.style.transform).toContain('translate(-17.5px, -17.5px)');
       expect(element.style.transform).toContain('scale(2, 2)');
 
-      expect(secondElement.style.transform).toContain('translate(5.625px, 5.625px)');
+      expect(secondElement.style.transform).toContain('translate(10px, 10px)');
       expect(secondElement.style.transform).toContain('scale(0.5, 0.5)');
     });
     it(`should not update the other element's position during zooming a element`, () => {
@@ -224,7 +244,7 @@ describe('Feature - Zoom', () => {
       firstEvent.dispatchMove({ x: 0, y: 0 });
       secondEvent.dispatchMove({ x: 30, y: 30 });
 
-      expect(element.style.transform).toContain('translate(-10px, -10px)');
+      expect(element.style.transform).toContain('translate(-17.5px, -17.5px)');
       expect(element.style.transform).toContain('scale(2, 2)');
 
       expect(secondElement.style.transform).toEqual('');
