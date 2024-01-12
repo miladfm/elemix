@@ -76,6 +76,10 @@ export enum MovementDirection {
   Vertical = 'vertical',
 }
 
+/**
+ * Defines the type of boundary constraints applied to the draggable element, dictating how the element interacts
+ * with the specified boundary.
+ */
 export enum DragBoundaryType {
   /**
    * Applies when the draggable element is smaller than the boundary. It restricts movement so that
