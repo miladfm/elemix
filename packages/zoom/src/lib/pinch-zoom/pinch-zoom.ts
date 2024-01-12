@@ -6,6 +6,7 @@ import { PinchZoomCoreAdjuster } from './pinch-zoom-scale-adjusters';
 import { PinchZoomOptions } from './pinch-zoom.model';
 
 const DEFAULT_OPTIONS: PinchZoomOptions = {
+  minEventThreshold: 5,
   minScale: 0,
   maxScale: Infinity,
   bounceFactor: 0.9,
@@ -54,7 +55,7 @@ export class PinchZoom {
   constructor(selector: DomType, options: Partial<PinchZoomOptions> = {}) {
     this.options = { ...DEFAULT_OPTIONS, ...options };
     this.element = new Dom(selector);
-    this.gesture = new Gestures(this.element);
+    this.gesture = new Gestures(this.element, { minZoomEventThreshold: this.options.minEventThreshold });
     this.animation = Animation.getOrCreateInstance(this.element);
 
     this.addZoomStyle();
@@ -69,7 +70,7 @@ export class PinchZoom {
   }
 
   private setZoomAdjuster() {
-    this.zoomAdjuster = [new PinchZoomCoreAdjuster(this.element)];
+    this.zoomAdjuster = [new PinchZoomCoreAdjuster(this.element, this.options)];
   }
 
   public enable() {

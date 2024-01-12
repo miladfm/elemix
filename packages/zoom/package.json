@@ -2,7 +2,9 @@
   "name": "@elemix/zoom",
   "version": "0.0.1",
   "dependencies": {
-    "@swc/helpers": "~0.5.2"
+    "@swc/helpers": "~0.5.2",
+    "@elemix/core": "*",
+    "rxjs": "7.8.1"
   },
   "peerDependencies": {},
   "type": "commonjs",
