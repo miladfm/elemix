@@ -194,6 +194,7 @@ export class Animation {
     });
   }
 
+  // eslint-disable-next-line max-lines-per-function
   public async animate({ duration = 100, easing = (x: number) => x, delay = 0 } = {}): Promise<boolean> {
     this.validateAnimation(duration, delay);
 
@@ -204,10 +205,16 @@ export class Animation {
           resolve(animateResult);
         }, delay);
       } else {
-        this.stopAnimation();
-
         const valueOnStart = deepClone(this.state.value.previousProperties);
         const valueOnEnd = deepClone(this.state.value.properties);
+
+        // Don't start animation, id nothing has changed
+        if (Object.keys(getObjectDiff(valueOnStart, valueOnEnd)).length === 0) {
+          resolve(true);
+          return;
+        }
+
+        this.stopAnimation();
 
         let start: number;
         this.state.deepSet({ isAnimating: true });

@@ -491,9 +491,9 @@ describe('Feature - Animation', () => {
       jest.spyOn(window, 'cancelAnimationFrame');
       const animation = new Animation(divElement);
 
-      animation.animate();
+      animation.addTranslate({ x: 10 }).animate();
       const firstFrameID = getLastFrameID();
-      animation.animate();
+      animation.addTranslate({ x: 20 }).animate();
 
       expect(cancelAnimationFrame).toHaveBeenCalledTimes(1);
       expect(cancelAnimationFrame).toHaveBeenCalledWith(firstFrameID);
@@ -538,7 +538,7 @@ describe('Feature - Animation', () => {
       const { frameDuration, getLastTime } = mockRequestAnimationFrame({ frames: 45, duration });
       const animation = new Animation(divElement);
 
-      await animation.setDimension({ width: 100 }).animate({ duration });
+      await animation.setDimension({ width: 200 }).animate({ duration });
 
       expect(getLastTime()).toBeGreaterThanOrEqual(duration);
       expect(getLastTime()).toBeLessThanOrEqual(duration + frameDuration);
@@ -568,6 +568,18 @@ describe('Feature - Animation', () => {
 
       expect(mockEaseIn).toHaveBeenCalledTimes(3);
       expect(divElement.style.transform).toEqual(`translate(100px, 0px) rotateX(0deg) rotateY(0deg) scale(1, 1)`);
+    });
+
+    it('should not run animation when no animation values has changed', async () => {
+      mockRequestAnimationFrame({ stopOnFrames: 1 });
+      jest.spyOn(window, 'cancelAnimationFrame');
+      jest.spyOn(window, 'requestAnimationFrame');
+      const animation = new Animation(divElement);
+
+      animation.animate();
+
+      expect(cancelAnimationFrame).not.toHaveBeenCalled();
+      expect(requestAnimationFrame).not.toHaveBeenCalled();
     });
   });
 });
