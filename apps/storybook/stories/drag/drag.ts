@@ -4,13 +4,13 @@ import { Drag, DragBoundaryType } from '@elemix/drag';
 import { StoryContext } from '@storybook/html';
 
 export const createBasicDrag = (args: DragStoryType, _context: StoryContext<DragStoryType>) => {
-  const wrapper = document.createElement('div');
-  wrapper.className = 'draggable-wrapper';
+  const container = document.createElement('div');
+  container.className = 'drag-story__container';
 
   const element = document.createElement('div');
-  element.className = 'draggable-element draggable-element--inner';
+  element.className = 'drag-story__draggable-element drag-story__draggable-element--inner';
 
-  wrapper.appendChild(element);
+  container.appendChild(element);
 
   const drag = new Drag(element, {
     movementDirection: args.movementDirection,
@@ -21,42 +21,42 @@ export const createBasicDrag = (args: DragStoryType, _context: StoryContext<Drag
     args.onPress(event);
   });
 
-  return wrapper;
+  return container;
 };
 
 export const createBoundaryDrag = (args: DragStoryType) => {
-  const wrapper = document.createElement('div');
-  wrapper.className = 'draggable-wrapper';
+  const container = document.createElement('div');
+  container.className = 'drag-story__container';
 
-  const boundary = document.createElement('div');
-  boundary.className = 'draggable-boundary';
+  const wrapper = document.createElement('div');
+  wrapper.className = 'drag-story__wrapper';
 
   const element = document.createElement('div');
-  element.className = 'draggable-element';
+  element.className = 'drag-story__draggable-element';
 
   switch (args.boundaryType) {
     case DragBoundaryType.Inner:
-      element.classList.add('draggable-element--inner');
+      element.classList.add('drag-story__draggable-element--inner');
       break;
 
     case DragBoundaryType.Outer:
-      element.classList.add('draggable-element--outer');
+      element.classList.add('drag-story__draggable-element--outer');
       break;
 
     case DragBoundaryType.Auto:
-      element.classList.add('draggable-element--auto');
+      element.classList.add('drag-story__draggable-element--auto');
       break;
   }
 
-  wrapper.appendChild(boundary);
-  boundary.appendChild(element);
+  container.appendChild(wrapper);
+  container.appendChild(element);
 
   document.addEventListener('DOMContentLoaded', function () {
     const drag = new Drag(element, {
       movementDirection: args.movementDirection,
       minMovements: args.minMovements,
       boundary: {
-        elem: boundary,
+        elem: wrapper,
         type: args.boundaryType,
         bounceFactor: args.bounceFactor,
       },
@@ -67,5 +67,5 @@ export const createBoundaryDrag = (args: DragStoryType) => {
     });
   });
 
-  return wrapper;
+  return container;
 };
