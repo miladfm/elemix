@@ -36,9 +36,14 @@ export type ZoomGesturesEventType =
 export interface GesturesOptions {
   /**
    * The minimum movements in pixels that the pointer event must be moved
-   * along either the x or y axis to initiate the dragging process.
+   * along either the x or y axis to trigger the 'dragStart.
    */
   minDragMovements: number;
+
+  /**
+   * The minimum number of events required to trigger the 'zoomStart' event.
+   */
+  minZoomEventThreshold: number;
 }
 
 export interface PressGesturesEvent {
@@ -74,6 +79,7 @@ export interface ZoomGesturesEvent {
 
   distance: number;
   scaleFactorFromPress: number | null; // available after ZoomPress
+  scaleFactorFromStart: number | null; // available after ZoomStart
 
   centerPageX: number;
   centerPageY: number;
@@ -86,6 +92,9 @@ export interface ZoomGesturesEvent {
 
   centerMovementXFromPress: number | null; // available after ZoomPress
   centerMovementYFromPress: number | null; // available after ZoomPress
+
+  centerMovementXFromStart: number | null; // available after ZoomStart
+  centerMovementYFromStart: number | null; // available after ZoomStart
 
   event: PointerEvent;
 }
