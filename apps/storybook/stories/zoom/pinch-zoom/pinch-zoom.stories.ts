@@ -1,6 +1,6 @@
 import { Meta, StoryObj } from '@storybook/html';
-import { createPinchZoom } from './zoom';
-import README from '../../../../packages/zoom/src/lib/pinch-zoom/README.md';
+import { createPinchZoom } from './pinch-zoom';
+import README from '../../../../../packages/zoom/src/lib/pinch-zoom/README.md';
 import { PinchZoomBoundaryType } from '@elemix/zoom';
 
 export interface ZoomStoryType {

@@ -21,7 +21,7 @@ import { PinchZoomAnimateToBoundaryAdjusters } from './pinch-zoom-animate-to-bou
 const DEFAULT_OPTIONS: PinchZoomOptions = {
   minEventThreshold: 5,
   minScale: 0,
-  maxScale: Infinity,
+  maxScale: 10,
   bounceFactor: 0.9,
 };
 
