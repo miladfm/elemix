@@ -64,3 +64,7 @@ export type DeepPartial<T> = {
 export declare interface Class<T> extends Function {
   new (...args: any[]): T;
 }
+
+export type ExcludeNullish<T> = {
+  [P in keyof T]: NonNullable<T[P]>;
+};

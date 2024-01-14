@@ -1,9 +1,22 @@
-import { Animation, Dom, DomType, Gestures, GesturesEvent, GesturesEventType, TransformProperty, ZoomGesturesEvent } from '@elemix/core';
+import {
+  Animation,
+  Dom,
+  DomType,
+  ExcludeNullish,
+  Gestures,
+  GesturesEvent,
+  GesturesEventType,
+  isNullish,
+  TransformProperty,
+  ZoomGesturesEvent,
+} from '@elemix/core';
 
 import { ZoomAdjuster, ZoomAdjusterConfig, ZoomAdjusterHooks } from '../zoom.model';
 import { Observable, Subject, Subscription } from 'rxjs';
-import { PinchZoomCoreAdjuster } from './pinch-zoom-scale-adjusters';
+import { pinchZoomScaleAdjusters } from './pinch-zoom-scale-adjusters';
 import { PinchZoomOptions } from './pinch-zoom.model';
+import { getPinchZoomScaleRange } from './pinch-zoom-scale-range';
+import { PinchZoomAnimateToBoundaryAdjusters } from './pinch-zoom-animate-to-boundary-adjusters';
 
 const DEFAULT_OPTIONS: PinchZoomOptions = {
   minEventThreshold: 5,
@@ -44,8 +57,11 @@ export class PinchZoom {
 
   private readonly options: PinchZoomOptions;
   private readonly element: Dom;
-  private gesture: Gestures;
-  private animation: Animation;
+  private readonly gesture: Gestures;
+  private readonly animation: Animation;
+  private readonly minScale: number;
+  private readonly maxScale: number;
+
   private gestureChangesSub: Subscription | null = null;
 
   private startEvent: ZoomGesturesEvent | null;
@@ -58,6 +74,9 @@ export class PinchZoom {
     this.gesture = new Gestures(this.element, { minZoomEventThreshold: this.options.minEventThreshold });
     this.animation = Animation.getOrCreateInstance(this.element);
 
+    const scaleRange = getPinchZoomScaleRange(this.element, this.options);
+    this.minScale = scaleRange.min;
+    this.maxScale = scaleRange.max;
     this.addZoomStyle();
     this.setZoomAdjuster();
     this.enable();
@@ -70,7 +89,7 @@ export class PinchZoom {
   }
 
   private setZoomAdjuster() {
-    this.zoomAdjuster = [new PinchZoomCoreAdjuster(this.element, this.options)];
+    this.zoomAdjuster = [pinchZoomScaleAdjusters, new PinchZoomAnimateToBoundaryAdjusters(this.element)];
   }
 
   public enable() {
@@ -128,7 +147,14 @@ export class PinchZoom {
   private handlePinchZoomPress(event: ZoomGesturesEvent) {
     this.zoomAdjuster.forEach((positionAdjuster) => {
       if (typeof positionAdjuster !== 'function' && positionAdjuster.onPress) {
-        positionAdjuster.onPress(event, this.options);
+        positionAdjuster.onPress({
+          minScale: this.minScale,
+          maxScale: this.maxScale,
+          startEvent: this.startEvent,
+          translateOnStart: this.translateOnStart,
+          event,
+          option: this.options,
+        });
       }
     });
   }
@@ -140,17 +166,26 @@ export class PinchZoom {
 
     this.zoomAdjuster.forEach((positionAdjuster) => {
       if (typeof positionAdjuster !== 'function' && positionAdjuster.onStart) {
-        positionAdjuster.onStart(event, this.options);
+        positionAdjuster.onStart({
+          minScale: this.minScale,
+          maxScale: this.maxScale,
+          startEvent: this.startEvent,
+          translateOnStart: this.translateOnStart,
+          event,
+          option: this.options,
+        });
       }
     });
   }
 
   private async handlePinchZoom(event: ZoomGesturesEvent) {
-    if (!this.translateOnStart || !this.startEvent) {
+    if (isNullish(this.startEvent) || isNullish(this.translateOnStart)) {
       return;
     }
 
-    const adjusterConfig: ZoomAdjusterConfig = {
+    const adjusterConfig: ExcludeNullish<ZoomAdjusterConfig> = {
+      minScale: this.minScale,
+      maxScale: this.maxScale,
       startEvent: this.startEvent,
       translateOnStart: this.translateOnStart,
       event,
@@ -179,7 +214,14 @@ export class PinchZoom {
 
     this.zoomAdjuster.forEach((positionAdjuster) => {
       if (typeof positionAdjuster !== 'function' && positionAdjuster.onEnd) {
-        positionAdjuster.onEnd(event, this.options);
+        positionAdjuster.onEnd({
+          minScale: this.minScale,
+          maxScale: this.maxScale,
+          startEvent: this.startEvent,
+          translateOnStart: this.translateOnStart,
+          event,
+          option: this.options,
+        });
       }
     });
   }
@@ -187,7 +229,14 @@ export class PinchZoom {
   private handlePinchZoomRelease(event: ZoomGesturesEvent) {
     this.zoomAdjuster.forEach((positionAdjuster) => {
       if (typeof positionAdjuster !== 'function' && positionAdjuster.onRelease) {
-        positionAdjuster.onRelease(event, this.options);
+        positionAdjuster.onRelease({
+          minScale: this.minScale,
+          maxScale: this.maxScale,
+          startEvent: this.startEvent,
+          translateOnStart: this.translateOnStart,
+          event,
+          option: this.options,
+        });
       }
     });
   }
