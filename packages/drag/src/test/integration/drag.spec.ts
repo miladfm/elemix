@@ -280,7 +280,7 @@ describe('Feature - Drag', () => {
      */
     const initInnerBoundary = () => {
       jest.spyOn(boundaryElement, 'getBoundingClientRect').mockReturnValue({
-        ...element.getBoundingClientRect(),
+        ...boundaryElement.getBoundingClientRect(),
         width: 400,
         height: 400,
         x: 400,

@@ -1,5 +1,15 @@
 import { ZoomAdjusterConfig, ZoomAdjusterHooks, ZoomAdjusterResult } from '../zoom.model';
-import { Animation, clamp, Coordinate, Dom, DomSelector, getBounceEffectValue, TransformProperty, ZoomGesturesEvent } from '@elemix/core';
+import {
+  Animation,
+  clamp,
+  Coordinate,
+  Dom,
+  DomSelector,
+  getBounceEffectValue,
+  TransformProperty,
+  ZoomGesturesEvent,
+  isNullish,
+} from '@elemix/core';
 import { PinchZoomBoundary, PinchZoomBoundaryType, PinchZoomOptions } from './pinch-zoom.model';
 
 export class PinchZoomCoreAdjuster implements ZoomAdjusterHooks {
@@ -101,7 +111,7 @@ export class PinchZoomCoreAdjuster implements ZoomAdjusterHooks {
   }
 
   adjuster(next: ZoomAdjusterResult, config: ZoomAdjusterConfig): ZoomAdjusterResult {
-    if (!config.event.scaleFactorFromStart) {
+    if (isNullish(config.event.scaleFactorFromStart)) {
       return next;
     }
 
@@ -173,7 +183,7 @@ export class PinchZoomCoreAdjuster implements ZoomAdjusterHooks {
   }
 
   private getTranslate(scale: number, event: ZoomGesturesEvent): Coordinate | null {
-    if (!this.translateOnStart || !this.startCenterOffset) {
+    if (isNullish(this.translateOnStart) || isNullish(this.startCenterOffset)) {
       return null;
     }
 

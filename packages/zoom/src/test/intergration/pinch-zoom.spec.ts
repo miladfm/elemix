@@ -8,6 +8,7 @@ import {
 } from '@internal-lib/util-testing';
 import { map, Observable, toArray } from 'rxjs';
 import { GesturesEventType, ZoomGesturesEventType } from '@elemix/core';
+import { pinchZoomBoundaryMovementCases, pinchZoomBoundaryScaleCases } from './pinch-zoom.cases';
 
 describe('Feature - Zoom', () => {
   let element: HTMLElement;
@@ -218,8 +219,16 @@ describe('Feature - Zoom', () => {
     });
     it(`should update only the target element's position when multi pinch-zoom element exist`, () => {
       const secondElement = document.createElement('div');
-      const thirdEvent = new MockPointerEvent({ pointerId: 2, defaultDownElement: secondElement, defaultCancelElement: secondElement });
-      const fourthEvent = new MockPointerEvent({ pointerId: 3, defaultDownElement: secondElement, defaultCancelElement: secondElement });
+      const thirdEvent = new MockPointerEvent({
+        pointerId: 2,
+        defaultDownElement: secondElement,
+        defaultCancelElement: secondElement,
+      });
+      const fourthEvent = new MockPointerEvent({
+        pointerId: 3,
+        defaultDownElement: secondElement,
+        defaultCancelElement: secondElement,
+      });
       new PinchZoom(secondElement, { minEventThreshold: 1 });
 
       firstEvent.dispatchDown({ x: 10, y: 10 });
@@ -388,5 +397,110 @@ describe('Feature - Zoom', () => {
       expect(element.style.transform).toContain('scale(1.5, 1.5)');
       expect(window.requestAnimationFrame).not.toHaveBeenCalled();
     });
+  });
+
+  describe('Boundary Pinch Zoom', () => {
+    const setPosition = (
+      mockElement: HTMLElement,
+      { ratio, width, x, y }: { ratio: '1:1' | '2:1' | '1:2'; width: number; x: number; y: number }
+    ) => {
+      // prettier-ignore
+      const height =
+        ratio === '1:1'
+          ? width
+          : ratio === '2:1'
+            ? width / 2
+            : width * 2;
+
+      jest.spyOn(mockElement, 'getBoundingClientRect').mockReturnValue({
+        ...mockElement.getBoundingClientRect(),
+        width,
+        height,
+        x,
+        y,
+        left: x,
+        top: y,
+        right: width + x,
+        bottom: height + y,
+      });
+    };
+
+    it.each(pinchZoomBoundaryScaleCases)(
+      '$index- should calculate correct `$scaleType` when boundary and element ratios are $boundaryRect.ratio and $elemRect.ratio, and `boundaryType` is `$boundaryType`',
+      ({ elemRect, boundaryRect, scaleType, boundaryType, expected }) => {
+        const boundaryElement = document.createElement('div');
+
+        setPosition(element, elemRect);
+        setPosition(boundaryElement, boundaryRect);
+
+        new PinchZoom(element, {
+          [scaleType]: {
+            element: boundaryElement,
+            boundaryType: boundaryType,
+          },
+          minEventThreshold: 1,
+          bounceFactor: 1,
+        });
+
+        const endPointerDelta = scaleType === 'minScale' ? 150 : 500;
+        const startFirstPointer = 300;
+        const startSecondPointer = 700;
+        const endFirstPointer = scaleType === 'minScale' ? startFirstPointer + endPointerDelta : startFirstPointer - endPointerDelta;
+        const endSecondPointer = scaleType === 'minScale' ? startSecondPointer - endPointerDelta : startSecondPointer + endPointerDelta;
+
+        firstEvent.dispatchDown({ x: startFirstPointer, y: startFirstPointer });
+        secondEvent.dispatchDown({ x: startSecondPointer, y: startSecondPointer });
+        firstEvent.dispatchMove({ x: startFirstPointer, y: startFirstPointer }); // To start the zoom process
+        firstEvent.dispatchMove({ x: endFirstPointer, y: endFirstPointer });
+        secondEvent.dispatchMove({ x: endSecondPointer, y: endSecondPointer });
+
+        expect(element.style.transform).toContain(expected);
+      }
+    );
+
+    it.each(pinchZoomBoundaryMovementCases)(
+      '$index- should move back to `$moveTo` with animation in boundary range when boundary and element ration is $boundaryRect.ratio and $elemRect.ratio and `boundaryType` is `$boundaryType`',
+      ({ elemRect, boundaryRect, scaleType, pointerMovements, boundaryType, expected }) => {
+        mockRequestAnimationFrame();
+        const boundaryElement = document.createElement('div');
+
+        setPosition(element, elemRect);
+        setPosition(boundaryElement, boundaryRect);
+
+        new PinchZoom(element, {
+          [scaleType]: {
+            element: boundaryElement,
+            boundaryType: boundaryType,
+          },
+          minEventThreshold: 1,
+          bounceFactor: 0.9,
+        });
+
+        const endPointerDelta = scaleType === 'minScale' ? 140 : 150;
+        const startFirstPointer = 250;
+        const startSecondPointer = 550;
+        const endFirstPointerScale = scaleType === 'minScale' ? startFirstPointer + endPointerDelta : startFirstPointer - endPointerDelta;
+        const endSecondPointerScale =
+          scaleType === 'minScale' ? startSecondPointer - endPointerDelta : startSecondPointer + endPointerDelta;
+
+        firstEvent.dispatchDown({ x: startFirstPointer, y: startFirstPointer });
+        secondEvent.dispatchDown({ x: startSecondPointer, y: startSecondPointer });
+        firstEvent.dispatchMove({ x: startFirstPointer, y: startFirstPointer }); // To start the zoom process
+        firstEvent.dispatchMove({
+          x: endFirstPointerScale + pointerMovements.fistEvent.x,
+          y: endFirstPointerScale + +pointerMovements.fistEvent.y,
+        });
+        secondEvent.dispatchMove({
+          x: endSecondPointerScale + +pointerMovements.secondEvent.x,
+          y: endSecondPointerScale + +pointerMovements.secondEvent.y,
+        });
+
+        jest.clearAllMocks();
+        firstEvent.dispatchUp({ x: 0, y: 0 });
+
+        expect(window.requestAnimationFrame).toHaveBeenCalled();
+        expect(element.style.transform).toContain(expected);
+      }
+    );
   });
 });
