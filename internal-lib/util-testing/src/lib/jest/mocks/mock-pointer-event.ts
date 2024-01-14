@@ -14,6 +14,8 @@ interface MockPointerEventDispatch {
   y: number; // PageY
   clientX?: number; // Default is x
   clientY?: number; // Default is y
+  offsetX?: number; // Default is x
+  offsetY?: number; // Default is y
   movementX?: number; // Default is 0
   movementY?: number; // Default is 0
 }
@@ -46,6 +48,8 @@ export class MockPointerEvent {
       pageY: data.y,
       clientX: data.clientX ?? data.x,
       clientY: data.clientY ?? data.y,
+      offsetX: data.offsetX ?? data.x,
+      offsetY: data.offsetY ?? data.y,
       movementX: data.movementX ?? 0,
       movementY: data.movementY ?? 0,
     });

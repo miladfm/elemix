@@ -66,9 +66,10 @@ export class Drag {
     this.gesture = new Gestures(this.element, {
       minDragMovements: this.options.minMovements,
     });
-    this.animation = new Animation(this.element);
+    this.animation = Animation.getOrCreateInstance(this.element);
 
     this.setPositionAdjuster();
+    this.addDraggableStyle();
     this.enable();
   }
 
@@ -80,7 +81,7 @@ export class Drag {
     }
   }
 
-  private async onDetectGesture(event: GesturesEvent) {
+  private async handleGesture(event: GesturesEvent) {
     switch (event.type) {
       case GesturesEventType.DragPress:
         this.handleDragPress(event);
@@ -183,10 +184,16 @@ export class Drag {
         return;
       }
 
-      this.onDetectGesture(event);
+      this.handleGesture(event);
       this.eventsSubject$.next(event);
     });
+
     this.isEnable = true;
+  }
+
+  private addDraggableStyle() {
+    this.element.setStyleImmediately('userSelect', 'none');
+    this.element.setStyleImmediately('touchAction', 'none');
   }
 
   public disable() {

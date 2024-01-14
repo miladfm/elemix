@@ -8,6 +8,7 @@ import { ZoomGestureStrategy } from './gesture-strategy-zoom';
 
 const DEFAULT_OPTIONS: GesturesOptions = {
   minDragMovements: 3,
+  minZoomEventThreshold: 3,
 };
 
 const gesturePriority: Record<GesturesEventType, number> = {
@@ -90,11 +91,23 @@ export class Gestures {
     this.strategies = [
       new PressGestureStrategy(),
       new DragGestureStrategy({ minMovement: this.options.minDragMovements }),
-      new ZoomGestureStrategy(),
+      new ZoomGestureStrategy({ minEventThreshold: this.options.minZoomEventThreshold }),
     ];
   }
 
   private detectGesture(event: PointerEvent): GesturesEvent[] {
+    // console.log('event', {
+    //   ponterId: event.pointerId,
+    //   type: event.type,
+    //   pageX: event.pageX,
+    //   pageY: event.pageY,
+    //   clientX: event.clientX,
+    //   clientY: event.clientY,
+    //   offsetX: event.offsetX,
+    //   offsetY: event.offsetY,
+    //   movementX: event.movementX,
+    //   movementY: event.movementY,
+    // });
     return this.strategies
       .flatMap((strategy) => strategy.detectGesture(this.events, event) || [])
       .sort((a, b) => gesturePriority[a.type] - gesturePriority[b.type]);

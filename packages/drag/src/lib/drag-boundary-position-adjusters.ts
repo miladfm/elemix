@@ -1,4 +1,4 @@
-import { Animation, clamp, Coordinate, Dom, DomSelector, DragGesturesEvent } from '@elemix/core';
+import { Animation, clamp, Coordinate, Dom, DragGesturesEvent, getBounceEffectValue } from '@elemix/core';
 import {
   DragBoundaryRange,
   DragBoundary,
@@ -7,7 +7,7 @@ import {
   DragPositionAdjusterConfig,
   DragPositionAdjusterHooks,
 } from './drag.model';
-import { getBoundaryRange, getPositionWithBounceEffect } from './drag-boundary-position-adjusters.utils';
+import { getBoundaryRange } from './drag-boundary-position-adjusters.utils';
 
 export class BoundaryPositionAdjuster implements DragPositionAdjusterHooks {
   private enabled = false;
@@ -17,7 +17,7 @@ export class BoundaryPositionAdjuster implements DragPositionAdjusterHooks {
   private boundaryRange: DragBoundaryRange | null;
   private bounceFactor: number;
 
-  constructor(element: DomSelector, private option: DragOptions) {
+  constructor(element: Dom, private option: DragOptions) {
     if (!this.option.boundary) {
       return;
     }
@@ -25,10 +25,10 @@ export class BoundaryPositionAdjuster implements DragPositionAdjusterHooks {
     this.initialize(element, this.option.boundary);
   }
 
-  private initialize(element: DomSelector, boundaryConfig: DragBoundary) {
+  private initialize(element: Dom, boundaryConfig: DragBoundary) {
     this.enabled = true;
     this.boundaryElement = new Dom(boundaryConfig.elem);
-    this.draggableElement = new Dom(element);
+    this.draggableElement = element;
     this.boundaryType = boundaryConfig.type ?? DragBoundaryType.Auto;
 
     this.bounceFactor = boundaryConfig.bounceFactor ?? 1;
@@ -49,8 +49,8 @@ export class BoundaryPositionAdjuster implements DragPositionAdjusterHooks {
     }
 
     return {
-      x: getPositionWithBounceEffect(nextPosition.x, this.boundaryRange.left, this.boundaryRange.right, this.bounceFactor),
-      y: getPositionWithBounceEffect(nextPosition.y, this.boundaryRange.top, this.boundaryRange.bottom, this.bounceFactor),
+      x: getBounceEffectValue(nextPosition.x, this.boundaryRange.left, this.boundaryRange.right, this.bounceFactor),
+      y: getBounceEffectValue(nextPosition.y, this.boundaryRange.top, this.boundaryRange.bottom, this.bounceFactor),
     };
   }
 

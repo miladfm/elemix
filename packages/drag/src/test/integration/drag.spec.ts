@@ -43,6 +43,7 @@ describe('Feature - Drag', () => {
     // Enable
     it(`should not listen to 'pointerdown' more than one when the enabled method has called more than one times`, () => {
       drag.enable();
+      drag.enable();
       expect(element.addEventListener).toHaveBeenCalledTimes(1);
       expect(element.addEventListener).toHaveBeenCalledWith('pointerdown', expect.any(Function), undefined);
       expect(document.addEventListener).not.toHaveBeenCalled();
@@ -279,7 +280,7 @@ describe('Feature - Drag', () => {
      */
     const initInnerBoundary = () => {
       jest.spyOn(boundaryElement, 'getBoundingClientRect').mockReturnValue({
-        ...element.getBoundingClientRect(),
+        ...boundaryElement.getBoundingClientRect(),
         width: 400,
         height: 400,
         x: 400,

@@ -5,10 +5,15 @@ import { average, getDistance } from '../common/math.util';
 export class ZoomGestureStrategy extends GestureStrategyBase {
   private pressEvent: PointerEvent | null = null;
   private startEvent: PointerEvent | null = null;
+  private eventCounter = 0;
 
   private pressEventCenterMovementX: number | null = null;
   private pressEventCenterMovementY: number | null = null;
   private pressEventDistance: number | null = null;
+
+  private startEventCenterMovementX: number | null = null;
+  private startEventCenterMovementY: number | null = null;
+  private startEventDistance: number | null = null;
 
   private get hasPressEventDispatched() {
     return !!this.pressEvent;
@@ -16,6 +21,10 @@ export class ZoomGestureStrategy extends GestureStrategyBase {
 
   private get hasStartEventDispatched() {
     return !!this.startEvent;
+  }
+
+  constructor(private option: { minEventThreshold: number }) {
+    super();
   }
 
   protected gestureHandler(params: GestureHandlerParams): ZoomGesturesEvent[] {
@@ -31,6 +40,7 @@ export class ZoomGestureStrategy extends GestureStrategyBase {
     const zoomGesturesEvents = identifiedGestures.map((gestureType) => this.createGestureEvent(gestureType, params));
     this.afterGestureEventCreated(params);
 
+    this.eventCounter = params.eventList.length === 2 ? this.eventCounter + 1 : 0;
     return zoomGesturesEvents;
   }
 
@@ -43,7 +53,13 @@ export class ZoomGestureStrategy extends GestureStrategyBase {
   }
 
   private identifyZoomStartGesture(params: GestureHandlerParams): ZoomGesturesEventType[] {
-    if (this.hasPressEventDispatched && !this.hasStartEventDispatched && params.isMove && params.pointerLength === 2) {
+    if (
+      this.hasPressEventDispatched &&
+      !this.hasStartEventDispatched &&
+      params.isMove &&
+      this.eventCounter >= this.option.minEventThreshold &&
+      params.pointerLength === 2
+    ) {
       return [GesturesEventType.ZoomStart];
     }
     return [];
@@ -88,6 +104,14 @@ export class ZoomGestureStrategy extends GestureStrategyBase {
 
     if (identifiedGestures.includes(GesturesEventType.ZoomStart)) {
       this.startEvent = params.event;
+      this.startEventCenterMovementX = average(params.eventList.map((e) => e.pageX));
+      this.startEventCenterMovementY = average(params.eventList.map((e) => e.pageY));
+      this.startEventDistance = getDistance(
+        params.eventList[0].pageX,
+        params.eventList[0].pageY,
+        params.eventList[1].pageX,
+        params.eventList[1].pageY
+      );
     }
   }
 
@@ -95,16 +119,21 @@ export class ZoomGestureStrategy extends GestureStrategyBase {
     if (params.pointerLength !== 2) {
       this.pressEvent = null;
       this.startEvent = null;
+
       this.pressEventCenterMovementX = null;
       this.pressEventCenterMovementY = null;
       this.pressEventDistance = null;
+
+      this.startEventCenterMovementX = null;
+      this.startEventCenterMovementY = null;
+      this.startEventDistance = null;
     }
   }
 
   // endregion
 
   // region Helpers
-  private createGestureEvent(gestureType: ZoomGesturesEventType, params: GestureHandlerParams) {
+  private createGestureEvent(gestureType: ZoomGesturesEventType, params: GestureHandlerParams): ZoomGesturesEvent {
     const centerPageX = average(params.eventList.map((e) => e.pageX));
     const centerPageY = average(params.eventList.map((e) => e.pageY));
 
@@ -120,16 +149,22 @@ export class ZoomGestureStrategy extends GestureStrategyBase {
 
       distance: getDistance(params.eventList[0].pageX, params.eventList[0].pageY, params.eventList[1].pageX, params.eventList[1].pageY),
       scaleFactorFromPress: this.pressEventDistance && Number((distance / this.pressEventDistance).toFixed(2)),
+      scaleFactorFromStart: this.startEventDistance && Number((distance / this.startEventDistance).toFixed(2)),
 
       centerPageX,
       centerPageY,
       centerClientX: average(params.eventList.map((e) => e.clientX)),
       centerClientY: average(params.eventList.map((e) => e.clientY)),
+      centerOffsetX: average(params.eventList.map((e) => e.offsetX)),
+      centerOffsetY: average(params.eventList.map((e) => e.offsetY)),
       centerMovementX: average(params.eventList.map((e) => e.movementX)),
       centerMovementY: average(params.eventList.map((e) => e.movementY)),
 
       centerMovementXFromPress: this.pressEventCenterMovementX && centerPageX - this.pressEventCenterMovementX,
       centerMovementYFromPress: this.pressEventCenterMovementY && centerPageY - this.pressEventCenterMovementY,
+
+      centerMovementXFromStart: this.startEventCenterMovementX && centerPageX - this.startEventCenterMovementX,
+      centerMovementYFromStart: this.startEventCenterMovementY && centerPageY - this.startEventCenterMovementY,
 
       event: params.event,
     };
