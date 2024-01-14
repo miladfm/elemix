@@ -210,11 +210,14 @@ importers:
 
   packages/zoom:
     dependencies:
+      '@elemix/core':
+        specifier: '*'
+        version: link:../core
       '@swc/helpers':
         specifier: ~0.5.2
         version: 0.5.3
       rxjs:
-        specifier: ^7.8.1
+        specifier: 7.8.1
         version: 7.8.1
 
 packages:
