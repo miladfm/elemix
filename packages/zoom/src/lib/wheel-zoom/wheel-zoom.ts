@@ -25,7 +25,7 @@ export class WheelZoom {
 
   private wheelEventSub: Subscription | null = null;
 
-  constructor(selector: DomType, options: Partial<WheelZoomOptions>) {
+  constructor(selector: DomType, options: Partial<WheelZoomOptions> = {}) {
     this.options = { ...DEFAULT_OPTIONS, ...options };
     this.element = new Dom(selector);
     this.animation = Animation.getOrCreateInstance(this.element);
@@ -68,12 +68,12 @@ export class WheelZoom {
     const deltaY = clamp(event.deltaY, [-15, 15]);
     const scaleDelta = deltaY * deltaFactor;
     const wheelScale = this.animation.value.transform.scale + scaleDelta;
-    const scale = clamp(wheelScale, [this.options.minScale, this.options.maxScale]);
+    const scale = Number(clamp(wheelScale, [this.options.minScale, this.options.maxScale]).toFixed(2));
 
     const centerOffset = { x: event.offsetX, y: event.offsetY };
     const translationDelta = getZoomTranslationDelta(scale, this.animation.value.transform.scale, centerOffset);
-    const x = this.animation.value.transform.x + translationDelta.x;
-    const y = this.animation.value.transform.y + translationDelta.y;
+    const x = Number((this.animation.value.transform.x + translationDelta.x).toFixed(2));
+    const y = Number((this.animation.value.transform.y + translationDelta.y).toFixed(2));
 
     this.animation.setScale(scale).setTranslate({ x, y }).apply();
   }
