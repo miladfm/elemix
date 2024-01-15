@@ -11,7 +11,7 @@ const DEFAULT_OPTIONS: ClickZoomOptions = {
 };
 
 export class ClickZoom {
-  private clickType: ClickZoomType;
+  private clickType = ClickZoomType.ZoomIn;
 
   private _isEnable = false;
   public get isEnable() {
@@ -29,14 +29,13 @@ export class ClickZoom {
   private clickEventSub: Subscription | null = null;
   private dblclickEventSub: Subscription | null = null;
 
-  constructor(selector: DomType, options: Partial<ClickZoomOptions>) {
+  constructor(selector: DomType, options: Partial<ClickZoomOptions> = {}) {
     this.options = { ...DEFAULT_OPTIONS, ...options };
     this.element = new Dom(selector);
     this.animation = Animation.getOrCreateInstance(this.element);
 
     this.addZoomStyle();
     this.enable();
-    this.setClickType(ClickZoomType.ZoomIn);
   }
 
   private addZoomStyle() {
@@ -67,6 +66,8 @@ export class ClickZoom {
       return;
     }
 
+    this.setClickType(this.clickType);
+
     this.clickEventSub = fromEvent<MouseEvent>(this.element.nativeElement, 'click')
       .pipe(filter((_) => this.clickType === ClickZoomType.ZoomIn || this.clickType === ClickZoomType.ZoomOut))
       .subscribe((event) => {
@@ -83,6 +84,7 @@ export class ClickZoom {
   }
 
   public disable() {
+    this.element.setStyleImmediately('cursor', 'initial');
     this.clickEventSub?.unsubscribe();
     this.dblclickEventSub?.unsubscribe();
     this.clickEventSub = null;
@@ -101,12 +103,12 @@ export class ClickZoom {
         ? this.animation.value.transform.scale * this.options.clickScaleFactor
         : this.animation.value.transform.scale / this.options.clickScaleFactor;
 
-    const scale = clamp(clickScale, [this.options.minScale, this.options.maxScale]);
+    const scale = Number(clamp(clickScale, [this.options.minScale, this.options.maxScale]).toFixed(2));
 
     const centerOffset = { x: event.offsetX, y: event.offsetY };
     const translationDelta = getZoomTranslationDelta(scale, this.animation.value.transform.scale, centerOffset);
-    const x = this.animation.value.transform.x + translationDelta.x;
-    const y = this.animation.value.transform.y + translationDelta.y;
+    const x = Number((this.animation.value.transform.x + translationDelta.x).toFixed(2));
+    const y = Number((this.animation.value.transform.y + translationDelta.y).toFixed(2));
 
     this.animation.setScale(scale).setTranslate({ x, y }).animate();
   }
@@ -117,12 +119,12 @@ export class ClickZoom {
         ? this.animation.value.transform.scale * this.options.dblclickScaleFactor
         : this.animation.value.transform.scale / this.options.dblclickScaleFactor;
 
-    const scale = clamp(dblclickScale, [this.options.minScale, this.options.maxScale]);
+    const scale = Number(clamp(dblclickScale, [this.options.minScale, this.options.maxScale]).toFixed(2));
 
     const centerOffset = { x: event.offsetX, y: event.offsetY };
     const translationDelta = getZoomTranslationDelta(scale, this.animation.value.transform.scale, centerOffset);
-    const x = this.animation.value.transform.x + translationDelta.x;
-    const y = this.animation.value.transform.y + translationDelta.y;
+    const x = Number((this.animation.value.transform.x + translationDelta.x).toFixed(2));
+    const y = Number((this.animation.value.transform.y + translationDelta.y).toFixed(2));
 
     this.animation.setScale(scale).setTranslate({ x, y }).animate();
   }
