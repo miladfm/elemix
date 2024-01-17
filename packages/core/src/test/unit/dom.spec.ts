@@ -53,6 +53,19 @@ describe('Dom Class - HTMLElement', () => {
     expect(domInstance.querySelector('span')).toEqual(childElem);
   });
 
+  it('should return all children HTMLElement when querySelectorAll is called', () => {
+    const firstChildElem = document.createElement('span');
+    const secondChildElem = document.createElement('span');
+    element.appendChild(firstChildElem);
+    element.appendChild(secondChildElem);
+    const domInstance = new Dom(element);
+
+    const selector = domInstance.querySelectorAll('span');
+    expect(selector.length).toEqual(2);
+    expect(selector[0]).toEqual(firstChildElem);
+    expect(selector[1]).toEqual(secondChildElem);
+  });
+
   it('should append the element to a parent when appendTo is called', () => {
     const parent = document.createElement('div');
     const child = document.createElement('div');

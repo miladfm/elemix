@@ -1,4 +1,4 @@
-import { Animation, clamp, Dom, DomType } from '@elemix/core';
+import { Animation, clamp, Dom, DomSelector } from '@elemix/core';
 import { fromEvent, Subscription } from 'rxjs';
 import { getZoomTranslationDelta } from '../zoom.util';
 import { WheelZoomOptions } from './wheel-zoom.model';
@@ -25,7 +25,7 @@ export class WheelZoom {
 
   private wheelEventSub: Subscription | null = null;
 
-  constructor(selector: DomType, options: Partial<WheelZoomOptions> = {}) {
+  constructor(selector: DomSelector, options: Partial<WheelZoomOptions> = {}) {
     this.options = { ...DEFAULT_OPTIONS, ...options };
     this.element = new Dom(selector);
     this.animation = Animation.getOrCreateInstance(this.element);

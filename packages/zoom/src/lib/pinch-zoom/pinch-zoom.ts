@@ -1,7 +1,7 @@
 import {
   Animation,
   Dom,
-  DomType,
+  DomSelector,
   ExcludeNullish,
   Gestures,
   GesturesEvent,
@@ -68,7 +68,7 @@ export class PinchZoom {
   private translateOnStart: TransformProperty | null;
   private zoomAdjuster: (ZoomAdjuster | ZoomAdjusterHooks)[];
 
-  constructor(selector: DomType, options: Partial<PinchZoomOptions> = {}) {
+  constructor(selector: DomSelector, options: Partial<PinchZoomOptions> = {}) {
     this.options = { ...DEFAULT_OPTIONS, ...options };
     this.element = new Dom(selector);
     this.gesture = new Gestures(this.element, { minZoomEventThreshold: this.options.minEventThreshold });

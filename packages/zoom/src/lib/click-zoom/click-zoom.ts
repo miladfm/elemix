@@ -1,4 +1,4 @@
-import { Animation, clamp, Dom, DomType } from '@elemix/core';
+import { Animation, clamp, Dom, DomSelector } from '@elemix/core';
 import { filter, fromEvent, Subscription } from 'rxjs';
 import { ClickZoomOptions, ClickZoomType } from './click-zoom.model';
 import { getZoomTranslationDelta } from '../zoom.util';
@@ -29,7 +29,7 @@ export class ClickZoom {
   private clickEventSub: Subscription | null = null;
   private dblclickEventSub: Subscription | null = null;
 
-  constructor(selector: DomType, options: Partial<ClickZoomOptions> = {}) {
+  constructor(selector: DomSelector, options: Partial<ClickZoomOptions> = {}) {
     this.options = { ...DEFAULT_OPTIONS, ...options };
     this.element = new Dom(selector);
     this.animation = Animation.getOrCreateInstance(this.element);
