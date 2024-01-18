@@ -96,18 +96,6 @@ export class Gestures {
   }
 
   private detectGesture(event: PointerEvent): GesturesEvent[] {
-    // console.log('event', {
-    //   ponterId: event.pointerId,
-    //   type: event.type,
-    //   pageX: event.pageX,
-    //   pageY: event.pageY,
-    //   clientX: event.clientX,
-    //   clientY: event.clientY,
-    //   offsetX: event.offsetX,
-    //   offsetY: event.offsetY,
-    //   movementX: event.movementX,
-    //   movementY: event.movementY,
-    // });
     return this.strategies
       .flatMap((strategy) => strategy.detectGesture(this.events, event) || [])
       .sort((a, b) => gesturePriority[a.type] - gesturePriority[b.type]);

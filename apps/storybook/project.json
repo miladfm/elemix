@@ -42,7 +42,8 @@
     "compodoc": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "compodoc -e json -p ./tsconfig.json -d ./apps/storybook/tmp"
+        "command": "npm run compodoc",
+        "cwd": "apps/storybook"
       }
     },
     "test-storybook": {

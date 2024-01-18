@@ -59,6 +59,10 @@ export class Dom<T extends DomType = HTMLElement> {
     return this.nativeElement.querySelector(selector);
   }
 
+  public querySelectorAll(selector: string) {
+    return this.nativeElement.querySelectorAll(selector);
+  }
+
   public appendTo(parentElem: DomSelector) {
     const parent = new Dom(parentElem);
     parent.nativeElement.appendChild(this.nativeElement);

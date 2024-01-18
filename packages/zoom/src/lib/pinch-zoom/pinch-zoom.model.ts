@@ -7,14 +7,12 @@ export interface PinchZoomOptions {
   minEventThreshold: number;
 
   /**
-   * The `minZoom` defines the smallest zoom level the element can reach.
-   * It determines the minimum scale at which the element is displayed.
+   * The `minScale` defines the smallest zoom level the element can reach.
    */
   minScale: number | PinchZoomBoundary;
 
   /**
-   * The `maxZoom` sets the largest zoom level for the element.
-   * It specifies the maximum scale at which the element can be displayed.
+   * The `maxScale` sets the largest zoom level for the element.
    */
   maxScale: number | PinchZoomBoundary;
 

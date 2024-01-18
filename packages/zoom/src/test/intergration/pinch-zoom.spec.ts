@@ -10,7 +10,7 @@ import { map, Observable, toArray } from 'rxjs';
 import { GesturesEventType, ZoomGesturesEventType } from '@elemix/core';
 import { pinchZoomBoundaryMovementCases, pinchZoomBoundaryScaleCases } from './pinch-zoom.cases';
 
-describe('Feature - Zoom', () => {
+describe('Feature - Pinch Zoom', () => {
   let element: HTMLElement;
   let pinchZoom: PinchZoom;
   let firstEvent: MockPointerEvent;
@@ -27,7 +27,7 @@ describe('Feature - Zoom', () => {
     secondEvent = new MockPointerEvent({ defaultDownElement: element, defaultCancelElement: element, pointerId: 1 });
   });
 
-  describe('Initialized', () => {
+  describe('Initialized Pinch Zoom', () => {
     beforeEach(() => {
       pinchZoom = new PinchZoom(element);
     });
@@ -78,7 +78,7 @@ describe('Feature - Zoom', () => {
     // TODO: Add scenarios for test the destroy
   });
 
-  describe('Events', () => {
+  describe('Events Pinch Zoom', () => {
     let events$: Observable<ZoomGesturesEventType[]>;
 
     beforeEach(() => {
