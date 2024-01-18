@@ -24,7 +24,7 @@ jobs:
         run: npx nx run storybook:build-storybook
 
       - name: Upload artifact
-        run: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v3
         with:
           path: dist/storybook/storybook
 
