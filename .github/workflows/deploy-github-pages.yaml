@@ -23,9 +23,10 @@ jobs:
       - name: Build Storybook
         run: npx nx run storybook:build-storybook
 
+      - name: Upload artifact
+        run: actions/upload-pages-artifact@v3
+        width:
+          path: dist/storybook/storybook
+
       - name: Deploy to GitHub Pages
-        uses: JamesIves/github-pages-deploy-action@4.1.4
-        with:
-          branch: gh-pages
-          folder: dist/storybook/storybook
-          token: ${{ secrets.GITHUB_TOKEN }}
+        uses: actions/deploy-pages@v4
