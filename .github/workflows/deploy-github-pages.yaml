@@ -25,7 +25,7 @@ jobs:
 
       - name: Upload artifact
         run: actions/upload-pages-artifact@v3
-        width:
+        with:
           path: dist/storybook/storybook
 
       - name: Deploy to GitHub Pages
