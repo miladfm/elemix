@@ -1,0 +1,37 @@
+{
+  "name": "crop",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/crop/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:swc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/crop",
+        "main": "packages/crop/src/index.ts",
+        "tsConfig": "packages/crop/tsconfig.lib.json",
+        "assets": ["packages/crop/*.md"]
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs crop {args.ver} {args.tag}",
+      "dependsOn": ["build"]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/crop/**/*.ts", "packages/crop/package.json"]
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "packages/crop/jest.config.ts"
+      }
+    }
+  },
+  "tags": []
+}

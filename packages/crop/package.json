@@ -1,0 +1,13 @@
+{
+  "name": "@elemix/crop",
+  "version": "0.0.1",
+  "dependencies": {
+    "@swc/helpers": "~0.5.2"
+  },
+  "peerDependencies": {
+    "@elemix/core": "*"
+  },
+  "type": "commonjs",
+  "main": "./src/index.js",
+  "typings": "./src/index.d.ts"
+}

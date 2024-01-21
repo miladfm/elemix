@@ -18,6 +18,7 @@
     "baseUrl": ".",
     "paths": {
       "@elemix/core": ["packages/core/src/index.ts"],
+      "@elemix/crop": ["packages/crop/src/index.ts"],
       "@elemix/drag": ["packages/drag/src/index.ts"],
       "@elemix/zoom": ["packages/zoom/src/index.ts"],
       "@internal-lib/util-testing": ["internal-lib/util-testing/src/index.ts"],

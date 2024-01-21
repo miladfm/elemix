@@ -208,7 +208,7 @@ export class Animation {
         const valueOnStart = deepClone(this.state.value.previousProperties);
         const valueOnEnd = deepClone(this.state.value.properties);
 
-        // Don't start animation, id nothing has changed
+        // Nothing has changed, don't start animation
         if (Object.keys(getObjectDiff(valueOnStart, valueOnEnd)).length === 0) {
           resolve(true);
           return;
