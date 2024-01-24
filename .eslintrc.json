@@ -37,6 +37,7 @@
       "files": ["*.ts", "*.tsx"],
       "extends": ["plugin:@nx/typescript"],
       "rules": {
+        "no-async-promise-executor": "off",
         "@typescript-eslint/no-explicit-any": "off",
         "indent": ["error", 2, { "SwitchCase": 1 }],
         "constructor-super": ["error"],

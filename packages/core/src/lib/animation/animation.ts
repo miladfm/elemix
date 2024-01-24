@@ -5,12 +5,11 @@ import { State } from '../common/state';
 import { AnimationProperties, Dimension } from './animation.model';
 import { getAnimationValueOnProgress, getTransform2dValue } from './animation.util';
 import { clamp } from '../common/math.util';
-import { isNullish } from '../common/ensure.util';
+import { AnimationFrameManager } from './animation-frame-manager';
 
 interface AnimationState {
   properties: AnimationProperties;
   previousProperties: AnimationProperties;
-  isAnimating: boolean;
 }
 
 /**
@@ -31,17 +30,18 @@ export class Animation {
   private callbacks = new Set<Callback<AnimationProperties>>();
 
   private state: State<AnimationState>;
+  private frameManager: AnimationFrameManager | null;
 
   private dom: Dom;
 
-  // Used to resolve the Promise when the animation is manually stopped outside animate method.
-  private resolveAnimationPromise: ((isCompleted: boolean) => void) | null = null;
-
-  private animationFrameID: number;
   private animationDelayTimerID: NodeJS.Timeout;
 
   public get value() {
     return this.state.value.properties;
+  }
+
+  public get isAnimating() {
+    return !!this.frameManager?.isAnimating;
   }
 
   constructor(element: DomSelector) {
@@ -146,16 +146,9 @@ export class Animation {
   // region --- animate ----
 
   public stopAnimation() {
-    if (this.state.value.isAnimating) {
-      this.state.deepSet({ isAnimating: false });
-      cancelAnimationFrame(this.animationFrameID);
-      clearTimeout(this.animationDelayTimerID);
-
-      if (this.resolveAnimationPromise) {
-        this.resolveAnimationPromise(false);
-        this.resolveAnimationPromise = null;
-      }
-    }
+    clearTimeout(this.animationDelayTimerID);
+    this.frameManager?.cancel();
+    this.frameManager = null;
   }
 
   public applyImmediately() {
@@ -187,107 +180,73 @@ export class Animation {
   public apply() {
     return new Promise<boolean>((resolve) => {
       this.stopAnimation();
-      this.animationFrameID = requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
         this.applyImmediately();
         resolve(true);
       });
     });
   }
 
-  // eslint-disable-next-line max-lines-per-function
-  public async animate({ duration = 100, easing = (x: number) => x, delay = 0 } = {}): Promise<boolean> {
-    this.validateAnimation(duration, delay);
+  public _getAnimationFrameCallback() {
+    const valueOnStart = deepClone(this.state.value.previousProperties);
+    const valueOnEnd = deepClone(this.state.value.properties);
 
-    return new Promise((resolve) => {
+    if (Object.keys(getObjectDiff(valueOnStart, valueOnEnd)).length === 0) {
+      return null;
+    }
+
+    return (progress: number) => {
+      this.state.deepSet({
+        properties: {
+          transform: {
+            x: getAnimationValueOnProgress(progress, valueOnStart.transform.x, valueOnEnd.transform.x),
+            y: getAnimationValueOnProgress(progress, valueOnStart.transform.y, valueOnEnd.transform.y),
+            scale: getAnimationValueOnProgress(progress, valueOnStart.transform.scale, valueOnEnd.transform.scale),
+            rotateX: getAnimationValueOnProgress(progress, valueOnStart.transform.rotateX, valueOnEnd.transform.rotateX),
+            rotateY: getAnimationValueOnProgress(progress, valueOnStart.transform.rotateY, valueOnEnd.transform.rotateY),
+          },
+          dimension: {
+            width: getAnimationValueOnProgress(progress, valueOnStart.dimension.width, valueOnEnd.dimension.width),
+            height: getAnimationValueOnProgress(progress, valueOnStart.dimension.height, valueOnEnd.dimension.height),
+          },
+          opacity: getAnimationValueOnProgress(progress, valueOnStart.opacity, valueOnEnd.opacity),
+        },
+      });
+
+      this.applyImmediately();
+    };
+  }
+
+  public animate({ duration = 100, easing = (x: number) => x, delay = 0 } = {}): Promise<boolean> {
+    if (duration <= 0) {
+      return this.apply();
+    }
+
+    this.stopAnimation();
+
+    return new Promise(async (resolve) => {
+      // Handel Delay
       if (delay > 0) {
         this.animationDelayTimerID = setTimeout(async () => {
           const animateResult = await this.animate({ duration, easing });
           resolve(animateResult);
         }, delay);
-      } else {
-        const valueOnStart = deepClone(this.state.value.previousProperties);
-        const valueOnEnd = deepClone(this.state.value.properties);
 
-        // Nothing has changed, don't start animation
-        if (Object.keys(getObjectDiff(valueOnStart, valueOnEnd)).length === 0) {
-          resolve(true);
-          return;
-        }
-
-        this.stopAnimation();
-
-        let start: number;
-        this.state.deepSet({ isAnimating: true });
-        this.resolveAnimationPromise = resolve;
-
-        const _animate = (timeStamp: number) => {
-          /**
-           * Initialize Animation Start Time
-           *
-           * The 'timeStamp' argument represents the current time in the animation cycle.
-           * On the first call, we initialize 'start' with this value to properly calculate
-           * frameTime on subsequent frames.
-           */
-          if (isNullish(start)) {
-            start = timeStamp;
-          }
-
-          /**
-           * Calculate Frame Time
-           *
-           * FrameTime is a normalized value between 0 and 1 that represents the animation's progress.
-           * To ensure it doesn't exceed 1, we use Math.min().
-           */
-          const frameTime = Math.min(1, (timeStamp - start) / duration);
-
-          // Calculate Animation Progress with Easing Function
-          const progress = easing(frameTime);
-
-          // Update Animation State
-          this.state.deepSet({
-            properties: {
-              transform: {
-                x: getAnimationValueOnProgress(progress, valueOnStart.transform.x, valueOnEnd.transform.x),
-                y: getAnimationValueOnProgress(progress, valueOnStart.transform.y, valueOnEnd.transform.y),
-                scale: getAnimationValueOnProgress(progress, valueOnStart.transform.scale, valueOnEnd.transform.scale),
-                rotateX: getAnimationValueOnProgress(progress, valueOnStart.transform.rotateX, valueOnEnd.transform.rotateX),
-                rotateY: getAnimationValueOnProgress(progress, valueOnStart.transform.rotateY, valueOnEnd.transform.rotateY),
-              },
-              dimension: {
-                width: getAnimationValueOnProgress(progress, valueOnStart.dimension.width, valueOnEnd.dimension.width),
-                height: getAnimationValueOnProgress(progress, valueOnStart.dimension.height, valueOnEnd.dimension.height),
-              },
-              opacity: getAnimationValueOnProgress(progress, valueOnStart.opacity, valueOnEnd.opacity),
-            },
-          });
-
-          this.applyImmediately();
-
-          // Check for Animation Completion. (frameTime 1, means animation is completed)
-          if (frameTime === 1) {
-            this.state.deepSet({ isAnimating: false });
-            resolve(true);
-            this.resolveAnimationPromise = null;
-            return;
-          }
-
-          // Request the next animation frame if the animation is not complete
-          this.animationFrameID = requestAnimationFrame(_animate);
-        };
-
-        // Trigger the first animation frame
-        this.animationFrameID = requestAnimationFrame(_animate);
+        return;
       }
-    });
-  }
 
-  private validateAnimation(duration: number, delay: number) {
-    if (duration < 1) {
-      throw new Error('the duration of animation cna not be less than 1ms');
-    }
-    if (delay < 0) {
-      throw new Error('the delay of animation cna not be less than 0ms');
-    }
+      const onAnimateFrame = this._getAnimationFrameCallback();
+
+      if (!onAnimateFrame) {
+        resolve(true);
+        return;
+      }
+
+      this.frameManager = new AnimationFrameManager(duration, easing);
+      const animateResult = await this.frameManager.animate((progress) => onAnimateFrame?.(progress));
+      this.frameManager = null;
+      resolve(animateResult);
+    });
   }
 
   // endregion

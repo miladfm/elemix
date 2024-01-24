@@ -4,6 +4,7 @@ export * from './lib/common/ensure.util';
 export * from './lib/common/math.util';
 export * from './lib/dom/dom';
 export * from './lib/animation/animation';
+export * from './lib/animation/animation-group';
 export * from './lib/animation/animation.model';
 export * from './lib/scale-element-to-fit/scale-element-to-fit';
 export * from './lib/gestures/gestures';
