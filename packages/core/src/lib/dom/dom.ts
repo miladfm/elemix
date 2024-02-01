@@ -16,7 +16,7 @@ export class Dom<T extends DomType = HTMLElement> {
     const _target = domSelector<T>(selector, parentElem);
 
     if (!_target) {
-      throw new Error('No element was found');
+      throw new Error(`No element was found. Try to find ${selector}`);
     }
 
     this.nativeElement = _target;
