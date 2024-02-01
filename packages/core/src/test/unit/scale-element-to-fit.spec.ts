@@ -48,6 +48,10 @@ describe('Utils - elementFitScale', () => {
     it('should not throw an error when no options is provided', () => {
       expect(() => scaleElementToFit(targetSmallElement, containerElement)).not.toThrow();
     });
+    it('should use the zero `gap` and `contain` when no option is provided', () => {
+      const { scale } = scaleElementToFit(targetSmallElement, containerElement);
+      expect(scale).toEqual(2);
+    });
 
     it('should throw an error when target is not a valid TargetElement', () => {
       expect(() => scaleElementToFit('' as any, containerElement)).toThrow();
@@ -129,9 +133,31 @@ describe('Utils - elementFitScale', () => {
       ).toThrow('The provided horizontal gap value is too large for the container dimensions');
     });
 
-    it('should use the zero `gap` and `contain` when no option is provided', () => {
-      const { scale } = scaleElementToFit(targetSmallElement, containerElement);
-      expect(scale).toEqual(2);
+    it('should return the correct `relativePosition` when container is bigger than target', () => {
+      const { relativePosition } = scaleElementToFit(targetSmallElement, containerElement);
+      expect(relativePosition).toEqual({ x: 200, y: 0 });
+    });
+    it('should return the correct `relativePosition` when container is smaller than target', () => {
+      const { relativePosition } = scaleElementToFit(targetBigImageElement, containerElement);
+      expect(relativePosition).toEqual({ x: 100, y: 0 });
+    });
+    it('should return the correct `relativePosition` when container is bigger than target and gap options is provided', () => {
+      const { relativePosition } = scaleElementToFit(targetSmallElement, containerElement, {
+        gap: {
+          vertical: 50,
+          horizontal: 50,
+        },
+      });
+      expect(relativePosition).toEqual({ x: 225, y: 50 });
+    });
+    it('should return the correct `relativePosition` when container is smaller than target and gap options is provided', () => {
+      const { relativePosition } = scaleElementToFit(targetBigImageElement, containerElement, {
+        gap: {
+          vertical: 50,
+          horizontal: 50,
+        },
+      });
+      expect(relativePosition).toEqual({ x: 150, y: 50 });
     });
   });
 
@@ -145,11 +171,6 @@ describe('Utils - elementFitScale', () => {
       expect(dimensions.width).toEqual(200);
       expect(dimensions.height).toEqual(400);
     });
-    it('should return the correct `relativePosition` when `fitType` options is `contain`', () => {
-      const { relativePosition } = scaleElementToFit(targetSmallElement, containerElement, { fitType: ScalingMode.Contain });
-      expect(relativePosition.x).toEqual(200);
-      expect(relativePosition.y).toEqual(0);
-    });
 
     it('should return the correct `scale` when target is a `HTMLImageElement` element and `fitType` options is `contain`', () => {
       const { scale } = scaleElementToFit(targetBigImageElement, containerElement, { fitType: ScalingMode.Contain });
@@ -159,11 +180,6 @@ describe('Utils - elementFitScale', () => {
       const { dimensions } = scaleElementToFit(targetBigImageElement, containerElement, { fitType: ScalingMode.Contain });
       expect(dimensions.width).toEqual(400);
       expect(dimensions.height).toEqual(400);
-    });
-    it('should return the correct `relativePosition` target is a `HTMLImageElement` element and when `fitType` options is `contain`', () => {
-      const { relativePosition } = scaleElementToFit(targetBigImageElement, containerElement, { fitType: ScalingMode.Contain });
-      expect(relativePosition.x).toEqual(100);
-      expect(relativePosition.y).toEqual(0);
     });
 
     it('should return the correct `scale` when gap option is provided and `fitType` options is `contain`', () => {
@@ -187,17 +203,6 @@ describe('Utils - elementFitScale', () => {
       expect(dimensions.width).toEqual(150);
       expect(dimensions.height).toEqual(300);
     });
-    it('should return the correct `relativePosition` when gap options is provided and `fitType` options is `contain`', () => {
-      const { relativePosition } = scaleElementToFit(targetSmallElement, containerElement, {
-        fitType: ScalingMode.Contain,
-        gap: {
-          vertical: 50,
-          horizontal: 50,
-        },
-      });
-      expect(relativePosition.x).toEqual(225);
-      expect(relativePosition.y).toEqual(50);
-    });
   });
 
   describe('cover type', () => {
@@ -210,11 +215,6 @@ describe('Utils - elementFitScale', () => {
       expect(dimensions.width).toEqual(600);
       expect(dimensions.height).toEqual(1200);
     });
-    it('should return the correct `relativePosition` when `fitType` options is `cover`', () => {
-      const { relativePosition } = scaleElementToFit(targetSmallElement, containerElement, { fitType: ScalingMode.Cover });
-      expect(relativePosition.x).toEqual(0);
-      expect(relativePosition.y).toEqual(-400);
-    });
 
     it('should return the correct `scale` when target is a `HTMLImageElement` element and `fitType` options is `cover`', () => {
       const { scale } = scaleElementToFit(targetBigImageElement, containerElement, { fitType: ScalingMode.Cover });
@@ -224,11 +224,6 @@ describe('Utils - elementFitScale', () => {
       const { dimensions } = scaleElementToFit(targetBigImageElement, containerElement, { fitType: ScalingMode.Cover });
       expect(dimensions.width).toEqual(600);
       expect(dimensions.height).toEqual(600);
-    });
-    it('should return the correct `relativePosition` target is a `HTMLImageElement` element and when `fitType` options is `cover`', () => {
-      const { relativePosition } = scaleElementToFit(targetBigImageElement, containerElement, { fitType: ScalingMode.Cover });
-      expect(relativePosition.x).toEqual(0);
-      expect(relativePosition.y).toEqual(-100);
     });
 
     it('should return the correct `scale` when gap option is provided and `fitType` options is `cover`', () => {
@@ -251,17 +246,6 @@ describe('Utils - elementFitScale', () => {
       });
       expect(dimensions.width).toEqual(500);
       expect(dimensions.height).toEqual(1000);
-    });
-    it('should return the correct `relativePosition` when gap options is provided and `fitType` options is `cover`', () => {
-      const { relativePosition } = scaleElementToFit(targetSmallElement, containerElement, {
-        fitType: ScalingMode.Cover,
-        gap: {
-          vertical: 50,
-          horizontal: 50,
-        },
-      });
-      expect(relativePosition.x).toEqual(50);
-      expect(relativePosition.y).toEqual(-300);
     });
   });
 });

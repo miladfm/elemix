@@ -38,8 +38,8 @@ export function scaleElementToFit(
   };
 
   const relativePosition = {
-    x: option.fitType === ScalingMode.Contain ? (container.width - dimensions.width) / 2 : option.gap.horizontal,
-    y: option.fitType === ScalingMode.Contain ? option.gap.vertical : (container.height - dimensions.height) / 2,
+    x: (container.width - dimensions.width) / 2,
+    y: (container.height - dimensions.height) / 2,
   };
 
   return { scale: scaleFactor, dimensions, relativePosition };
