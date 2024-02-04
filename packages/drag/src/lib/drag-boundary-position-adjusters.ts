@@ -1,13 +1,15 @@
-import { Animation, clamp, Coordinate, Dom, DragGesturesEvent, getBounceEffectValue } from '@elemix/core';
+import { AnimateState, Animation, clamp, Coordinate, Dom, DragGesturesEvent, getBounceEffectValue } from '@elemix/core';
 import {
-  DragBoundaryRange,
   DragBoundary,
+  DragBoundaryRange,
   DragBoundaryType,
   DragOptions,
   DragPositionAdjusterConfig,
   DragPositionAdjusterHooks,
+  DragEvent,
 } from './drag.model';
 import { getBoundaryRange } from './drag-boundary-position-adjusters.utils';
+import { Subject } from 'rxjs';
 
 export class BoundaryPositionAdjuster implements DragPositionAdjusterHooks {
   private enabled = false;
@@ -17,7 +19,7 @@ export class BoundaryPositionAdjuster implements DragPositionAdjusterHooks {
   private boundaryRange: DragBoundaryRange | null;
   private bounceFactor: number;
 
-  constructor(element: Dom, private option: DragOptions) {
+  constructor(element: Dom, private option: DragOptions, private eventsSubject$: Subject<DragEvent>) {
     if (!this.option.boundary) {
       return;
     }
@@ -49,8 +51,8 @@ export class BoundaryPositionAdjuster implements DragPositionAdjusterHooks {
     }
 
     return {
-      x: getBounceEffectValue(nextPosition.x, this.boundaryRange.left, this.boundaryRange.right, this.bounceFactor),
-      y: getBounceEffectValue(nextPosition.y, this.boundaryRange.top, this.boundaryRange.bottom, this.bounceFactor),
+      x: getBounceEffectValue(nextPosition.x, this.boundaryRange.minX, this.boundaryRange.maxX, this.bounceFactor),
+      y: getBounceEffectValue(nextPosition.y, this.boundaryRange.minX, this.boundaryRange.maxY, this.bounceFactor),
     };
   }
 
@@ -62,14 +64,23 @@ export class BoundaryPositionAdjuster implements DragPositionAdjusterHooks {
     const animation = Animation.getOrCreateInstance(this.draggableElement);
 
     const position = {
-      x: clamp(animation.value.transform.x, [this.boundaryRange.left, this.boundaryRange.right]),
-      y: clamp(animation.value.transform.y, [this.boundaryRange.top, this.boundaryRange.bottom]),
+      x: clamp(animation.value.transform.x, [this.boundaryRange.minX, this.boundaryRange.maxX]),
+      y: clamp(animation.value.transform.y, [this.boundaryRange.minX, this.boundaryRange.maxY]),
     };
 
     const hasPositionChanged = position.x !== animation.value.transform.x || position.y !== animation.value.transform.y;
 
     if (hasPositionChanged) {
-      animation.setTranslate(position).animate();
+      animation
+        .setTranslate(position)
+        .animate$()
+        .subscribe((e) => {
+          if (e.state === AnimateState.Animating) {
+            const x = e.changes?.transform?.x ?? animation.value.transform.x;
+            const y = e.changes?.transform?.y ?? animation.value.transform.y;
+            this.eventsSubject$.next({ type: 'bounce', translate: { x, y } });
+          }
+        });
     }
   }
 }

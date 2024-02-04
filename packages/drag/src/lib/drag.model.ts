@@ -1,4 +1,11 @@
-import { Coordinate, DomSelector, DragGesturesEvent, TransformProperty } from '@elemix/core';
+import { Coordinate, DomSelector, DragGesturesEvent, DragGesturesEventType, TransformProperty } from '@elemix/core';
+
+export type DragEventType = DragGesturesEventType | 'bounce';
+
+export interface DragEvent {
+  type: DragEventType;
+  translate: Coordinate;
+}
 
 export interface DragOptions {
   /**
@@ -150,8 +157,12 @@ export interface DragPositionAdjusterConfig {
 export type DragPositionAdjuster = (nextPosition: Coordinate, config: DragPositionAdjusterConfig) => Coordinate;
 
 export interface DragBoundaryRange {
-  left: number;
-  top: number;
-  right: number;
-  bottom: number;
+  // left: number;
+  // top: number;
+  // right: number;
+  // bottom: number;
+  minX: number;
+  maxX: number;
+  minY: number;
+  maxY: number;
 }

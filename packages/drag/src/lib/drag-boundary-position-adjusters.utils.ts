@@ -23,29 +23,47 @@ export function getBoundaryRange(draggableElement: Dom, boundaryElement: Dom, bo
 }
 
 function getInnerBoundaryRange(animationProperties: AnimationProperties, boundaryRect: DOMRect, draggableRect: DOMRect): DragBoundaryRange {
+  const left = boundaryRect.left - draggableRect.left + animationProperties.transform.x;
+  const top = boundaryRect.top - draggableRect.top + animationProperties.transform.y;
+  const right = boundaryRect.right - draggableRect.right + animationProperties.transform.x;
+  const bottom = boundaryRect.bottom - draggableRect.bottom + animationProperties.transform.y;
+
   return {
-    left: boundaryRect.left - draggableRect.left + animationProperties.transform.x,
-    top: boundaryRect.top - draggableRect.top + animationProperties.transform.y,
-    right: boundaryRect.right - draggableRect.right + animationProperties.transform.x,
-    bottom: boundaryRect.bottom - draggableRect.bottom + animationProperties.transform.y,
+    minX: Math.min(left, right),
+    maxX: Math.max(left, right),
+    minY: Math.min(top, bottom),
+    maxY: Math.max(top, bottom),
   };
 }
 
 function getOuterBoundaryRange(animationProperties: AnimationProperties, boundaryRect: DOMRect, draggableRect: DOMRect): DragBoundaryRange {
+  const left =
+    (draggableRect.left - boundaryRect.left - animationProperties.transform.x) * (draggableRect.left <= boundaryRect.left ? -1 : 1);
+  const top = (draggableRect.top - boundaryRect.top - animationProperties.transform.y) * (draggableRect.top <= boundaryRect.top ? -1 : 1);
+  const right =
+    (draggableRect.right - boundaryRect.right - animationProperties.transform.x) * (draggableRect.right >= boundaryRect.right ? -1 : 1);
+  const bottom =
+    (draggableRect.bottom - boundaryRect.bottom - animationProperties.transform.y) * (draggableRect.bottom >= boundaryRect.bottom ? -1 : 1);
+
   return {
-    left: draggableRect.left - boundaryRect.left - animationProperties.transform.x,
-    top: draggableRect.top - boundaryRect.top - animationProperties.transform.y,
-    right: draggableRect.right - boundaryRect.right - animationProperties.transform.x,
-    bottom: draggableRect.bottom - boundaryRect.bottom - animationProperties.transform.y,
+    minX: Math.min(left, right),
+    maxX: Math.max(left, right),
+    minY: Math.min(top, bottom),
+    maxY: Math.max(top, bottom),
   };
 }
 
 function getAutoBoundaryRange(animationProperties: AnimationProperties, boundaryRect: DOMRect, draggableRect: DOMRect): DragBoundaryRange {
+  const left = calculateAxisBoundary('left', boundaryRect, draggableRect, animationProperties.transform);
+  const top = calculateAxisBoundary('top', boundaryRect, draggableRect, animationProperties.transform);
+  const right = calculateAxisBoundary('right', boundaryRect, draggableRect, animationProperties.transform);
+  const bottom = calculateAxisBoundary('bottom', boundaryRect, draggableRect, animationProperties.transform);
+
   return {
-    left: calculateAxisBoundary('left', boundaryRect, draggableRect, animationProperties.transform),
-    top: calculateAxisBoundary('top', boundaryRect, draggableRect, animationProperties.transform),
-    right: calculateAxisBoundary('right', boundaryRect, draggableRect, animationProperties.transform),
-    bottom: calculateAxisBoundary('bottom', boundaryRect, draggableRect, animationProperties.transform),
+    minX: Math.min(left, right),
+    maxX: Math.max(left, right),
+    minY: Math.min(top, bottom),
+    maxY: Math.max(top, bottom),
   };
 }
 

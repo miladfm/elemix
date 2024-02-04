@@ -22,8 +22,8 @@ export class Dom<T extends DomType = HTMLElement> {
     this.nativeElement = _target;
   }
 
-  public setStyleImmediately<Key extends CssStylesKey>(key: Key, value: CSSStyleDeclaration[Key] | number) {
-    this.nativeElement.style[key] = toStr(value);
+  public setStyleImmediately(key: CssStylesKey, value: string | number) {
+    this.nativeElement.style[key as any] = toStr(value);
   }
 
   public get width(): number {

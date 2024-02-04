@@ -42,10 +42,13 @@ export interface TransformObject {
   scaleY: number;
 }
 
-export type CssStylesKey = Exclude<
-  keyof CSSStyleDeclaration,
-  'parentRule' | 'length' | 'getPropertyPriority' | 'getPropertyValue' | 'item' | 'removeProperty' | 'setProperty'
->;
+export type CssStylesKey =
+  | Exclude<
+      keyof CSSStyleDeclaration,
+      'parentRule' | 'length' | 'getPropertyPriority' | 'getPropertyValue' | 'item' | 'removeProperty' | 'setProperty'
+    >
+  | 'userDrag'
+  | 'webkitUserDrag';
 
 export interface Coordinate {
   x: number;

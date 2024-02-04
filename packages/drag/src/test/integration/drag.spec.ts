@@ -8,8 +8,8 @@ import {
   mockBasicRequestAnimationFrame,
 } from '@internal-lib/util-testing';
 import { map, Observable, toArray } from 'rxjs';
-import { DragGesturesEventType, GesturesEventType } from '@elemix/core';
-import { DragBoundaryType, MovementDirection } from '../../lib/drag.model';
+import { GesturesEventType } from '@elemix/core';
+import { DragBoundaryType, DragEventType, MovementDirection } from '../../lib/drag.model';
 
 describe('Feature - Drag', () => {
   let element: HTMLElement;
@@ -77,7 +77,7 @@ describe('Feature - Drag', () => {
   });
 
   describe('Events', () => {
-    let events$: Observable<DragGesturesEventType[]>;
+    let events$: Observable<DragEventType[]>;
 
     beforeEach(() => {
       drag = new Drag(element);
@@ -1421,54 +1421,36 @@ describe('Feature - Drag', () => {
       expect(element.style.transform).toContain('translate(-100px, 100px)');
     });
 
-    it(`should animate the element back to the boundary when bounce effect has applied and dragging has finished`, () => {
-      mockRequestAnimationFrame();
+    it.each([
+      { label: 'top-left', to: { x: -300, y: 300 }, expected: { x: -100, y: 100 } },
+      { label: 'top-right', to: { x: 300, y: 300 }, expected: { x: 100, y: 100 } },
+      { label: 'bottom-right', to: { x: 300, y: -300 }, expected: { x: 100, y: -100 } },
+      { label: 'bottom-left', to: { x: -300, y: -300 }, expected: { x: -100, y: -100 } },
+    ])(
+      `should animate the element back to $label the boundary when bounce effect has applied and dragging has finished`,
+      ({ to, expected }) => {
+        mockRequestAnimationFrame();
 
-      mockClientRect(boundaryElement, { width: 400, height: 400, left: 400, top: 400 });
-      mockClientRect(element, { width: 200, height: 200, left: 500, top: 500 });
+        mockClientRect(boundaryElement, { width: 400, height: 400, left: 400, top: 400 });
+        mockClientRect(element, { width: 200, height: 200, left: 500, top: 500 });
 
-      drag = new Drag(element, {
-        boundary: {
-          elem: boundaryElement,
-          type: DragBoundaryType.Inner,
-          bounceFactor: 0.5,
-        },
-      });
+        drag = new Drag(element, {
+          boundary: {
+            elem: boundaryElement,
+            type: DragBoundaryType.Inner,
+            bounceFactor: 0.5,
+          },
+        });
 
-      // left-top
-      event.dispatchDown({ x: 10, y: 10 });
-      event.dispatchMove({ x: 0, y: 0 }); // To start dragging
-      event.dispatchMove({ x: -300, y: 300 });
-      event.dispatchUp({ x: 0, y: 0 });
-      expect(element.style.transform).toContain('translate(-100px, 100px)');
+        // left-top
+        event.dispatchDown({ x: 10, y: 10 });
+        event.dispatchMove({ x: 0, y: 0 }); // To start dragging
+        event.dispatchMove({ x: to.x, y: to.y });
+        event.dispatchUp({ x: 0, y: 0 });
+        expect(element.style.transform).toContain(`translate(${expected.x}px, ${expected.y}px)`);
+      }
+    );
 
-      // top-right
-      mockClientRect(element, { width: 200, height: 200, left: 400, top: 600 });
-
-      event.dispatchDown({ x: 10, y: 10 });
-      event.dispatchMove({ x: 0, y: 0 }); // To start dragging
-      event.dispatchMove({ x: 300, y: 300 });
-      event.dispatchUp({ x: 0, y: 0 });
-      expect(element.style.transform).toContain('translate(100px, 100px)');
-
-      // right-bottom
-      mockClientRect(element, { width: 200, height: 200, left: 600, top: 600 });
-
-      event.dispatchDown({ x: 10, y: 10 });
-      event.dispatchMove({ x: 0, y: 0 }); // To start dragging
-      event.dispatchMove({ x: 300, y: -300 });
-      event.dispatchUp({ x: 0, y: 0 });
-      expect(element.style.transform).toContain('translate(100px, -100px)');
-
-      // bottom-left
-      mockClientRect(element, { width: 200, height: 200, left: 600, top: 400 });
-
-      event.dispatchDown({ x: 10, y: 10 });
-      event.dispatchMove({ x: 0, y: 0 }); // To start dragging
-      event.dispatchMove({ x: -300, y: -300 });
-      event.dispatchUp({ x: 0, y: 0 });
-      expect(element.style.transform).toContain('translate(-100px, -100px)');
-    });
     it(`should skip boundary concept where the boundary element is removed before start dragging`, () => {
       jest.spyOn(boundaryElement, 'getBoundingClientRect').mockReturnValue({
         ...element.getBoundingClientRect(),
@@ -1543,7 +1525,7 @@ describe('Feature - Drag', () => {
   });
 
   describe('MinMovement Dragging', () => {
-    let events$: Observable<DragGesturesEventType[]>;
+    let events$: Observable<DragEventType[]>;
 
     beforeEach(() => {
       drag = new Drag(element, { minMovements: 10 });

@@ -1,5 +1,6 @@
 import {
   Animation,
+  Coordinate,
   Dom,
   DomSelector,
   DragGesturesEvent,
@@ -9,7 +10,14 @@ import {
   TransformProperty,
 } from '@elemix/core';
 import { Observable, Subject, Subscription } from 'rxjs';
-import { DragOptions, DragPositionAdjuster, DragPositionAdjusterConfig, DragPositionAdjusterHooks, MovementDirection } from './drag.model';
+import {
+  DragEvent,
+  DragOptions,
+  DragPositionAdjuster,
+  DragPositionAdjusterConfig,
+  DragPositionAdjusterHooks,
+  MovementDirection,
+} from './drag.model';
 import { movementDirectionPositionAdjuster } from './drag-movement-direction-position-adjusters';
 import { basicPositionAdjuster } from './drag-basic-position-adjusters';
 import { BoundaryPositionAdjuster } from './drag-boundary-position-adjusters';
@@ -28,8 +36,8 @@ const DRAG_GESTURES_TYPE = [
 ];
 
 export class Drag {
-  private eventsSubject$ = new Subject<DragGesturesEvent>();
-  public events$: Observable<DragGesturesEvent> = this.eventsSubject$.asObservable();
+  private eventsSubject$ = new Subject<DragEvent>();
+  public events$: Observable<DragEvent> = this.eventsSubject$.asObservable();
 
   private _isEnable = false;
   public get isEnable() {
@@ -77,35 +85,30 @@ export class Drag {
     this.positionAdjuster = [basicPositionAdjuster, movementDirectionPositionAdjuster];
 
     if (this.options.boundary) {
-      this.positionAdjuster.push(new BoundaryPositionAdjuster(this.element, this.options));
+      this.positionAdjuster.push(new BoundaryPositionAdjuster(this.element, this.options, this.eventsSubject$));
     }
   }
 
-  private async handleGesture(event: GesturesEvent) {
+  private handleGesture(event: DragGesturesEvent): Promise<Coordinate> | Coordinate {
     switch (event.type) {
       case GesturesEventType.DragPress:
-        this.handleDragPress(event);
-        break;
+        return this.handleDragPress(event);
 
       case GesturesEventType.DragStart:
-        this.handleDragStart(event);
-        break;
+        return this.handleDragStart(event);
 
       case GesturesEventType.Drag:
-        await this.handleDrag(event);
-        break;
+        return this.handleDrag(event);
 
       case GesturesEventType.DragEnd:
-        this.handleDragEnd(event);
-        break;
+        return this.handleDragEnd(event);
 
       case GesturesEventType.DragRelease:
-        this.handleDragRelease(event);
-        break;
+        return this.handleDragRelease(event);
     }
   }
 
-  private handleDragPress(event: DragGesturesEvent) {
+  private handleDragPress(event: DragGesturesEvent): Coordinate {
     this.pressEvent = event;
 
     this.positionAdjuster.forEach((positionAdjuster) => {
@@ -113,9 +116,14 @@ export class Drag {
         positionAdjuster.onPress(event, this.options);
       }
     });
+
+    return {
+      x: this.animation.actualValue.transform.x,
+      y: this.animation.actualValue.transform.y,
+    };
   }
 
-  private handleDragStart(event: DragGesturesEvent) {
+  private handleDragStart(event: DragGesturesEvent): Coordinate {
     this.isDragging = true;
     this.translateOnStart = { ...this.animation.value.transform };
     this.startEvent = event;
@@ -125,11 +133,19 @@ export class Drag {
         positionAdjuster.onStart(event, this.options);
       }
     });
+
+    return {
+      x: this.animation.actualValue.transform.x,
+      y: this.animation.actualValue.transform.y,
+    };
   }
 
-  private async handleDrag(event: DragGesturesEvent) {
+  private async handleDrag(event: DragGesturesEvent): Promise<Coordinate> {
     if (!this.translateOnStart || !this.startEvent || !this.pressEvent) {
-      return;
+      return {
+        x: this.animation.actualValue.transform.x,
+        y: this.animation.actualValue.transform.y,
+      };
     }
 
     const positionAdjusterConfig: DragPositionAdjusterConfig = {
@@ -150,9 +166,10 @@ export class Drag {
 
     this.animation.setTranslate(nextTranslate);
     await this.animation.apply();
+    return nextTranslate;
   }
 
-  private handleDragEnd(event: DragGesturesEvent) {
+  private handleDragEnd(event: DragGesturesEvent): Coordinate {
     this.isDragging = false;
     this.translateOnStart = null;
     this.startEvent = null;
@@ -162,9 +179,14 @@ export class Drag {
         positionAdjuster.onEnd(event, this.options);
       }
     });
+
+    return {
+      x: this.animation.actualValue.transform.x,
+      y: this.animation.actualValue.transform.y,
+    };
   }
 
-  private handleDragRelease(event: DragGesturesEvent) {
+  private handleDragRelease(event: DragGesturesEvent): Coordinate {
     this.pressEvent = null;
 
     this.positionAdjuster.forEach((positionAdjuster) => {
@@ -172,6 +194,11 @@ export class Drag {
         positionAdjuster.onRelease(event, this.options);
       }
     });
+
+    return {
+      x: this.animation.actualValue.transform.x,
+      y: this.animation.actualValue.transform.y,
+    };
   }
 
   public enable() {
@@ -184,8 +211,8 @@ export class Drag {
         return;
       }
 
-      this.handleGesture(event);
-      this.eventsSubject$.next(event);
+      const translate = await this.handleGesture(event);
+      this.eventsSubject$.next({ type: event.type, translate });
     });
 
     this.isEnable = true;
@@ -194,6 +221,8 @@ export class Drag {
   private addDraggableStyle() {
     this.element.setStyleImmediately('userSelect', 'none');
     this.element.setStyleImmediately('touchAction', 'none');
+    this.element.setStyleImmediately('userDrag', 'none');
+    this.element.setStyleImmediately('webkitUserDrag', 'none');
   }
 
   public disable() {
@@ -204,7 +233,18 @@ export class Drag {
 
   public destroy() {
     this.disable();
-    this.eventsSubject$.complete();
+    /**
+     * In handling asynchronous pointer events, such as drag operations, where DOM updates are scheduled
+     * for the next animation frame, we use setTimeout to delay eventsSubject$ completion.
+     * To ensure that changes are dispatched through eventsSubject$ after these updates, we use setTimeout.
+     * This technique delays the completion of eventsSubject$ until the current event handling cycle is fully resolved.
+     * Without this delay, eventsSubject$ might complete before the DOM is updated, preventing the dispatch
+     * of change events after asynchronous DOM updates.
+     * This ensures consistency between the DOM state and events dispatched by eventsSubject$.
+     */
+    setTimeout((_) => {
+      this.eventsSubject$.complete();
+    });
     // TODO: Don't let the enable method works after destroy
   }
 
