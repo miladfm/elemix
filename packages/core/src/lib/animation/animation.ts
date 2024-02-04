@@ -2,10 +2,11 @@ import { Dom, DomSelector, DomType } from '../dom/dom';
 import { Callback, Coordinate } from '../common/common.model';
 import { deepClone, getObjectDiff } from '../common/common.util';
 import { State } from '../common/state';
-import { AnimationProperties, Dimension } from './animation.model';
+import { AnimateResult, AnimateState, AnimationProperties, Dimension } from './animation.model';
 import { getAnimationValueOnProgress, getTransform2dValue } from './animation.util';
 import { clamp } from '../common/math.util';
 import { AnimationFrameManager } from './animation-frame-manager';
+import { lastValueFrom, Observable, ReplaySubject } from 'rxjs';
 
 interface AnimationState {
   properties: AnimationProperties;
@@ -38,6 +39,10 @@ export class Animation {
 
   public get value() {
     return this.state.value.properties;
+  }
+
+  public get actualValue() {
+    return this.state.value.previousProperties;
   }
 
   public get isAnimating() {
@@ -151,7 +156,11 @@ export class Animation {
     this.frameManager = null;
   }
 
-  public applyImmediately() {
+  /**
+   * Apply all style changes to the DOM immediately.
+   * @return The changes that applied to the DOM
+   */
+  public applyImmediately(): Partial<AnimationProperties> {
     const changesValues = getObjectDiff(this.state.value.previousProperties, this.state.value.properties);
 
     if (changesValues.transform !== undefined) {
@@ -175,14 +184,20 @@ export class Animation {
     }
 
     this.state.deepSet({ previousProperties: deepClone(this.state.value.properties) });
+
+    return changesValues;
   }
 
-  public apply() {
-    return new Promise<boolean>((resolve) => {
+  /**
+   * Apply all style changes to the DOM on the next requestAnimationFrame.
+   * @return A promise of changes that applied to the DOM
+   */
+  public apply(): Promise<Partial<AnimationProperties>> {
+    return new Promise<Partial<AnimationProperties>>((resolve) => {
       this.stopAnimation();
       requestAnimationFrame(() => {
-        this.applyImmediately();
-        resolve(true);
+        const changes = this.applyImmediately();
+        resolve(changes);
       });
     });
   }
@@ -195,7 +210,7 @@ export class Animation {
       return null;
     }
 
-    return (progress: number) => {
+    return (progress: number): Partial<AnimationProperties> => {
       this.state.deepSet({
         properties: {
           transform: {
@@ -213,41 +228,70 @@ export class Animation {
         },
       });
 
-      this.applyImmediately();
+      return this.applyImmediately();
     };
   }
 
-  public animate({ duration = 100, easing = (x: number) => x, delay = 0 } = {}): Promise<boolean> {
+  /**
+   * Animate all style changes to the DOM.
+   * @return An Observable of changes on each frame, that apply to the DOM
+   */
+  public animate$({ duration = 100, easing = (x: number) => x, delay = 0 } = {}): Observable<AnimateResult> {
+    const changesSubject$ = new ReplaySubject<AnimateResult>();
+    const changes$ = changesSubject$.asObservable();
+
     if (duration <= 0) {
-      return this.apply();
+      this.apply().then((changes) => {
+        changesSubject$.next({ state: AnimateState.Animating, changes });
+        changesSubject$.next({ state: AnimateState.Completed });
+        changesSubject$.complete();
+      });
+      return changes$;
     }
 
     this.stopAnimation();
 
-    return new Promise(async (resolve) => {
-      // Handel Delay
-      if (delay > 0) {
-        this.animationDelayTimerID = setTimeout(async () => {
-          const animateResult = await this.animate({ duration, easing });
-          resolve(animateResult);
-        }, delay);
+    if (delay > 0) {
+      this.animationDelayTimerID = setTimeout(async () => {
+        this.animate$({ duration, easing }).subscribe({
+          next: (animationResult) => changesSubject$.next(animationResult),
+          complete: () => changesSubject$.complete(),
+        });
+      }, delay);
 
-        return;
-      }
+      return changes$;
+    }
 
-      const onAnimateFrame = this._getAnimationFrameCallback();
+    const onAnimateFrame = this._getAnimationFrameCallback();
 
-      if (!onAnimateFrame) {
-        resolve(true);
-        return;
-      }
+    if (!onAnimateFrame) {
+      changesSubject$.next({ state: AnimateState.Completed });
+      changesSubject$.complete();
+      return changes$;
+    }
 
-      this.frameManager = new AnimationFrameManager(duration, easing);
-      const animateResult = await this.frameManager.animate((progress) => onAnimateFrame?.(progress));
-      this.frameManager = null;
-      resolve(animateResult);
-    });
+    this.frameManager = new AnimationFrameManager(duration, easing);
+    this.frameManager
+      .animate((progress) => {
+        const changes = onAnimateFrame(progress);
+        changesSubject$.next({ state: AnimateState.Animating, changes });
+      })
+      .then((isCompleted) => {
+        this.frameManager = null;
+        changesSubject$.next({ state: isCompleted ? AnimateState.Completed : AnimateState.Canceled });
+        changesSubject$.complete();
+      });
+
+    return changes$;
   }
 
+  /**
+   * Animate all style changes to the DOM.
+   * @return A promise that resolves to true if the animation state is completed, otherwise false
+   */
+  public async animate({ duration = 100, easing = (x: number) => x, delay = 0 } = {}): Promise<boolean> {
+    const result = await lastValueFrom(this.animate$({ duration, easing, delay }));
+    return result.state === AnimateState.Completed;
+  }
   // endregion
 }

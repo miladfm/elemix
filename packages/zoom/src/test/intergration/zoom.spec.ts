@@ -270,10 +270,10 @@ describe('Feature - Click Zoom', () => {
       expect(element.style.transform).toContain('translate(-40px, -40px)');
       expect(secondElement.style.transform).toBe('');
     });
-    it(`should not zoom in beyond the maximum zoom level when 'zoomIn' method has called`, () => {
-      zoom.zoomIn({ scaleFactor: 2 });
-      zoom.zoomIn({ scaleFactor: 2 }); // Last one
-      zoom.zoomIn({ scaleFactor: 2 }); // Should not have any effect
+    it(`should not zoom in beyond the maximum zoom level when 'zoomIn' method has called`, async () => {
+      await zoom.zoomIn({ scaleFactor: 2 });
+      await zoom.zoomIn({ scaleFactor: 2 }); // Last one
+      await zoom.zoomIn({ scaleFactor: 2 }); // Should not have any effect
       expect(element.style.transform).toContain('scale(6, 6)');
       expect(element.style.transform).toContain('translate(-1000px, -1000px)');
     });
