@@ -49,6 +49,11 @@ export class Animation {
     return !!this.frameManager?.isAnimating;
   }
 
+  /**
+   * @internal Internal implementation detail, do not use directly
+   */
+  public _disableAnimate = false;
+
   constructor(element: DomSelector) {
     this.dom = new Dom(element);
     Animation.instances.set(this.dom.nativeElement, this);
@@ -193,6 +198,10 @@ export class Animation {
    * @return A promise of changes that applied to the DOM
    */
   public apply(): Promise<Partial<AnimationProperties>> {
+    if (this._disableAnimate) {
+      return Promise.resolve({});
+    }
+
     return new Promise<Partial<AnimationProperties>>((resolve) => {
       this.stopAnimation();
       requestAnimationFrame(() => {
@@ -228,7 +237,7 @@ export class Animation {
         },
       });
 
-      return this.applyImmediately();
+      return this._disableAnimate ? {} : this.applyImmediately();
     };
   }
 

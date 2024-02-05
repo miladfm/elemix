@@ -1,8 +1,15 @@
 import { Animation } from './animation';
 import { DomSelector } from '../dom/dom';
 import { AnimationFrameManager } from './animation-frame-manager';
+import { AnimationGroupConfig } from './animation.model';
+
+const DEFAULT_CONFIG: AnimationGroupConfig = {
+  disableInstance: false,
+};
 
 export class AnimationGroup {
+  private readonly config: AnimationGroupConfig;
+
   private animationDelayTimerID: NodeJS.Timeout;
   private frameManager: AnimationFrameManager | null;
 
@@ -12,12 +19,14 @@ export class AnimationGroup {
     return !!this.frameManager?.isAnimating;
   }
 
-  constructor(instances: (Animation | DomSelector)[] = []) {
+  constructor(instances: (Animation | DomSelector)[] = [], config: Partial<AnimationGroupConfig> = {}) {
+    this.config = { ...DEFAULT_CONFIG, ...config };
     instances.forEach((instance) => this.add(instance));
   }
 
   public add(instance: Animation | DomSelector) {
     const animation = instance instanceof Animation ? instance : Animation.getOrCreateInstance(instance);
+    animation._disableAnimate = this.config.disableInstance;
     this.instances.add(animation);
   }
 

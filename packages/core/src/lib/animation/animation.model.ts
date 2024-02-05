@@ -30,3 +30,7 @@ export enum AnimateState {
   Completed = 'completed',
   Canceled = 'canceled',
 }
+
+export interface AnimationGroupConfig {
+  disableInstance: boolean;
+}
