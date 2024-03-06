@@ -115,7 +115,7 @@ export class ClickZoom {
 
   private async handleDblClick(event: MouseEvent) {
     const dblclickScale =
-      this.animation.value.transform.scale === 1
+      this.animation.value.transform.scale <= 1
         ? this.animation.value.transform.scale * this.options.dblclickScaleFactor
         : this.animation.value.transform.scale / this.options.dblclickScaleFactor;
 

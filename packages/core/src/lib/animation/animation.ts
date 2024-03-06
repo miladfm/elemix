@@ -58,10 +58,11 @@ export class Animation {
     this.dom = new Dom(element);
     Animation.instances.set(this.dom.nativeElement, this);
 
+    const currentOpacity = window.getComputedStyle(this.dom.nativeElement).opacity;
     const properties: AnimationProperties = {
       transform: { x: 0, y: 0, scale: 1, rotateX: 0, rotateY: 0 },
       dimension: this.dom.dimension,
-      opacity: Number(window.getComputedStyle(this.dom.nativeElement).opacity),
+      opacity: currentOpacity === '' ? 1 : Number(currentOpacity),
     };
 
     this.state = new State({
@@ -211,7 +212,7 @@ export class Animation {
     });
   }
 
-  public _getAnimationFrameCallback() {
+  public _getAnimationFrameCallback(isAnimationGroup = false) {
     const valueOnStart = deepClone(this.state.value.previousProperties);
     const valueOnEnd = deepClone(this.state.value.properties);
 
@@ -237,7 +238,7 @@ export class Animation {
         },
       });
 
-      return this._disableAnimate ? {} : this.applyImmediately();
+      return isAnimationGroup || !this._disableAnimate ? this.applyImmediately() : {};
     };
   }
 

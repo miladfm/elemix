@@ -1,3 +1,5 @@
+/// <reference types="./node_modules/@types/jest/index.d.ts" />
+
 // add all jest-extended matchers
 import { toBeCalledAsFunctionWith, toContainTimes, toHaveNotDeepInstances } from '@internal-lib/util-testing';
 

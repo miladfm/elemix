@@ -2,6 +2,7 @@ export * from './lib/common/common.model';
 export * from './lib/common/common.util';
 export * from './lib/common/ensure.util';
 export * from './lib/common/math.util';
+export * from './lib/common/switch-array.util';
 export * from './lib/dom/dom';
 export * from './lib/animation/animation';
 export * from './lib/animation/animation-group';

@@ -25,5 +25,5 @@
       "storybook": ["apps/storybook/src/index.ts"]
     }
   },
-  "exclude": ["node_modules", "tmp"]
+  "exclude": ["node_modules", "tmp", "./cypress.config.ts"]
 }

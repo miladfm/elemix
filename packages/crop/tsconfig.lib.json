@@ -6,5 +6,15 @@
     "types": ["node"]
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["jest.config.ts", "src/**/*.spec.ts", "src/**/*.test.ts", "test/**/*.spec.ts", "test/**/*.test.ts"]
+  "exclude": [
+    "jest.config.ts",
+    "cypress.config.ts",
+    "src/vite.config.ts",
+    "src/**/*.spec.ts",
+    "src/**/*.test.ts",
+    "test/**/*.spec.ts",
+    "test/**/*.test.ts",
+    "src/test/**/*.*",
+    "src/vite-serve/**/*.*"
+  ]
 }

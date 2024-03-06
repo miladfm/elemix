@@ -11,7 +11,7 @@
         "outputPath": "dist/packages/crop",
         "main": "packages/crop/src/index.ts",
         "tsConfig": "packages/crop/tsconfig.lib.json",
-        "assets": ["packages/crop/*.md"]
+        "assets": ["packages/crop/*.md", "packages/crop/images/*.*"]
       }
     },
     "publish": {
@@ -30,6 +30,34 @@
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
         "jestConfig": "packages/crop/jest.config.ts"
+      }
+    },
+    "e2e": {
+      "executor": "@nx/cypress:cypress",
+      "options": {
+        "cypressConfig": "packages/crop/cypress.config.ts",
+        "testingType": "e2e",
+        "devServerTarget": "e2e-serve"
+      }
+    },
+    "e2e-ui": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx cypress open",
+        "cwd": "packages/crop"
+      }
+    },
+    "e2e-build": {
+      "executor": "@nx/vite:build",
+      "options": {
+        "outputPath": "dist/crop-e2e",
+        "configFile": "packages/crop/src/vite.config.ts"
+      }
+    },
+    "e2e-serve": {
+      "executor": "@nx/vite:dev-server",
+      "options": {
+        "buildTarget": "crop:e2e-build"
       }
     }
   },

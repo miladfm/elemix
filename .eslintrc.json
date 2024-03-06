@@ -37,13 +37,14 @@
       "files": ["*.ts", "*.tsx"],
       "extends": ["plugin:@nx/typescript"],
       "rules": {
+        "cypress/no-unnecessary-waiting": "off",
         "no-async-promise-executor": "off",
         "@typescript-eslint/no-explicit-any": "off",
         "indent": ["error", 2, { "SwitchCase": 1 }],
         "constructor-super": ["error"],
         "semi": ["error", "always"],
         "camelcase": ["error"],
-        "arrow-body-style": ["error", "as-needed"],
+        "arrow-body-style": ["off"],
         "complexity": ["error", { "max": 12 }],
         "curly": ["error"],
         "default-case-last": ["error"],
@@ -55,8 +56,8 @@
         "max-lines": ["error", { "max": 400, "skipBlankLines": true, "skipComments": true }],
         "max-lines-per-function": ["error", { "max": 65, "skipComments": true }],
         "max-nested-callbacks": ["error", 3],
-        "max-params": ["error", 4],
-        "max-statements": ["error", 18],
+        "max-params": ["error", 5],
+        "max-statements": ["error", 23],
         "no-alert": ["error"],
         "no-console": ["error"],
         "no-empty-function": ["error"],
@@ -71,7 +72,7 @@
         "@typescript-eslint/no-shadow": ["error"],
         "no-var": ["error"],
         "prefer-const": ["error"],
-        "spaced-comment": ["error", "always"],
+        "spaced-comment": ["error", "always", { "markers": ["/"] }],
         "no-duplicate-imports": ["error"]
       }
     },
@@ -81,7 +82,7 @@
       "rules": {}
     },
     {
-      "files": ["*.spec.ts", "*.spec.tsx", "*.spec.js", "*.spec.jsx", "*.cases.ts"],
+      "files": ["*.spec.ts", "*.spec.tsx", "*.spec.js", "*.spec.jsx", "*.cases.ts", "*.cy.{ts,js,tsx,jsx}"],
       "env": {
         "jest": true
       },

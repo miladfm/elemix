@@ -18,5 +18,16 @@
     "type": "commonjs"
   },
   "sourceMaps": true,
-  "exclude": ["jest.config.ts", ".*\\.spec.tsx?$", ".*\\.test.tsx?$", "./src/jest-setup.ts$", "./**/jest-setup.ts$", ".*.js$"]
+  "exclude": [
+    "jest.config.ts",
+    "cypress.config.ts",
+    ".*\\.spec.tsx?$",
+    ".*\\.test.tsx?$",
+    "./src/jest-setup.ts$",
+    "./**/jest-setup.ts$",
+    ".*.js$",
+    "./src/vite.config.ts",
+    "src/vite-serve/**/*.*",
+    "src/test/**/*.*",
+   ]
 }

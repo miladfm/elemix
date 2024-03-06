@@ -2,14 +2,18 @@ import { Meta, StoryObj } from '@storybook/html';
 import README from '../../../../packages/crop/README.md';
 import { createCrop } from './crop';
 
-export interface CropStoryType {}
+export interface CropStoryType {
+  runTest: boolean;
+}
 
 type Story = StoryObj<CropStoryType>;
 
 const meta: Meta<CropStoryType> = {
   title: 'Crop',
   tags: ['autodocs'],
-  argTypes: {},
+  argTypes: {
+    runTest: { control: 'boolean' },
+  },
   args: {},
   parameters: {
     componentSubtitle: 'TODO',

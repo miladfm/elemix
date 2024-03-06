@@ -74,7 +74,7 @@ export class AnimationGroup {
         return;
       }
 
-      const onAnimateFrame = Array.from(this.instances).map((animation) => animation._getAnimationFrameCallback());
+      const onAnimateFrame = Array.from(this.instances).map((animation) => animation._getAnimationFrameCallback(true));
       const hasValuesChanged = onAnimateFrame.some((callback) => callback !== null);
 
       if (!hasValuesChanged) {
