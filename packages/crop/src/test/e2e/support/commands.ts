@@ -38,23 +38,87 @@ interface CropInitOption {
 declare namespace Cypress {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   interface Chainable<Subject> {
-    checkCss(
+    /**
+     * Checks the CSS styles of an element against the expected values.
+     * It verifies if the specified element's dimensions, position, scale or any css value matches the expected styles.
+     */
+    checkStyle(
       selector: string,
       style: Partial<{ w: number; h: number; x: number; y: number; s: number }> | Record<string, string | number>
     ): void;
+
+    /**
+     * Sets specific CSS styles for an element selected by the CSS selector.
+     * This command allows direct manipulation of the element's style, aiding in testing various CSS properties.
+     */
+    setCss(selector: string, style: Partial<Record<keyof CSSStyleDeclaration, string>>): void;
+
+    /**
+     * Checks the styles of crop box, image, and backdrop elements against specified values.
+     * This is used to ensure that these elements are correctly styled during cropping operations.
+     */
     checkCropStyle(elements: {
       cropBox: { w: number; h: number; x: number; y: number };
       image: { x: number; y: number; s: number };
       backdrop: { x: number; y: number; s: number };
     }): void;
+
+    /**
+     * Waits for the next animation frame before proceeding.
+     * This ensures that any CSS transitions or animations have been processed by the browser.
+     */
     waitForAnimationFrame(): void;
+
+    /**
+     * Triggers a document-level event, such as mouse or pointer events, with specified options.
+     * This is useful for simulating user interactions in a controlled manner.
+     */
     documentTrigger(eventName: string, options?: Partial<TriggerOptions & ObjectLike>): void;
+
+    /**
+     * Simulates a press action at a specific point of the crop origin.
+     * This is used to initiate a drag or interact with a cropping interface.
+     */
     dragPress(origin: CropOrigin, x: number, y: number): void;
+
+    /**
+     * Starts a drag action at a specified position.
+     * This command is typically used to initiate a drag interact with a cropping interface.
+     */
     dragStart(x?: number, y?: number): void;
+
+    /**
+     * Continues a drag action to a new position.
+     * This command is used to simulate the movement of an element during a drag operation.
+     */
     dragMove(x: number, y: number): void;
+
+    /**
+     * Performs a drag action from one point to another, emitting events at intervals based on the 'counter'.
+     * This function calculates the start and end points of the drag and then simulates the drag action
+     * by emitting pointer events at evenly spaced intervals between these points. The 'counter' parameter
+     * determines the number of intermediate steps and events to be generated during the drag, allowing for
+     * a more detailed simulation of the dragging motion.
+     */
     dragFromTo(from: [number, number], to: [number, number], counter?: number): void;
+
+    /**
+     * Ends a drag action at a specified crop origin.
+     * This command is used to finish a drag operation and release the dragged element.
+     */
     dragEnd(origin: CropOrigin): void;
-    setInitCropHorizontalStyle(options: Partial<CropInitOption>, initStyle?: CropInitStyle): void;
+
+    /**
+     * Sets the initial style for the crop elements based on the given options and init styles.
+     * This helps in preparing the crop elements with specific dimensions and positions before testing.
+     */
+    setupCrop(options: Partial<CropInitOption>, initStyle?: CropInitStyle): void;
+
+    /**
+     * Logs the current styles of the crop box, image, and backdrop elements for debugging purposes.
+     * Then we can just copy the output to check the styles of crop
+     */
+    logStyles(message?: string): void;
   }
 }
 
@@ -66,33 +130,35 @@ Cypress.Commands.add('waitForAnimationFrame', () => {
   });
 });
 
-Cypress.Commands.add('setInitCropHorizontalStyle', (options, initStyle) => {
+Cypress.Commands.add('setupCrop', (options, initStyle) => {
   cy.viewport(700, 700);
   cy.visit('http://127.0.0.1:4300/');
   cy.window().then((canvasWindows) => {
     (canvasWindows as any).__INIT_CROP__(options, initStyle);
   });
 
-  cy.wait(100);
+  cy.wait(300); // Wait for image load and init styles
 });
 
 Cypress.Commands.add('checkCropStyle', ({ cropBox, image, backdrop }) => {
-  cy.checkCss('.crop__box', cropBox);
-  cy.checkCss('.crop__image', image);
-  cy.checkCss('.crop__back-drop-wrapper', backdrop);
+  cy.checkStyle('.crop__box', cropBox);
+  cy.checkStyle('.crop__image', image);
+  cy.checkStyle('.crop__back-drop-wrapper', backdrop);
 });
 
-Cypress.Commands.add('checkCss', (selector, styles) => {
+Cypress.Commands.add('checkStyle', (selector, styles) => {
   cy.get(selector).should(($el) => {
+    const style = $el[0].style;
+
     if (styles.w) {
-      expect(toFloor($el[0].style.width), 'Check Width').to.be.closeTo(toFloor(styles.w), 1);
+      expect(toFloor(style.width), 'Check Width').to.be.closeTo(toFloor(styles.w), 1);
     }
 
     if (styles.h) {
-      expect(toFloor($el[0].style.height), 'Check Height').to.be.closeTo(toFloor(styles.h), 1);
+      expect(toFloor(style.height), 'Check Height').to.be.closeTo(toFloor(styles.h), 1);
     }
 
-    const transformValue = getTransformValues($el[0].style.transform) ?? ({} as { x: string; y: string; s: string });
+    const transformValue = getTransformValues(style.transform) ?? ({} as { x: string; y: string; s: string });
     if (styles.x) {
       expect(toFloor(transformValue.x), 'Check X').to.be.closeTo(toFloor(styles.x), 1);
     }
@@ -102,16 +168,25 @@ Cypress.Commands.add('checkCss', (selector, styles) => {
     }
 
     if (styles.s) {
-      expect(parseFloat(transformValue.s), 'Check Scale').to.be.equal(styles.s);
+      expect(parseFloat(transformValue.s), 'Check Scale').to.be.closeTo(styles.s as number, 0.00005);
     }
 
     const otherStyles = Object.entries(styles).filter(([key, _value]) => !['w', 'h', 'x', 'y', 's'].includes(key));
     if (otherStyles.length > 0) {
       otherStyles.forEach(([key, value]) => {
-        expect($el[0].style[key as any], `Check ${key}`).to.be.equal(value.toString());
+        expect(style[key as any], `Check ${key}`).to.be.equal(value.toString());
       });
     }
   });
+});
+
+Cypress.Commands.add('setCss', (selector, styles) => {
+  cy.get(selector).then(($el) => {
+    Object.entries(styles).forEach(([key, value]) => {
+      $el[0].style[key as any] = value as string;
+    });
+  });
+  cy.log('Set style', selector, styles);
 });
 
 Cypress.Commands.add('documentTrigger', (eventName, options = {}) => {
@@ -124,6 +199,7 @@ Cypress.Commands.add('documentTrigger', (eventName, options = {}) => {
 
 Cypress.Commands.add('dragPress', (origin, x, y) => {
   cy.get(CROP_ORIGIN_SELECTOR[origin]).trigger('pointerdown', { pointerId: 1, clientX: x, clientY: y, force: true });
+  cy.wait(110); // Wait for press animation (grid lines and backdrop opacity)
 });
 
 Cypress.Commands.add('dragStart', (x = 0, y = 0) => {
@@ -150,7 +226,68 @@ Cypress.Commands.add('dragFromTo', (from, to, counter = 10) => {
 
 Cypress.Commands.add('dragEnd', (origin) => {
   cy.get(CROP_ORIGIN_SELECTOR[origin]).trigger('pointerup', { pointerId: 1, clientX: 0, clientY: 0, force: true });
-  cy.wait(310);
+  cy.wait(310); // Wait for end animation (grid lines, backdrop opacity, move the cropBox to center)
+});
+
+Cypress.Commands.add('logStyles', (message = 'LOG STYLE') => {
+  cy.get('.crop__box').then(($cropBox) => {
+    cy.get('.crop__image').then(($image) => {
+      // eslint-disable-next-line max-nested-callbacks
+      cy.get('.crop__back-drop-wrapper').then(($backdropWrapper) => {
+        const cropBoxStyle = $cropBox[0].style;
+        const imageStyle = $image[0].style;
+        const backdropWrapperStyle = $backdropWrapper[0].style;
+
+        /**
+         * Regular expression to extract translate and scale values from a CSS transform string.
+         * It matches translate values with optional negative and decimal numbers followed by 'px',
+         * and scale values with optional negative and decimal numbers.
+         *
+         * @example
+         * 'translate(-10px, 20px) scale(0.5, 0.5)' => translateX: -10, translateY: 20, scale: 0.5
+         */
+        const regex = /translate\((-?\d+|-?\d*\.\d+)px, (-?\d+|-?\d*\.\d+)px\).*scale\((-?\d+|-?\d*\.\d+), (-?\d+|-?\d*\.\d+)\)/;
+
+        const cropBoxMatches = cropBoxStyle.transform.match(regex);
+        const imageMatches = imageStyle.transform.match(regex);
+        const backdropWrapperMatches = backdropWrapperStyle.transform.match(regex);
+
+        if (!cropBoxMatches || !imageMatches || !backdropWrapperMatches) {
+          throw new Error(`
+          Can not parse the transform value.\n
+          cropBox: ${!!cropBoxMatches} - ${cropBoxStyle.transform}\n
+          image: ${!!imageMatches} - ${imageStyle.transform}\n
+          backdropWrapper: ${!!backdropWrapperMatches} - ${backdropWrapperStyle.transform}`);
+        }
+
+        const cropBoxWidth = toFloor(parseFloat($cropBox[0].style.width));
+        const cropBoxHeight = toFloor(parseFloat($cropBox[0].style.height));
+
+        const cropBoxX = toFloor(parseFloat(cropBoxMatches[1]));
+        const cropBoxY = toFloor(parseFloat(cropBoxMatches[2]));
+
+        const imageX = toFloor(parseFloat(imageMatches[1]));
+        const imageY = toFloor(parseFloat(imageMatches[2]));
+        const imageS = parseFloat(imageMatches[3]);
+
+        const backdropWrapperX = toFloor(parseFloat(backdropWrapperMatches[1]));
+        const backdropWrapperY = toFloor(parseFloat(backdropWrapperMatches[2]));
+        const backdropWrapperS = parseFloat(backdropWrapperMatches[3]);
+
+        // eslint-disable-next-line no-console
+        console.log(
+          message,
+          `
+          cy.checkCropStyle({
+            cropBox: { w: ${cropBoxWidth}, h: ${cropBoxHeight}, x: ${cropBoxX}, y: ${cropBoxY} },
+            image: { x: ${imageX}, y: ${imageY}, s: ${imageS} },
+            backdrop: { x: ${backdropWrapperX}, y: ${backdropWrapperY}, s: ${backdropWrapperS} },
+          });
+        `
+        );
+      });
+    });
+  });
 });
 
 function getTransformValues(transform: string) {

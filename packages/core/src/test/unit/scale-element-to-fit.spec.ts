@@ -68,13 +68,13 @@ describe('Utils - elementFitScale', () => {
       expect(() => scaleElementToFit(targetSmallElement, targetBigImageElement)).toThrow();
     });
     it('should throw an error when the width of target HTMLEElement is 0', () => {
-      mockClientRect(targetSmallElement, { width: 0 });
+      mockClientRect(targetSmallElement, { width: 0, height: 100 });
       expect(() => scaleElementToFit(targetSmallElement, containerElement)).toThrow(
         'The width or height of the target HTMLElement should be greater than zero.'
       );
     });
     it('should throw an error when the height of target HTMLEElement is 0', () => {
-      mockClientRect(targetSmallElement, { height: 0 });
+      mockClientRect(targetSmallElement, { width: 100, height: 0 });
       expect(() => scaleElementToFit(targetSmallElement, containerElement)).toThrow(
         'The width or height of the target HTMLElement should be greater than zero.'
       );

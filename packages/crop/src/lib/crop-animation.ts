@@ -34,7 +34,7 @@ export class CropAnimation {
     this.gridAnimation = Animation.getOrCreateInstance(elements.grids);
   }
 
-  public applyImmediatelyCropInitStyle() {
+  public applyInitStyle() {
     const allAnimations = [
       this.cropBoxAnimation,
       this.imageAnimation,
@@ -54,10 +54,10 @@ export class CropAnimation {
     this.cropBoxAnimation.setTranslate({ x: size.relativePosition.x, y: size.relativePosition.y });
     this.imageAnimation.setTranslate({ x: 0, y: 0 });
     this.imageAnimation.setScale(size.scale);
-    this.backdropAnimation.setOpacity(0.7);
+    this.backdropAnimation.setOpacity(0.7); // Don't use css: The element has not applied to dom to get the init opacity from css
     this.backdropWrapperAnimation.setDimension({ width: size.dimensions.width, height: size.dimensions.height });
     this.backdropWrapperAnimation.setTranslate({ x: size.relativePosition.x, y: size.relativePosition.y });
-    this.gridAnimation.setOpacity(0);
+    this.gridAnimation.setOpacity(0); // Don't use css: The element has not applied to dom to get the init opacity from css
 
     allAnimations.forEach((animation) => animation.applyImmediately());
   }
@@ -75,7 +75,7 @@ export class CropAnimation {
     this.cropAnimationGroup.apply();
   }
 
-  public animateToCenterOnCropResize() {
+  public alignElementsToCenter(animate = false) {
     const size = scaleElementToFit(this.elements.cropBox, this.elements.container, {
       gap: {
         vertical: this.options.verticalGap,
@@ -102,7 +102,11 @@ export class CropAnimation {
       y: scaledBackdropWrapperY + size.relativePosition.y,
     });
 
-    this.cropAnimationGroup.animate({ duration: 300 });
+    if (animate) {
+      this.cropAnimationGroup.animate({ duration: 300 });
+    } else {
+      this.cropAnimationGroup.apply();
+    }
   }
 
   public animateBackdropVisibilityOnCropResize(isVisible: boolean) {

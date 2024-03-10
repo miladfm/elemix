@@ -7,7 +7,7 @@ type MockElementSize = {
 
 export function mockClientRect(
   element: Element,
-  { width, height, left, top }: { width: number; height: number; top: number; left: number }
+  { width, height, left = 0, top = 0 }: { width: number; height: number; top?: number; left?: number }
 ) {
   jest.spyOn(element, 'getBoundingClientRect').mockReturnValue({
     ...element.getBoundingClientRect(),

@@ -3,7 +3,7 @@ import { CROP_HORIZONTAL_STYLE, CROP_VERTICAL_STYLE } from '../support/crop-conf
 describe('Crop Resize', () => {
   describe('Crop - Single Zone', () => {
     beforeEach(() => {
-      cy.setInitCropHorizontalStyle({}, CROP_HORIZONTAL_STYLE);
+      cy.setupCrop({}, CROP_HORIZONTAL_STYLE);
     });
 
     it(`should correctly calculate crop elements style for 'single-zone' and 'top-left'`, () => {
@@ -232,7 +232,7 @@ describe('Crop Resize', () => {
 
   describe('Crop - BothSide Zone - Horizontal Crop', () => {
     beforeEach(() => {
-      cy.setInitCropHorizontalStyle({}, CROP_HORIZONTAL_STYLE);
+      cy.setupCrop({}, CROP_HORIZONTAL_STYLE);
     });
 
     it(`should correctly calculate crop elements style for 'both-side-zone' and 'top-left'`, () => {
@@ -408,7 +408,7 @@ describe('Crop Resize', () => {
 
   describe('Crop - BothSide Zone - Vertical Crop', () => {
     beforeEach(() => {
-      cy.setInitCropHorizontalStyle({}, CROP_VERTICAL_STYLE);
+      cy.setupCrop({}, CROP_VERTICAL_STYLE);
     });
 
     it(`should correctly calculate crop elements style for 'both-side-zone' and 'top-left'`, () => {
@@ -581,7 +581,7 @@ describe('Crop Resize', () => {
 
   describe('Crop - Scale Zone - Horizontal Crop', () => {
     beforeEach(() => {
-      cy.setInitCropHorizontalStyle({}, CROP_HORIZONTAL_STYLE);
+      cy.setupCrop({}, CROP_HORIZONTAL_STYLE);
     });
 
     it(`should correctly calculate crop elements style for 'both-side-zone' and 'top-left'`, () => {
@@ -1269,7 +1269,7 @@ describe('Crop Resize', () => {
 
   describe('Crop - Scale Zone - Vertical Crop', () => {
     beforeEach(() => {
-      cy.setInitCropHorizontalStyle({}, CROP_VERTICAL_STYLE);
+      cy.setupCrop({}, CROP_VERTICAL_STYLE);
     });
 
     it(`should correctly calculate crop elements style for 'both-side-zone' and 'top-left'`, () => {

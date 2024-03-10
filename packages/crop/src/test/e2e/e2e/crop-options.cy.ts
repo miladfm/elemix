@@ -1,7 +1,7 @@
 describe('Crop Options', () => {
   describe('Crop - Min Width and Height', () => {
     beforeEach(() => {
-      cy.setInitCropHorizontalStyle({ minWidth: 100, minHeight: 200 });
+      cy.setupCrop({ minWidth: 100, minHeight: 200 });
     });
 
     it(`should maintain 'minWidth' and 'minHeight' when resizing from 'top-left'`, () => {
@@ -161,7 +161,7 @@ describe('Crop Options', () => {
 
   describe('Crop - Gap', () => {
     it(`should set custom gap when the resizing from 'top-left'`, () => {
-      cy.setInitCropHorizontalStyle(
+      cy.setupCrop(
         { verticalGap: 50, horizontalGap: 100 },
         {
           cropBoxW: 314.682,
@@ -228,7 +228,7 @@ describe('Crop Options', () => {
       });
     });
     it(`should set custom gap when the resizing from 'top-right'`, () => {
-      cy.setInitCropHorizontalStyle(
+      cy.setupCrop(
         { verticalGap: 50, horizontalGap: 100 },
         {
           cropBoxW: 500,
@@ -279,7 +279,7 @@ describe('Crop Options', () => {
       });
     });
     it(`should set custom gap when the resizing from 'bottom-right'`, () => {
-      cy.setInitCropHorizontalStyle(
+      cy.setupCrop(
         { verticalGap: 50, horizontalGap: 100 },
         {
           cropBoxW: 314.682,
@@ -338,7 +338,7 @@ describe('Crop Options', () => {
       });
     });
     it(`should set custom gap when the resizing from 'bottom-left'`, () => {
-      cy.setInitCropHorizontalStyle(
+      cy.setupCrop(
         { verticalGap: 50, horizontalGap: 100 },
         {
           cropBoxW: 500,
@@ -390,7 +390,7 @@ describe('Crop Options', () => {
     });
 
     it(`should set custom gap when the resizing from 'top'`, () => {
-      cy.setInitCropHorizontalStyle(
+      cy.setupCrop(
         { verticalGap: 50, horizontalGap: 100 },
         {
           cropBoxW: 500,
@@ -441,7 +441,7 @@ describe('Crop Options', () => {
       });
     });
     it(`should set custom gap when the resizing from 'right'`, () => {
-      cy.setInitCropHorizontalStyle(
+      cy.setupCrop(
         { verticalGap: 50, horizontalGap: 100 },
         {
           cropBoxW: 314.682,
@@ -493,7 +493,7 @@ describe('Crop Options', () => {
       });
     });
     it(`should set custom gap when the resizing from 'bottom'`, () => {
-      cy.setInitCropHorizontalStyle(
+      cy.setupCrop(
         { verticalGap: 50, horizontalGap: 100 },
         {
           cropBoxW: 500,
@@ -544,7 +544,7 @@ describe('Crop Options', () => {
       });
     });
     it(`should set custom gap when the resizing from 'left'`, () => {
-      cy.setInitCropHorizontalStyle(
+      cy.setupCrop(
         { verticalGap: 50, horizontalGap: 100 },
         {
           cropBoxW: 314.682,

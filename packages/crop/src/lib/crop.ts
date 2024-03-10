@@ -44,9 +44,13 @@ export class Crop {
     CropDebug.init(this.options, this.elements);
 
     this.elements.image.nativeElement.addEventListener('load', () => {
-      this.cropAnimation.applyImmediatelyCropInitStyle();
+      this.cropAnimation.applyInitStyle();
       this.initImageDrag();
       this.initResize();
+
+      this.elements.container.observeResize$().subscribe(() => {
+        this.cropAnimation.alignElementsToCenter();
+      });
     });
 
     this.elements.container.appendChild(this.elements.wrapper);
@@ -145,7 +149,7 @@ export class Crop {
   }
 
   private onCropResizeEnd() {
-    this.cropAnimation.animateToCenterOnCropResize();
+    this.cropAnimation.alignElementsToCenter(true);
     this.baseConfig = null;
   }
 

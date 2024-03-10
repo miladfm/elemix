@@ -1,8 +1,8 @@
-import { CROP_HORIZONTAL_STYLE } from '../support/crop-config';
+import { CROP_HORIZONTAL_STYLE, CROP_VERTICAL_STYLE } from '../support/crop-config';
 
 describe('Crop Base', () => {
   it(`should cropBox be at center of container when crop has initialized`, () => {
-    cy.setInitCropHorizontalStyle({});
+    cy.setupCrop({});
 
     cy.checkCropStyle({
       cropBox: { w: 360, h: 360, x: 170, y: 170 },
@@ -10,48 +10,90 @@ describe('Crop Base', () => {
       backdrop: { x: 170, y: 170, s: 1 },
     });
   });
+  it(`should cropBox be at center of container when the viewport size has changes`, () => {
+    cy.setupCrop({}, CROP_VERTICAL_STYLE);
+
+    cy.viewport(500, 600);
+    cy.waitForAnimationFrame();
+
+    cy.checkCropStyle({
+      cropBox: { w: 124, h: 300, x: 187, y: 150 },
+      image: { x: -272, y: -185, s: 1.40662 },
+      backdrop: { x: -84, y: -35, s: 1.85205 },
+    });
+
+    cy.viewport(900, 800);
+    cy.waitForAnimationFrame();
+
+    cy.checkCropStyle({
+      cropBox: { w: 207, h: 500, x: 346, y: 150 },
+      image: { x: -453, y: -308, s: 2.34436 },
+      backdrop: { x: -107, y: -158, s: 3.08675 },
+    });
+  });
+  it(`should cropBox be at center of container when the container size has changes`, () => {
+    cy.setupCrop({}, CROP_HORIZONTAL_STYLE);
+
+    cy.setCss('.crop__container', { width: '600px', height: '800px', transform: 'translate(100px, -50px)' });
+    cy.waitForAnimationFrame();
+
+    cy.checkCropStyle({
+      cropBox: { w: 260, h: 154, x: 170, y: 322 },
+      image: { x: -260, y: -325, s: 1.64557 },
+      backdrop: { x: -90, y: -3, s: 2.16667 },
+    });
+
+    cy.setCss('.crop__container', { width: '800px', height: '600px', transform: 'translate(-50px, 100px)' });
+    cy.waitForAnimationFrame();
+
+    cy.checkCropStyle({
+      cropBox: { w: 460, h: 273, x: 170, y: 163 },
+      image: { x: -460, y: -575, s: 2.91139 },
+      backdrop: { x: -290, y: -412, s: 3.83333 },
+    });
+  });
 
   it(`should grid be invisible and backdrop almost invisible when crop resize has not started`, () => {
-    cy.setInitCropHorizontalStyle({});
+    cy.setupCrop({});
 
-    cy.checkCss('.crop__box-grid', { opacity: 0 });
-    cy.checkCss('.crop__back-drop', { opacity: 0.7 });
+    cy.checkStyle('.crop__box-grid', { opacity: 0 });
+    cy.checkStyle('.crop__back-drop', { opacity: 0.7 });
   });
   it(`should grid be visible and backdrop almost visible when crop resize has started`, () => {
-    cy.setInitCropHorizontalStyle({});
+    cy.setupCrop({});
 
     cy.dragPress('top-left', 0, 0);
 
-    cy.checkCss('.crop__box-grid', { opacity: 1 });
-    cy.checkCss('.crop__back-drop', { opacity: 0.4 });
+    cy.checkStyle('.crop__box-grid', { opacity: 1 });
+    cy.checkStyle('.crop__back-drop', { opacity: 0.4 });
   });
   it(`should grid be invisible and backdrop almost invisible when crop resize has ended`, () => {
-    cy.setInitCropHorizontalStyle({});
+    cy.setupCrop({});
 
     cy.dragPress('top-left', 0, 0);
     cy.dragEnd('top-left');
 
-    cy.checkCss('.crop__box-grid', { opacity: 0 });
-    cy.checkCss('.crop__back-drop', { opacity: 0.7 });
+    cy.checkStyle('.crop__box-grid', { opacity: 0 });
+    cy.checkStyle('.crop__back-drop', { opacity: 0.7 });
   });
   it(`should grid be invisible and backdrop almost invisible when image is dragging`, () => {
-    cy.setInitCropHorizontalStyle({}, CROP_HORIZONTAL_STYLE);
+    cy.setupCrop({}, CROP_HORIZONTAL_STYLE);
 
     cy.dragPress('image', 350, 350);
     cy.dragMove(350, 350);
     cy.dragMove(400, 400);
 
-    cy.checkCss('.crop__box-grid', { opacity: 0 });
-    cy.checkCss('.crop__back-drop', { opacity: 0.7 });
+    cy.checkStyle('.crop__box-grid', { opacity: 0 });
+    cy.checkStyle('.crop__back-drop', { opacity: 0.7 });
 
     cy.dragEnd('image');
 
-    cy.checkCss('.crop__box-grid', { opacity: 0 });
-    cy.checkCss('.crop__back-drop', { opacity: 0.7 });
+    cy.checkStyle('.crop__box-grid', { opacity: 0 });
+    cy.checkStyle('.crop__back-drop', { opacity: 0.7 });
   });
 
   it(`should move the backdrop with image when the image is dragging`, () => {
-    cy.setInitCropHorizontalStyle({}, CROP_HORIZONTAL_STYLE);
+    cy.setupCrop({}, CROP_HORIZONTAL_STYLE);
 
     cy.dragPress('image', 201, 272);
     cy.dragStart(201, 272);
@@ -81,7 +123,7 @@ describe('Crop Base', () => {
   });
 
   it(`should move back the backdrop with image in cropBox when the image is dragged towards the top-left outside the crop box`, () => {
-    cy.setInitCropHorizontalStyle(
+    cy.setupCrop(
       {},
       {
         cropBoxW: 360,
@@ -116,7 +158,7 @@ describe('Crop Base', () => {
     });
   });
   it(`should move back the backdrop with image in cropBox when the image is dragged towards the top-right outside the crop box`, () => {
-    cy.setInitCropHorizontalStyle(
+    cy.setupCrop(
       {},
       {
         cropBoxW: 360,
@@ -151,7 +193,7 @@ describe('Crop Base', () => {
     });
   });
   it(`should move back the backdrop with image in cropBox when the image is dragged towards the bottom-right outside the crop box`, () => {
-    cy.setInitCropHorizontalStyle(
+    cy.setupCrop(
       {},
       {
         cropBoxW: 360,
@@ -186,7 +228,7 @@ describe('Crop Base', () => {
     });
   });
   it(`should move back the backdrop with image in cropBox when the image is dragged towards the bottom-left outside the crop box`, () => {
-    cy.setInitCropHorizontalStyle(
+    cy.setupCrop(
       {},
       {
         cropBoxW: 360,

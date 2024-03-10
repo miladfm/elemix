@@ -1,6 +1,8 @@
 import { domSelector } from './dom.util';
 import { toStr } from '../common/ensure.util';
 import { CssStylesKey, Dimensions } from '../common/common.model';
+import { Observable } from 'rxjs';
+import { shareReplay } from 'rxjs/operators';
 
 export type DomType = HTMLElement | SVGSVGElement;
 export type DomSelector = Dom<DomType> | HTMLElement | string | Node;
@@ -124,5 +126,24 @@ export class Dom<T extends DomType = HTMLElement> {
 
   public get parentElement() {
     return this.nativeElement.parentElement;
+  }
+
+  public observeResize$(): Observable<ResizeObserverEntry> {
+    return new Observable<ResizeObserverEntry>((subscriber) => {
+      // Create a ResizeObserver and subscribe to resize events
+      const resizeObserver = new ResizeObserver((entries) => {
+        entries.forEach((entry) => {
+          subscriber.next(entry);
+        });
+      });
+
+      // Start observing the element
+      resizeObserver.observe(this.nativeElement);
+
+      // Return teardown logic to disconnect the observer when there are no more subscribers
+      return () => {
+        resizeObserver.disconnect();
+      };
+    }).pipe(shareReplay({ refCount: true }));
   }
 }
