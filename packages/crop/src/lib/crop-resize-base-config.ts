@@ -1,5 +1,5 @@
-import { CropOptions } from './crop.model';
 import { Animation, Dom } from '@elemix/core';
+import { CropOptions } from './crop.model';
 import { getCropZoneConfig } from './crop-resize-zone-config';
 import {
   CropBaseConfig,

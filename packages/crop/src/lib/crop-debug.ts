@@ -1,5 +1,5 @@
-import { CropOptions } from './crop.model';
 import { Dom } from '@elemix/core';
+import { CropOptions } from './crop.model';
 import { CropBaseConfig, CropDragMovementConfig, CropElements } from './crop.internal-model';
 
 interface DebugElements {

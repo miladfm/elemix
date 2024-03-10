@@ -1,5 +1,5 @@
-import { Dom, DragGesturesEvent, Gestures, GesturesEvent, GesturesEventType } from '@elemix/core';
 import { filter, map, merge, Observable } from 'rxjs';
+import { Dom, DragGesturesEvent, Gestures, GesturesEvent, GesturesEventType } from '@elemix/core';
 import { CropElementsEventData, CropHDirection, CropVDirection } from './crop.internal-model';
 
 // region PUBLIC

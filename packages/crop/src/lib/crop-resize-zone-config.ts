@@ -1,5 +1,5 @@
-import { CropOptions } from './crop.model';
 import { Animation } from '@elemix/core';
+import { CropOptions } from './crop.model';
 import { CropDebug } from './crop-debug';
 import {
   CropBaseConfig,

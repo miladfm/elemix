@@ -1,6 +1,6 @@
-import { CropOptions } from './crop.model';
 import { Animation, AnimationGroup, scaleElementToFit } from '@elemix/core';
 import { CropDomChanges, CropElements } from './crop.internal-model';
+import { CropOptions } from './crop.model';
 
 export class CropAnimation {
   private elements: CropElements;

@@ -1,7 +1,8 @@
+import { filter } from 'rxjs';
 import { DomSelector, GesturesEventType } from '@elemix/core';
+import { Drag, DragBoundaryType } from '@elemix/drag';
 import { CropOptions } from './crop.model';
 import { getCropElements } from './crop-elements';
-import { Drag, DragBoundaryType } from '@elemix/drag';
 import { getCropZoneConfig } from './crop-resize-zone-config';
 import { getBackdropWrapperScale, getBackdropWrapperX, getBackdropWrapperY } from './crop-resize-backdrop-wrapper';
 import { getCropDragMovements } from './crop-resize-movements';
@@ -16,7 +17,6 @@ import { getCropBoundedValues } from './crop-resize-bounded';
 import { CropDebug } from './crop-debug';
 import { getCropElementsEvent } from './crop-elements-event';
 import { CropAnimation } from './crop-animation';
-import { filter } from 'rxjs';
 import { captureTransformOnPress } from './crop-image-drag';
 import { getCropBaseConfig } from './crop-resize-base-config';
 import { CropBaseConfig, CropElements, CropElementsEventData } from './crop.internal-model';

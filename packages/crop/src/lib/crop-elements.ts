@@ -1,5 +1,4 @@
 import { Dom, DomSelector } from '@elemix/core';
-
 import { CropElements } from './crop.internal-model';
 
 // region PUBLIC

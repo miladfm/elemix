@@ -1,5 +1,5 @@
-import { CropOptions } from './crop.model';
 import { Animation, clamp, on, switchArray } from '@elemix/core';
+import { CropOptions } from './crop.model';
 import { getAdjustedValueAfterScaled } from './crop.utils';
 import { CropBaseConfig, CropDragMovementConfig, CropElements, CropZone } from './crop.internal-model';
 

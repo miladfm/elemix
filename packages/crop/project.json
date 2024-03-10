@@ -11,7 +11,7 @@
         "outputPath": "dist/packages/crop",
         "main": "packages/crop/src/index.ts",
         "tsConfig": "packages/crop/tsconfig.lib.json",
-        "assets": ["packages/crop/*.md", "packages/crop/images/*.*"]
+        "assets": ["packages/crop/*.md"]
       }
     },
     "publish": {
