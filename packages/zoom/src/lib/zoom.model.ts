@@ -1,4 +1,4 @@
-import { ExcludeNullish, TransformProperty, ZoomGesturesEvent } from '@elemix/core';
+import { AllPropsNonNullable, TransformProperty, ZoomGesturesEvent } from '@elemix/core';
 import { PinchZoomOptions } from './pinch-zoom/pinch-zoom.model';
 
 export interface ZoomAdjusterResult {
@@ -16,7 +16,7 @@ export interface ZoomAdjusterConfig {
   option: PinchZoomOptions;
 }
 
-export type ZoomAdjuster = (next: ZoomAdjusterResult, config: ExcludeNullish<ZoomAdjusterConfig>) => ZoomAdjusterResult;
+export type ZoomAdjuster = (next: ZoomAdjusterResult, config: AllPropsNonNullable<ZoomAdjusterConfig>) => ZoomAdjusterResult;
 
 /**
  * Hooks providing customizable behavior at different stages of a pinch-zoom operation.
@@ -39,7 +39,7 @@ export interface ZoomAdjusterHooks {
    * The core function that adjusts the position of the element.
    * This function is called repeatedly during the pinch-zoom operation and is responsible for calculating the new position of the element based on the pinch-zoom events and configuration.
    */
-  adjuster(next: ZoomAdjusterResult, config: ExcludeNullish<ZoomAdjusterConfig>): ZoomAdjusterResult;
+  adjuster(next: ZoomAdjusterResult, config: AllPropsNonNullable<ZoomAdjusterConfig>): ZoomAdjusterResult;
 
   /**
    * Called when the pinch-zoom operation is ending, typically on a mouseup or touchend event.

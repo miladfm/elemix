@@ -18,7 +18,7 @@ interface CropInitStyle {
 (window as any).__INIT_CROP__ = (options: CropOptions, initStyle: CropInitStyle = {} as CropInitStyle) => {
   new Crop('.container', './assets/number-grid-1-40.jpeg', options);
 
-  document!.querySelector('.crop__image')!.addEventListener('load', () => {
+  document.querySelector('.crop__image').addEventListener('load', () => {
     const cropBoxAnimation = Animation.getOrCreateInstance('.crop__box');
     const cropImageAnimation = Animation.getOrCreateInstance('.crop__image');
     const cropBackdropWrapperAnimation = Animation.getOrCreateInstance('.crop__back-drop-wrapper');

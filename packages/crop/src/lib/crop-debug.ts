@@ -12,7 +12,7 @@ interface DebugElements {
 export class CropDebug {
   private static options: CropOptions;
   private static cropElements: CropElements;
-  private static enabled: boolean = false;
+  private static enabled = false;
   private static debugElements: DebugElements;
 
   public static init(options: CropOptions, elements: CropElements) {

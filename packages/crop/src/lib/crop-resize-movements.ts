@@ -1,4 +1,4 @@
-import { clamp } from '@elemix/core';
+import { clamp, NonNullableProps } from '@elemix/core';
 import {
   CropBaseConfig,
   CropDragMovementConfig,
@@ -13,13 +13,13 @@ import {
 export function getCropDragMovements(
   baseConfig: CropBaseConfig,
   zoneConfig: CropZoneConfig,
-  eventData: CropElementsEventData
+  eventData: NonNullableProps<CropElementsEventData, 'event'>
 ): CropDragMovementConfig {
   const xZone = getXZone(baseConfig, zoneConfig, eventData);
   const yZone = getYZone(baseConfig, zoneConfig, eventData);
 
-  const movementXInZone = getMovementXInZone(baseConfig, zoneConfig, xZone, eventData.event.movementXFromPress!);
-  const movementYInZone = getMovementYInZone(baseConfig, zoneConfig, yZone, eventData.event.movementYFromPress!);
+  const movementXInZone = getMovementXInZone(baseConfig, zoneConfig, xZone, eventData.event.movementXFromPress);
+  const movementYInZone = getMovementYInZone(baseConfig, zoneConfig, yZone, eventData.event.movementYFromPress);
 
   const clientX = eventData.event.clientX + baseConfig.clientXDelta;
   const clientY = eventData.event.clientY + baseConfig.clientYDelta;
@@ -32,31 +32,35 @@ export function getCropDragMovements(
 // endregion
 
 // region HELPERS
-function getXZone(baseConfig: CropBaseConfig, zoneConfig: CropZoneConfig, eventData: CropElementsEventData): CropZone | null {
+function getXZone(
+  baseConfig: CropBaseConfig,
+  zoneConfig: CropZoneConfig,
+  eventData: NonNullableProps<CropElementsEventData, 'event'>
+): CropZone | null {
   if (baseConfig.hDirection === null) {
     return null;
   }
 
   // Single Side
   if (
-    (baseConfig.hDirection === CropHDirection.Left && eventData.event.movementXFromPress! >= zoneConfig.singleSideZone.minMovementX) ||
-    (baseConfig.hDirection === CropHDirection.Right && eventData.event.movementXFromPress! <= zoneConfig.singleSideZone.maxMovementX)
+    (baseConfig.hDirection === CropHDirection.Left && eventData.event.movementXFromPress >= zoneConfig.singleSideZone.minMovementX) ||
+    (baseConfig.hDirection === CropHDirection.Right && eventData.event.movementXFromPress <= zoneConfig.singleSideZone.maxMovementX)
   ) {
     return CropZone.SingleSide;
   }
 
   // Both Side
   if (
-    zoneConfig.bothSideZone.minMovementX < eventData.event.movementXFromPress! &&
-    eventData.event.movementXFromPress! <= zoneConfig.bothSideZone.maxMovementX
+    zoneConfig.bothSideZone.minMovementX < eventData.event.movementXFromPress &&
+    eventData.event.movementXFromPress <= zoneConfig.bothSideZone.maxMovementX
   ) {
     return CropZone.BothSide;
   }
 
   // Scale
   if (
-    (baseConfig.hDirection === CropHDirection.Left && eventData.event.movementXFromPress! < zoneConfig.scaleZone.maxMovementX) ||
-    (baseConfig.hDirection === CropHDirection.Right && eventData.event.movementXFromPress! > zoneConfig.scaleZone.minMovementX)
+    (baseConfig.hDirection === CropHDirection.Left && eventData.event.movementXFromPress < zoneConfig.scaleZone.maxMovementX) ||
+    (baseConfig.hDirection === CropHDirection.Right && eventData.event.movementXFromPress > zoneConfig.scaleZone.minMovementX)
   ) {
     return CropZone.Scale;
   }
@@ -64,31 +68,35 @@ function getXZone(baseConfig: CropBaseConfig, zoneConfig: CropZoneConfig, eventD
   return null;
 }
 
-function getYZone(baseConfig: CropBaseConfig, zoneConfig: CropZoneConfig, eventData: CropElementsEventData): CropZone | null {
+function getYZone(
+  baseConfig: CropBaseConfig,
+  zoneConfig: CropZoneConfig,
+  eventData: NonNullableProps<CropElementsEventData, 'event'>
+): CropZone | null {
   if (baseConfig.vDirection === null) {
     return null;
   }
 
   // Single Side
   if (
-    (baseConfig.vDirection === CropVDirection.Top && eventData.event.movementYFromPress! >= zoneConfig.singleSideZone.minMovementY) ||
-    (baseConfig.vDirection === CropVDirection.Bottom && eventData.event.movementYFromPress! <= zoneConfig.singleSideZone.maxMovementY)
+    (baseConfig.vDirection === CropVDirection.Top && eventData.event.movementYFromPress >= zoneConfig.singleSideZone.minMovementY) ||
+    (baseConfig.vDirection === CropVDirection.Bottom && eventData.event.movementYFromPress <= zoneConfig.singleSideZone.maxMovementY)
   ) {
     return CropZone.SingleSide;
   }
 
   // Both Side
   if (
-    zoneConfig.bothSideZone.minMovementY < eventData.event.movementYFromPress! &&
-    eventData.event.movementYFromPress! <= zoneConfig.bothSideZone.maxMovementY
+    zoneConfig.bothSideZone.minMovementY < eventData.event.movementYFromPress &&
+    eventData.event.movementYFromPress <= zoneConfig.bothSideZone.maxMovementY
   ) {
     return CropZone.BothSide;
   }
 
   // Scale
   if (
-    (baseConfig.vDirection === CropVDirection.Top && eventData.event.movementYFromPress! < zoneConfig.scaleZone.maxMovementY) ||
-    (baseConfig.vDirection === CropVDirection.Bottom && eventData.event.movementYFromPress! > zoneConfig.scaleZone.minMovementY)
+    (baseConfig.vDirection === CropVDirection.Top && eventData.event.movementYFromPress < zoneConfig.scaleZone.maxMovementY) ||
+    (baseConfig.vDirection === CropVDirection.Bottom && eventData.event.movementYFromPress > zoneConfig.scaleZone.minMovementY)
   ) {
     return CropZone.Scale;
   }

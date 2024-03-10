@@ -21,10 +21,13 @@ jobs:
         uses: ./.github/actions/pnpm-install
 
       - name: Lint
-        run: npx nx affected:lint --base=main --head=HEAD
+        run: npx nx affected:lint --base=main --head=HEAD --exclude=elemix
 
       - name: Build
-        run: npx nx affected:build --base=main --head=HEAD
+        run: npx nx affected:build --base=main --head=HEAD --exclude=elemix
 
       - name: Test
-        run: npx nx  affected:test --base=main --head=HEAD
+        run: npx nx affected:test --base=main --head=HEAD --exclude=elemix
+
+      - name: E2E
+        run: npx nx affected:e2e --base=main --head=HEAD --exclude=elemix

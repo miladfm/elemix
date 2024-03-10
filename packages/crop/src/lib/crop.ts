@@ -1,5 +1,5 @@
 import { filter } from 'rxjs';
-import { DomSelector, GesturesEventType } from '@elemix/core';
+import { DomSelector, GesturesEventType, NonNullableProps } from '@elemix/core';
 import { Drag, DragBoundaryType } from '@elemix/drag';
 import { CropOptions } from './crop.model';
 import { getCropElements } from './crop-elements';
@@ -85,7 +85,7 @@ export class Crop {
           break;
 
         case GesturesEventType.Drag:
-          this.onCropResize(eventData);
+          this.onCropResize(eventData as unknown as NonNullableProps<CropElementsEventData, 'event'>);
           break;
 
         case GesturesEventType.DragEnd:
@@ -104,7 +104,7 @@ export class Crop {
     this.baseConfig = getCropBaseConfig(this.elements, this.options, eventData);
   }
 
-  private onCropResize(eventData: CropElementsEventData) {
+  private onCropResize(eventData: NonNullableProps<CropElementsEventData, 'event'>) {
     if (!this.baseConfig) {
       return;
     }

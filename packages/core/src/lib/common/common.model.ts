@@ -68,6 +68,12 @@ export declare interface Class<T> extends Function {
   new (...args: any[]): T;
 }
 
-export type ExcludeNullish<T> = {
+export type AllPropsNonNullable<T> = {
   [P in keyof T]: NonNullable<T[P]>;
+};
+
+export type DeepNonNullable<T> = T extends object ? { [P in keyof T]: DeepNonNullable<T[P]> } : NonNullable<T>;
+
+export type NonNullableProps<T, K extends keyof T = keyof T> = {
+  [P in keyof T]: P extends K ? DeepNonNullable<T[P]> : T[P];
 };
