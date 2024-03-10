@@ -3,15 +3,27 @@ import { createBasicDrag, createBoundaryDrag } from './drag';
 import { DragBoundaryType, MovementDirection } from '@elemix/drag';
 import README from '../../../../packages/drag/README.md';
 
+export type DragStorySize = '1X1' | '2X1' | '1X2';
+export type DragStoryScale = '0.5X' | '1X' | '2X' | '3X' | '4X';
+
 export interface DragStoryType {
   movementDirection: MovementDirection;
   minMovements: number;
-  onPress: any;
+  onAction: any;
   boundaryType: DragBoundaryType;
   bounceFactor: number;
 
   bounceIntensity: number;
   dampeningFactor: number;
+
+  // Size Configuration
+  showStorySizeConfig: boolean;
+
+  wrapperSize: DragStorySize;
+  draggableSize: DragStorySize;
+
+  draggableScale: DragStoryScale;
+  wrapperScale: DragStoryScale;
 }
 
 type Story = StoryObj<DragStoryType>;
@@ -20,7 +32,7 @@ const meta: Meta<DragStoryType> = {
   title: 'Drag',
   tags: ['autodocs'],
   argTypes: {
-    onPress: { action: 'OnPress', table: { disable: true } },
+    onAction: { action: 'OnAction', table: { disable: true } },
     movementDirection: {
       control: 'select',
       options: Object.values(MovementDirection),
@@ -29,12 +41,6 @@ const meta: Meta<DragStoryType> = {
       type: 'string',
     },
     minMovements: { control: 'number', description: 'Overwritten description', defaultValue: 0 },
-    // label: {
-    //   name: 'ABXDE ',
-    //   description: 'XYZ Label',
-    //   control: { type: 'text' },
-    //   table: { type: { summary: 'The label contents', } }
-    // },
   },
   args: {},
   parameters: {
@@ -70,12 +76,38 @@ export const Boundary: Story = {
   argTypes: {
     boundaryType: { control: { type: 'select' }, options: Object.values(DragBoundaryType) },
     bounceFactor: { control: { type: 'range', min: 0, max: 1, step: 0.01 } },
+    showStorySizeConfig: { control: 'boolean' },
+    wrapperSize: {
+      if: { arg: 'showStorySizeConfig', truthy: true },
+      control: 'select',
+      options: ['1X1', '2X1', '1X2'],
+    },
+    draggableSize: {
+      if: { arg: 'showStorySizeConfig', truthy: true },
+      control: 'select',
+      options: ['1X1', '2X1', '1X2'],
+    },
+    wrapperScale: {
+      if: { arg: 'showStorySizeConfig', truthy: true },
+      control: 'select',
+      options: ['0.5X', '1X', '2X', '3X', '4X'],
+    },
+    draggableScale: {
+      if: { arg: 'showStorySizeConfig', truthy: true },
+      control: 'select',
+      options: ['0.5X', '1X', '2X', '3X', '4X'],
+    },
   },
   args: {
     movementDirection: MovementDirection.Both,
     minMovements: 0,
     boundaryType: DragBoundaryType.Inner,
     bounceFactor: 1,
+    showStorySizeConfig: false,
+    wrapperSize: '1X1',
+    draggableSize: '1X1',
+    wrapperScale: '1X',
+    draggableScale: '1X',
   },
   parameters: {
     docs: {

@@ -1,6 +1,6 @@
 /// <reference types="cypress" />
 
-type CropOrigin = 'top' | 'right' | 'bottom' | 'left' | 'top-right' | 'bottom-right' | 'bottom-left' | 'top-left';
+type CropOrigin = 'top' | 'right' | 'bottom' | 'left' | 'top-right' | 'bottom-right' | 'bottom-left' | 'top-left' | 'image';
 
 const CROP_ORIGIN_SELECTOR: Record<CropOrigin, string> = {
   top: '.crop__draggable--top',
@@ -11,6 +11,7 @@ const CROP_ORIGIN_SELECTOR: Record<CropOrigin, string> = {
   'bottom-right': '.crop__draggable--bottom-right',
   'bottom-left': '.crop__draggable--bottom-left',
   'top-left': '.crop__draggable--top-left',
+  image: '.crop__image',
 };
 
 interface CropInitStyle {
@@ -37,7 +38,10 @@ interface CropInitOption {
 declare namespace Cypress {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   interface Chainable<Subject> {
-    checkCss(selector: string, style: Partial<{ w: number; h: number; x: number; y: number; s: number }>): void;
+    checkCss(
+      selector: string,
+      style: Partial<{ w: number; h: number; x: number; y: number; s: number }> | Record<string, string | number>
+    ): void;
     checkCropStyle(elements: {
       cropBox: { w: number; h: number; x: number; y: number };
       image: { x: number; y: number; s: number };
@@ -46,7 +50,7 @@ declare namespace Cypress {
     waitForAnimationFrame(): void;
     documentTrigger(eventName: string, options?: Partial<TriggerOptions & ObjectLike>): void;
     dragPress(origin: CropOrigin, x: number, y: number): void;
-    dragStart(): void;
+    dragStart(x?: number, y?: number): void;
     dragMove(x: number, y: number): void;
     dragFromTo(from: [number, number], to: [number, number], counter?: number): void;
     dragEnd(origin: CropOrigin): void;
@@ -92,11 +96,20 @@ Cypress.Commands.add('checkCss', (selector, styles) => {
     if (styles.x) {
       expect(toFloor(transformValue.x), 'Check X').to.be.closeTo(toFloor(styles.x), 1);
     }
+
     if (styles.y) {
       expect(toFloor(transformValue.y), 'Check Y').to.be.closeTo(toFloor(styles.y), 1);
     }
+
     if (styles.s) {
       expect(parseFloat(transformValue.s), 'Check Scale').to.be.equal(styles.s);
+    }
+
+    const otherStyles = Object.entries(styles).filter(([key, _value]) => !['w', 'h', 'x', 'y', 's'].includes(key));
+    if (otherStyles.length > 0) {
+      otherStyles.forEach(([key, value]) => {
+        expect($el[0].style[key as any], `Check ${key}`).to.be.equal(value.toString());
+      });
     }
   });
 });
@@ -113,8 +126,8 @@ Cypress.Commands.add('dragPress', (origin, x, y) => {
   cy.get(CROP_ORIGIN_SELECTOR[origin]).trigger('pointerdown', { pointerId: 1, clientX: x, clientY: y, force: true });
 });
 
-Cypress.Commands.add('dragStart', () => {
-  cy.documentTrigger('pointermove', { pointerId: 1, clientX: 0, clientY: 0 });
+Cypress.Commands.add('dragStart', (x = 0, y = 0) => {
+  cy.documentTrigger('pointermove', { pointerId: 1, clientX: x, clientY: y });
 });
 
 Cypress.Commands.add('dragMove', (x, y) => {

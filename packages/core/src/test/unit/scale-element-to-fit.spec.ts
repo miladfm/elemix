@@ -1,5 +1,6 @@
 import { scaleElementToFit } from '../../lib/scale-element-to-fit/scale-element-to-fit';
 import { ScalingMode } from '../../lib/scale-element-to-fit/scale-element-to-fit.model';
+import { mockClientRect, mockElementAttribute } from '@internal-lib/util-testing';
 
 describe('Utils - elementFitScale', () => {
   /**
@@ -30,18 +31,18 @@ describe('Utils - elementFitScale', () => {
 
     // Target Element
     targetSmallElement = document.createElement('div');
-    Object.defineProperty(targetSmallElement, 'offsetWidth', { configurable: true, value: 100 });
-    Object.defineProperty(targetSmallElement, 'offsetHeight', { configurable: true, value: 200 });
+    mockClientRect(targetSmallElement, { width: 100, height: 200 });
+    mockElementAttribute(targetSmallElement, { offsetWidth: 100, offsetHeight: 200 });
 
     // Target Image Element
     targetBigImageElement = document.createElement('img');
-    Object.defineProperty(targetBigImageElement, 'naturalWidth', { configurable: true, value: 1000 });
-    Object.defineProperty(targetBigImageElement, 'naturalHeight', { configurable: true, value: 1000 });
+    mockClientRect(targetBigImageElement, { width: 1000, height: 1000 });
+    mockElementAttribute(targetBigImageElement, { naturalWidth: 1000, naturalHeight: 1000 });
 
     // Container Element
     containerElement = document.createElement('div');
-    Object.defineProperty(containerElement, 'offsetWidth', { configurable: true, value: 600 });
-    Object.defineProperty(containerElement, 'offsetHeight', { configurable: true, value: 400 });
+    mockClientRect(containerElement, { width: 600, height: 400 });
+    mockElementAttribute(containerElement, { offsetWidth: 600, offsetHeight: 400 });
   });
 
   describe('shared', () => {
@@ -67,13 +68,13 @@ describe('Utils - elementFitScale', () => {
       expect(() => scaleElementToFit(targetSmallElement, targetBigImageElement)).toThrow();
     });
     it('should throw an error when the width of target HTMLEElement is 0', () => {
-      Object.defineProperty(targetSmallElement, 'offsetWidth', { configurable: true, value: 0 });
+      mockClientRect(targetSmallElement, { width: 0 });
       expect(() => scaleElementToFit(targetSmallElement, containerElement)).toThrow(
         'The width or height of the target HTMLElement should be greater than zero.'
       );
     });
     it('should throw an error when the height of target HTMLEElement is 0', () => {
-      Object.defineProperty(targetSmallElement, 'offsetHeight', { configurable: true, value: 0 });
+      mockClientRect(targetSmallElement, { height: 0 });
       expect(() => scaleElementToFit(targetSmallElement, containerElement)).toThrow(
         'The width or height of the target HTMLElement should be greater than zero.'
       );

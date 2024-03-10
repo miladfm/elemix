@@ -1,3 +1,5 @@
+/// <reference types="jest" />
+
 /**
  * Configuration options for the mockRequestAnimationFrame function.
  */
@@ -96,7 +98,7 @@ export function mockRequestAnimationFrame({
   const mockCancelAnimationFrameFn = jest.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {
     hasCancelAnimationFrameCalled = true;
   });
-  const mockRequestAnimationFrameFn = jest.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => {
+  const mockRequestAnimationFrameFn = jest.spyOn(window, 'requestAnimationFrame').mockImplementation((cb: any) => {
     lastFrameID = Math.round(Math.random() * 1000000);
 
     if (frameCounter < stopOnFrames && !hasCancelAnimationFrameCalled) {
@@ -123,25 +125,8 @@ export function mockRequestAnimationFrame({
 }
 
 export function mockBasicRequestAnimationFrame() {
-  jest.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => {
+  jest.spyOn(window, 'requestAnimationFrame').mockImplementation((cb: any) => {
     cb(1);
     return 0;
-  });
-}
-
-export function mockClientRect(
-  element: Element,
-  { width, height, left, top }: { width: number; height: number; top: number; left: number }
-) {
-  jest.spyOn(element, 'getBoundingClientRect').mockReturnValue({
-    ...element.getBoundingClientRect(),
-    width,
-    height,
-    x: left,
-    y: top,
-    left,
-    top,
-    right: left + width,
-    bottom: height + top,
   });
 }

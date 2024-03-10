@@ -10,8 +10,8 @@ import { ContainerSelector, ScalingElement, TargetSelector } from './scale-eleme
 export function getTarget(_target: TargetSelector): ScalingElement {
   const target = new Dom(_target);
   const rect = target.getBoundingClientRect();
-  const effectiveWidth = rect.width;
-  const effectiveHeight = rect.height;
+  const effectiveWidth = target.naturalWidth ?? rect.width;
+  const effectiveHeight = target.naturalHeight ?? rect.height;
   return {
     isImage: isImage(target.nativeElement),
     width: effectiveWidth,

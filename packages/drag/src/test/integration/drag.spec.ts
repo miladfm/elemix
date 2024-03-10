@@ -2,10 +2,10 @@ import { Drag } from '../../lib/drag';
 import {
   mockRequestAnimationFrame,
   getActiveListener,
-  mockClientRect,
   mockEventListener,
   MockPointerEvent,
   mockBasicRequestAnimationFrame,
+  mockClientRect,
 } from '@internal-lib/util-testing';
 import { map, Observable, toArray } from 'rxjs';
 import { GesturesEventType } from '@elemix/core';
@@ -1268,171 +1268,83 @@ describe('Feature - Drag', () => {
       event.dispatchMove({ x: -300, y: 300 });
       expect(element.style.transform).toContain('translate(-292px, 292px)');
     });
-    it(`should draggable element moving outside the boundary like basic drag without bounce effect when 'bounceFactor' is 0`, () => {
-      jest.spyOn(boundaryElement, 'getBoundingClientRect').mockReturnValue({
-        ...element.getBoundingClientRect(),
-        width: 400,
-        height: 400,
-        x: 400,
-        y: 400,
-        left: 400,
-        top: 400,
-        right: 800,
-        bottom: 800,
-      });
-      jest.spyOn(element, 'getBoundingClientRect').mockReturnValue({
-        ...element.getBoundingClientRect(),
-        width: 200,
-        height: 200,
-        x: 500,
-        y: 500,
-        left: 500,
-        top: 500,
-        right: 700,
-        bottom: 700,
-      });
-
-      new Drag(element, {
-        boundary: {
-          elem: boundaryElement,
-          type: DragBoundaryType.Inner,
-          bounceFactor: 0,
-        },
-      });
-
-      event.dispatchDown({ x: 10, y: 10 });
-      event.dispatchMove({ x: 0, y: 0 }); // To start dragging
-
-      event.dispatchMove({ x: -300, y: 300 });
-      expect(element.style.transform).toContain('translate(-300px, 300px)');
-    });
-    it(`should draggable element moving outside the boundary like basic drag without bounce effect when 'bounceFactor' is less than 0`, () => {
-      jest.spyOn(boundaryElement, 'getBoundingClientRect').mockReturnValue({
-        ...element.getBoundingClientRect(),
-        width: 400,
-        height: 400,
-        x: 400,
-        y: 400,
-        left: 400,
-        top: 400,
-        right: 800,
-        bottom: 800,
-      });
-      jest.spyOn(element, 'getBoundingClientRect').mockReturnValue({
-        ...element.getBoundingClientRect(),
-        width: 200,
-        height: 200,
-        x: 500,
-        y: 500,
-        left: 500,
-        top: 500,
-        right: 700,
-        bottom: 700,
-      });
-
-      new Drag(element, {
-        boundary: {
-          elem: boundaryElement,
-          type: DragBoundaryType.Inner,
-          bounceFactor: -1,
-        },
-      });
-
-      event.dispatchDown({ x: 10, y: 10 });
-      event.dispatchMove({ x: 0, y: 0 }); // To start dragging
-
-      event.dispatchMove({ x: -300, y: 300 });
-      expect(element.style.transform).toContain('translate(-300px, 300px)');
-    });
-    it(`should prevent the draggable element from moving outside the boundary without bounce effect when 'bounceFactor' is equal to 1`, () => {
-      jest.spyOn(boundaryElement, 'getBoundingClientRect').mockReturnValue({
-        ...element.getBoundingClientRect(),
-        width: 400,
-        height: 400,
-        x: 400,
-        y: 400,
-        left: 400,
-        top: 400,
-        right: 800,
-        bottom: 800,
-      });
-      jest.spyOn(element, 'getBoundingClientRect').mockReturnValue({
-        ...element.getBoundingClientRect(),
-        width: 200,
-        height: 200,
-        x: 500,
-        y: 500,
-        left: 500,
-        top: 500,
-        right: 700,
-        bottom: 700,
-      });
-
-      new Drag(element, {
-        boundary: {
-          elem: boundaryElement,
-          type: DragBoundaryType.Inner,
-          bounceFactor: 1,
-        },
-      });
-
-      event.dispatchDown({ x: 10, y: 10 });
-      event.dispatchMove({ x: 0, y: 0 }); // To start dragging
-
-      event.dispatchMove({ x: -300, y: 300 });
-      expect(element.style.transform).toContain('translate(-100px, 100px)');
-    });
-    it(`should prevent the draggable element from moving outside the boundary without bounce effect when 'bounceFactor' is bigger than 1`, () => {
-      jest.spyOn(boundaryElement, 'getBoundingClientRect').mockReturnValue({
-        ...element.getBoundingClientRect(),
-        width: 400,
-        height: 400,
-        x: 400,
-        y: 400,
-        left: 400,
-        top: 400,
-        right: 800,
-        bottom: 800,
-      });
-      jest.spyOn(element, 'getBoundingClientRect').mockReturnValue({
-        ...element.getBoundingClientRect(),
-        width: 200,
-        height: 200,
-        x: 500,
-        y: 500,
-        left: 500,
-        top: 500,
-        right: 700,
-        bottom: 700,
-      });
-
-      new Drag(element, {
-        boundary: {
-          elem: boundaryElement,
-          type: DragBoundaryType.Inner,
-          bounceFactor: 2,
-        },
-      });
-
-      event.dispatchDown({ x: 10, y: 10 });
-      event.dispatchMove({ x: 0, y: 0 }); // To start dragging
-
-      event.dispatchMove({ x: -300, y: 300 });
-      expect(element.style.transform).toContain('translate(-100px, 100px)');
-    });
 
     it.each([
-      { label: 'top-left', to: { x: -300, y: 300 }, expected: { x: -100, y: 100 } },
-      { label: 'top-right', to: { x: 300, y: 300 }, expected: { x: 100, y: 100 } },
-      { label: 'bottom-right', to: { x: 300, y: -300 }, expected: { x: 100, y: -100 } },
-      { label: 'bottom-left', to: { x: -300, y: -300 }, expected: { x: -100, y: -100 } },
+      { label: 'top-left', bounceFactorLabel: '0', bounceFactor: 0, to: { x: 0, y: 0 }, expected: { x: -400, y: -400 } },
+      { label: 'top-right', bounceFactorLabel: '0', bounceFactor: 0, to: { x: 800, y: 0 }, expected: { x: 400, y: -400 } },
+      { label: 'bottom-right', bounceFactorLabel: '0', bounceFactor: 0, to: { x: 800, y: 800 }, expected: { x: 400, y: 400 } },
+      { label: 'bottom-left', bounceFactorLabel: '0', bounceFactor: 0, to: { x: 0, y: 800 }, expected: { x: -400, y: 400 } },
+
+      { label: 'top-left', bounceFactorLabel: 'less than 0', bounceFactor: -1, to: { x: 0, y: 0 }, expected: { x: -400, y: -400 } },
+      { label: 'top-right', bounceFactorLabel: 'less than 0', bounceFactor: -1, to: { x: 800, y: 0 }, expected: { x: 400, y: -400 } },
+      { label: 'bottom-right', bounceFactorLabel: 'less than 0', bounceFactor: -1, to: { x: 800, y: 800 }, expected: { x: 400, y: 400 } },
+      { label: 'bottom-left', bounceFactorLabel: 'less than 0', bounceFactor: -1, to: { x: 0, y: 800 }, expected: { x: -400, y: 400 } },
+    ])(
+      `should draggable element moving outside to $label the boundary like basic drag without bounce effect when 'bounceFactor' is $bounceFactorLabel`,
+      ({ to, expected, bounceFactor }) => {
+        mockClientRect(boundaryElement, { width: 600, height: 300, left: 100, top: 250 });
+        mockClientRect(element, { width: 100, height: 200, left: 350, top: 300 });
+
+        drag = new Drag(element, {
+          boundary: {
+            elem: boundaryElement,
+            type: DragBoundaryType.Inner,
+            bounceFactor,
+          },
+        });
+
+        event.dispatchDown({ x: 400, y: 400 });
+        event.dispatchMove({ x: 400, y: 400 }); // To start dragging
+        event.dispatchMove({ x: to.x, y: to.y });
+
+        expect(element.style.transform).toContain(`translate(${expected.x}px, ${expected.y}px)`);
+      }
+    );
+
+    it.each([
+      { label: 'top-left', bounceFactorLabel: '1', bounceFactor: 1, to: { x: 0, y: 0 }, expected: { x: -250, y: -50 } },
+      { label: 'top-right', bounceFactorLabel: '1', bounceFactor: 1, to: { x: 800, y: 0 }, expected: { x: 250, y: -50 } },
+      { label: 'bottom-right', bounceFactorLabel: '1', bounceFactor: 1, to: { x: 800, y: 800 }, expected: { x: 250, y: 50 } },
+      { label: 'bottom-left', bounceFactorLabel: '1', bounceFactor: 1, to: { x: 0, y: 800 }, expected: { x: -250, y: 50 } },
+
+      { label: 'top-left', bounceFactorLabel: 'bigger than 1', bounceFactor: 2, to: { x: 0, y: 0 }, expected: { x: -250, y: -50 } },
+      { label: 'top-right', bounceFactorLabel: 'bigger than 1', bounceFactor: 2, to: { x: 800, y: 0 }, expected: { x: 250, y: -50 } },
+      { label: 'bottom-right', bounceFactorLabel: 'bigger than 1', bounceFactor: 2, to: { x: 800, y: 800 }, expected: { x: 250, y: 50 } },
+      { label: 'bottom-left', bounceFactorLabel: 'bigger than 1', bounceFactor: 2, to: { x: 0, y: 800 }, expected: { x: -250, y: 50 } },
+    ])(
+      `should prevent the draggable element from moving outside to $label the boundary without bounce effect when 'bounceFactor' is $bounceFactorLabel`,
+      ({ to, expected, bounceFactor }) => {
+        mockClientRect(boundaryElement, { width: 600, height: 300, left: 100, top: 250 });
+        mockClientRect(element, { width: 100, height: 200, left: 350, top: 300 });
+
+        drag = new Drag(element, {
+          boundary: {
+            elem: boundaryElement,
+            type: DragBoundaryType.Inner,
+            bounceFactor,
+          },
+        });
+
+        event.dispatchDown({ x: 400, y: 400 });
+        event.dispatchMove({ x: 400, y: 400 }); // To start dragging
+        event.dispatchMove({ x: to.x, y: to.y });
+
+        expect(element.style.transform).toContain(`translate(${expected.x}px, ${expected.y}px)`);
+      }
+    );
+
+    it.each([
+      { label: 'top-left', to: { x: 0, y: 0 }, expected: { x: -250, y: -50 } },
+      { label: 'top-right', to: { x: 800, y: 0 }, expected: { x: 250, y: -50 } },
+      { label: 'bottom-right', to: { x: 800, y: 800 }, expected: { x: 250, y: 50 } },
+      { label: 'bottom-left', to: { x: 0, y: 800 }, expected: { x: -250, y: 50 } },
     ])(
       `should animate the element back to $label the boundary when bounce effect has applied and dragging has finished`,
       ({ to, expected }) => {
         mockRequestAnimationFrame();
 
-        mockClientRect(boundaryElement, { width: 400, height: 400, left: 400, top: 400 });
-        mockClientRect(element, { width: 200, height: 200, left: 500, top: 500 });
+        mockClientRect(boundaryElement, { width: 600, height: 300, left: 100, top: 250 });
+        mockClientRect(element, { width: 100, height: 200, left: 350, top: 300 });
 
         drag = new Drag(element, {
           boundary: {
@@ -1442,11 +1354,11 @@ describe('Feature - Drag', () => {
           },
         });
 
-        // left-top
-        event.dispatchDown({ x: 10, y: 10 });
-        event.dispatchMove({ x: 0, y: 0 }); // To start dragging
+        event.dispatchDown({ x: 400, y: 400 });
+        event.dispatchMove({ x: 400, y: 400 }); // To start dragging
         event.dispatchMove({ x: to.x, y: to.y });
         event.dispatchUp({ x: 0, y: 0 });
+
         expect(element.style.transform).toContain(`translate(${expected.x}px, ${expected.y}px)`);
       }
     );

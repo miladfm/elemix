@@ -1,4 +1,5 @@
-import { mockBasicRequestAnimationFrame, mockClientRect, mockRequestAnimationFrame } from './mock-request-animation-frame';
+import { mockBasicRequestAnimationFrame, mockRequestAnimationFrame } from './mock-request-animation-frame';
+import { mockClientRect } from '@internal-lib/util-testing';
 
 function getMockRequestAnimationFrameCallback(duration: number, onCallback?: (timeStamp: number) => void) {
   let startTime: number;

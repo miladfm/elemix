@@ -3,7 +3,7 @@ import README from '../../../../packages/crop/README.md';
 import { createCrop } from './crop';
 
 export interface CropStoryType {
-  runTest: boolean;
+  debug: boolean;
 }
 
 type Story = StoryObj<CropStoryType>;
@@ -12,7 +12,7 @@ const meta: Meta<CropStoryType> = {
   title: 'Crop',
   tags: ['autodocs'],
   argTypes: {
-    runTest: { control: 'boolean' },
+    debug: { control: 'boolean' },
   },
   args: {},
   parameters: {
@@ -36,6 +36,8 @@ export default meta;
  * This is the basic component
  */
 export const Basic: Story = {
-  args: {},
+  args: {
+    debug: false,
+  },
   render: (args, context) => createCrop(args, context),
 };

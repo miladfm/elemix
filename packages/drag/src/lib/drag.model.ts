@@ -83,6 +83,7 @@ export enum MovementDirection {
   Vertical = 'vertical',
 }
 
+// TODO: It's look like all types works same without any different. Check it one more time and create the correct story or remove it.
 /**
  * Defines the type of boundary constraints applied to the draggable element, dictating how the element interacts
  * with the specified boundary.

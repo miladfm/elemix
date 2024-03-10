@@ -26,7 +26,7 @@ const DEFAULT_OPTIONS: CropOptions = {
   horizontalGap: 170,
   minWidth: 50,
   minHeight: 50,
-  _debug: true,
+  _debug: false,
 };
 
 export class Crop {
@@ -56,7 +56,7 @@ export class Crop {
     const _drag = new Drag(this.elements.image, {
       boundary: {
         elem: this.elements.cropBox,
-        type: DragBoundaryType.Outer,
+        type: DragBoundaryType.Inner,
         bounceFactor: 0.98,
       },
     });
@@ -69,7 +69,7 @@ export class Crop {
       .subscribe((dragEvent) => {
         const x = dragEvent.transformOnPress.backdropWrapper.x - (dragEvent.transformOnPress.image.x - dragEvent.event.translate.x);
         const y = dragEvent.transformOnPress.backdropWrapper.y - (dragEvent.transformOnPress.image.y - dragEvent.event.translate.y);
-        this.cropAnimation.applyStylesOnImageDrag({ x, y }, dragEvent.event.type === GesturesEventType.Drag);
+        this.cropAnimation.applyStylesOnImageDrag({ x, y }, dragEvent.event.type !== GesturesEventType.Drag);
       });
   }
 

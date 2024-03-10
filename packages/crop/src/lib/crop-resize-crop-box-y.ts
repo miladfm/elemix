@@ -36,7 +36,6 @@ export function getCropBoxY(
 
     // Default
     on('default', () => {
-      // console.log('DEFAULT CROP-BOX Y');
       // center: Align to the center
       return (baseConfig.react.container.height - newHeight) / 2;
     })

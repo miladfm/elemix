@@ -61,7 +61,6 @@ export function getCropBoxHeight(
 
     // Default: Current height without changes
     on('default', () => {
-      // console.log('cropBox height default');
       return Animation.getOrCreateInstance(elements.cropBox).value.dimension.height;
     })
   );

@@ -52,7 +52,7 @@ export class BoundaryPositionAdjuster implements DragPositionAdjusterHooks {
 
     return {
       x: getBounceEffectValue(nextPosition.x, this.boundaryRange.minX, this.boundaryRange.maxX, this.bounceFactor),
-      y: getBounceEffectValue(nextPosition.y, this.boundaryRange.minX, this.boundaryRange.maxY, this.bounceFactor),
+      y: getBounceEffectValue(nextPosition.y, this.boundaryRange.minY, this.boundaryRange.maxY, this.bounceFactor),
     };
   }
 
@@ -65,7 +65,7 @@ export class BoundaryPositionAdjuster implements DragPositionAdjusterHooks {
 
     const position = {
       x: clamp(animation.value.transform.x, [this.boundaryRange.minX, this.boundaryRange.maxX]),
-      y: clamp(animation.value.transform.y, [this.boundaryRange.minX, this.boundaryRange.maxY]),
+      y: clamp(animation.value.transform.y, [this.boundaryRange.minY, this.boundaryRange.maxY]),
     };
 
     const hasPositionChanged = position.x !== animation.value.transform.x || position.y !== animation.value.transform.y;

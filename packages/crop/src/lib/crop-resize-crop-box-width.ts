@@ -61,7 +61,6 @@ export function getCropBoxWidth(
 
     // Default: Current width without changes
     on('default', () => {
-      // console.log('cropBox width default');
       return Animation.getOrCreateInstance(elements.cropBox).value.dimension.width;
     })
   );

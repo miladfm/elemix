@@ -9,7 +9,9 @@ export function createCrop(_args: CropStoryType, _context: StoryContext<CropStor
 
   document.addEventListener('DOMContentLoaded', () => {
     const imgSrc = 'images/number-grid-1-40.jpeg';
-    const _crop = new Crop(element, imgSrc);
+    const _crop = new Crop(element, imgSrc, {
+      _debug: _args.debug,
+    });
   });
 
   return element.nativeElement;
