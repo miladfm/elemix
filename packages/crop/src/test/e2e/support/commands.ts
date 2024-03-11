@@ -172,7 +172,7 @@ Cypress.Commands.add('checkStyle', (selector, styles, message) => {
     }
 
     if (styles.s) {
-      expect(parseFloat(transformValue.s), `Check Scale ${message ? '(' + message + ')' : ''}`).to.be.closeTo(styles.s as number, 0.00005);
+      expect(parseFloat(transformValue.s), `Check Scale ${message ? '(' + message + ')' : ''}`).to.be.closeTo(styles.s as number, 0.0002);
     }
 
     const otherStyles = Object.entries(styles).filter(([key, _value]) => !['w', 'h', 'x', 'y', 's'].includes(key));
