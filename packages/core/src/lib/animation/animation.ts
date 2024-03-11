@@ -2,15 +2,15 @@ import { Dom, DomSelector, DomType } from '../dom/dom';
 import { Callback, Coordinate } from '../common/common.model';
 import { deepClone, getObjectDiff } from '../common/common.util';
 import { State } from '../common/state';
-import { AnimationProperties, Dimension } from './animation.model';
+import { AnimateResult, AnimateState, AnimationProperties, Dimension } from './animation.model';
 import { getAnimationValueOnProgress, getTransform2dValue } from './animation.util';
 import { clamp } from '../common/math.util';
-import { isNullish } from '../common/ensure.util';
+import { AnimationFrameManager } from './animation-frame-manager';
+import { lastValueFrom, Observable, ReplaySubject } from 'rxjs';
 
 interface AnimationState {
   properties: AnimationProperties;
   previousProperties: AnimationProperties;
-  isAnimating: boolean;
 }
 
 /**
@@ -31,27 +31,38 @@ export class Animation {
   private callbacks = new Set<Callback<AnimationProperties>>();
 
   private state: State<AnimationState>;
+  private frameManager: AnimationFrameManager | null;
 
   private dom: Dom;
 
-  // Used to resolve the Promise when the animation is manually stopped outside animate method.
-  private resolveAnimationPromise: ((isCompleted: boolean) => void) | null = null;
-
-  private animationFrameID: number;
   private animationDelayTimerID: NodeJS.Timeout;
 
   public get value() {
     return this.state.value.properties;
   }
 
+  public get actualValue() {
+    return this.state.value.previousProperties;
+  }
+
+  public get isAnimating() {
+    return !!this.frameManager?.isAnimating;
+  }
+
+  /**
+   * @internal Internal implementation detail, do not use directly
+   */
+  public _disableAnimate = false;
+
   constructor(element: DomSelector) {
     this.dom = new Dom(element);
     Animation.instances.set(this.dom.nativeElement, this);
 
+    const currentOpacity = window.getComputedStyle(this.dom.nativeElement).opacity;
     const properties: AnimationProperties = {
       transform: { x: 0, y: 0, scale: 1, rotateX: 0, rotateY: 0 },
       dimension: this.dom.dimension,
-      opacity: Number(window.getComputedStyle(this.dom.nativeElement).opacity),
+      opacity: currentOpacity === '' ? 1 : Number(currentOpacity),
     };
 
     this.state = new State({
@@ -146,19 +157,16 @@ export class Animation {
   // region --- animate ----
 
   public stopAnimation() {
-    if (this.state.value.isAnimating) {
-      this.state.deepSet({ isAnimating: false });
-      cancelAnimationFrame(this.animationFrameID);
-      clearTimeout(this.animationDelayTimerID);
-
-      if (this.resolveAnimationPromise) {
-        this.resolveAnimationPromise(false);
-        this.resolveAnimationPromise = null;
-      }
-    }
+    clearTimeout(this.animationDelayTimerID);
+    this.frameManager?.cancel();
+    this.frameManager = null;
   }
 
-  public applyImmediately() {
+  /**
+   * Apply all style changes to the DOM immediately.
+   * @return The changes that applied to the DOM
+   */
+  public applyImmediately(): Partial<AnimationProperties> {
     const changesValues = getObjectDiff(this.state.value.previousProperties, this.state.value.properties);
 
     if (changesValues.transform !== undefined) {
@@ -182,113 +190,118 @@ export class Animation {
     }
 
     this.state.deepSet({ previousProperties: deepClone(this.state.value.properties) });
+
+    return changesValues;
   }
 
-  public apply() {
-    return new Promise<boolean>((resolve) => {
+  /**
+   * Apply all style changes to the DOM on the next requestAnimationFrame.
+   * @return A promise of changes that applied to the DOM
+   */
+  public apply(): Promise<Partial<AnimationProperties>> {
+    if (this._disableAnimate) {
+      return Promise.resolve({});
+    }
+
+    return new Promise<Partial<AnimationProperties>>((resolve) => {
       this.stopAnimation();
-      this.animationFrameID = requestAnimationFrame(() => {
-        this.applyImmediately();
-        resolve(true);
+      requestAnimationFrame(() => {
+        const changes = this.applyImmediately();
+        resolve(changes);
       });
     });
   }
 
-  // eslint-disable-next-line max-lines-per-function
+  public _getAnimationFrameCallback(isAnimationGroup = false) {
+    const valueOnStart = deepClone(this.state.value.previousProperties);
+    const valueOnEnd = deepClone(this.state.value.properties);
+
+    if (Object.keys(getObjectDiff(valueOnStart, valueOnEnd)).length === 0) {
+      return null;
+    }
+
+    return (progress: number): Partial<AnimationProperties> => {
+      this.state.deepSet({
+        properties: {
+          transform: {
+            x: getAnimationValueOnProgress(progress, valueOnStart.transform.x, valueOnEnd.transform.x),
+            y: getAnimationValueOnProgress(progress, valueOnStart.transform.y, valueOnEnd.transform.y),
+            scale: getAnimationValueOnProgress(progress, valueOnStart.transform.scale, valueOnEnd.transform.scale),
+            rotateX: getAnimationValueOnProgress(progress, valueOnStart.transform.rotateX, valueOnEnd.transform.rotateX),
+            rotateY: getAnimationValueOnProgress(progress, valueOnStart.transform.rotateY, valueOnEnd.transform.rotateY),
+          },
+          dimension: {
+            width: getAnimationValueOnProgress(progress, valueOnStart.dimension.width, valueOnEnd.dimension.width),
+            height: getAnimationValueOnProgress(progress, valueOnStart.dimension.height, valueOnEnd.dimension.height),
+          },
+          opacity: getAnimationValueOnProgress(progress, valueOnStart.opacity, valueOnEnd.opacity),
+        },
+      });
+
+      return isAnimationGroup || !this._disableAnimate ? this.applyImmediately() : {};
+    };
+  }
+
+  /**
+   * Animate all style changes to the DOM.
+   * @return An Observable of changes on each frame, that apply to the DOM
+   */
+  public animate$({ duration = 100, easing = (x: number) => x, delay = 0 } = {}): Observable<AnimateResult> {
+    const changesSubject$ = new ReplaySubject<AnimateResult>();
+    const changes$ = changesSubject$.asObservable();
+
+    if (duration <= 0) {
+      this.apply().then((changes) => {
+        changesSubject$.next({ state: AnimateState.Animating, changes });
+        changesSubject$.next({ state: AnimateState.Completed });
+        changesSubject$.complete();
+      });
+      return changes$;
+    }
+
+    this.stopAnimation();
+
+    if (delay > 0) {
+      this.animationDelayTimerID = setTimeout(async () => {
+        this.animate$({ duration, easing }).subscribe({
+          next: (animationResult) => changesSubject$.next(animationResult),
+          complete: () => changesSubject$.complete(),
+        });
+      }, delay);
+
+      return changes$;
+    }
+
+    const onAnimateFrame = this._getAnimationFrameCallback();
+
+    if (!onAnimateFrame) {
+      changesSubject$.next({ state: AnimateState.Completed });
+      changesSubject$.complete();
+      return changes$;
+    }
+
+    this.frameManager = new AnimationFrameManager(duration, easing);
+    this.frameManager
+      .animate((progress) => {
+        const changes = onAnimateFrame(progress);
+        changesSubject$.next({ state: AnimateState.Animating, changes });
+      })
+      .then((isCompleted) => {
+        this.frameManager = null;
+        changesSubject$.next({ state: isCompleted ? AnimateState.Completed : AnimateState.Canceled });
+        changesSubject$.complete();
+      });
+
+    return changes$;
+  }
+
+  /**
+   * Animate all style changes to the DOM.
+   * @return A promise that resolves to true if the animation state is completed, otherwise false
+   */
   public async animate({ duration = 100, easing = (x: number) => x, delay = 0 } = {}): Promise<boolean> {
-    this.validateAnimation(duration, delay);
-
-    return new Promise((resolve) => {
-      if (delay > 0) {
-        this.animationDelayTimerID = setTimeout(async () => {
-          const animateResult = await this.animate({ duration, easing });
-          resolve(animateResult);
-        }, delay);
-      } else {
-        const valueOnStart = deepClone(this.state.value.previousProperties);
-        const valueOnEnd = deepClone(this.state.value.properties);
-
-        // Don't start animation, id nothing has changed
-        if (Object.keys(getObjectDiff(valueOnStart, valueOnEnd)).length === 0) {
-          resolve(true);
-          return;
-        }
-
-        this.stopAnimation();
-
-        let start: number;
-        this.state.deepSet({ isAnimating: true });
-        this.resolveAnimationPromise = resolve;
-
-        const _animate = (timeStamp: number) => {
-          /**
-           * Initialize Animation Start Time
-           *
-           * The 'timeStamp' argument represents the current time in the animation cycle.
-           * On the first call, we initialize 'start' with this value to properly calculate
-           * frameTime on subsequent frames.
-           */
-          if (isNullish(start)) {
-            start = timeStamp;
-          }
-
-          /**
-           * Calculate Frame Time
-           *
-           * FrameTime is a normalized value between 0 and 1 that represents the animation's progress.
-           * To ensure it doesn't exceed 1, we use Math.min().
-           */
-          const frameTime = Math.min(1, (timeStamp - start) / duration);
-
-          // Calculate Animation Progress with Easing Function
-          const progress = easing(frameTime);
-
-          // Update Animation State
-          this.state.deepSet({
-            properties: {
-              transform: {
-                x: getAnimationValueOnProgress(progress, valueOnStart.transform.x, valueOnEnd.transform.x),
-                y: getAnimationValueOnProgress(progress, valueOnStart.transform.y, valueOnEnd.transform.y),
-                scale: getAnimationValueOnProgress(progress, valueOnStart.transform.scale, valueOnEnd.transform.scale),
-                rotateX: getAnimationValueOnProgress(progress, valueOnStart.transform.rotateX, valueOnEnd.transform.rotateX),
-                rotateY: getAnimationValueOnProgress(progress, valueOnStart.transform.rotateY, valueOnEnd.transform.rotateY),
-              },
-              dimension: {
-                width: getAnimationValueOnProgress(progress, valueOnStart.dimension.width, valueOnEnd.dimension.width),
-                height: getAnimationValueOnProgress(progress, valueOnStart.dimension.height, valueOnEnd.dimension.height),
-              },
-              opacity: getAnimationValueOnProgress(progress, valueOnStart.opacity, valueOnEnd.opacity),
-            },
-          });
-
-          this.applyImmediately();
-
-          // Check for Animation Completion. (frameTime 1, means animation is completed)
-          if (frameTime === 1) {
-            this.state.deepSet({ isAnimating: false });
-            resolve(true);
-            this.resolveAnimationPromise = null;
-            return;
-          }
-
-          // Request the next animation frame if the animation is not complete
-          this.animationFrameID = requestAnimationFrame(_animate);
-        };
-
-        // Trigger the first animation frame
-        this.animationFrameID = requestAnimationFrame(_animate);
-      }
-    });
+    const result = await lastValueFrom(this.animate$({ duration, easing, delay }));
+    return result.state === AnimateState.Completed;
   }
-
-  private validateAnimation(duration: number, delay: number) {
-    if (duration < 1) {
-      throw new Error('the duration of animation cna not be less than 1ms');
-    }
-    if (delay < 0) {
-      throw new Error('the delay of animation cna not be less than 0ms');
-    }
-  }
-
   // endregion
 }

@@ -2,7 +2,7 @@ import {
   Animation,
   Dom,
   DomSelector,
-  ExcludeNullish,
+  AllPropsNonNullable,
   Gestures,
   GesturesEvent,
   GesturesEventType,
@@ -183,7 +183,7 @@ export class PinchZoom {
       return;
     }
 
-    const adjusterConfig: ExcludeNullish<ZoomAdjusterConfig> = {
+    const adjusterConfig: AllPropsNonNullable<ZoomAdjusterConfig> = {
       minScale: this.minScale,
       maxScale: this.maxScale,
       startEvent: this.startEvent,

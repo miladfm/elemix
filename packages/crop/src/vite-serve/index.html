@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Crop E2E test</title>
+
+  <style>
+    html, body {
+        margin: 0;
+        padding: 0;
+    }
+    .container {
+        width: 100vw;
+        height: 100vh;
+        background-color: #444;
+    }
+
+    .crop-story__container {
+        width: 100%;
+        height: 100%;
+    }
+
+    :root {
+        --elemix-crop__border-size: 2px;
+        --elemix-crop__border-color: #fff;
+        --elemix-crop__edge-draagbel-size: 30px;
+        --elemix-crop__edge-icon-width: 30px;
+        --elemix-crop__edge-icon-height: 3px;
+        --elemix-crop__corner-draagbel-size: 40px;
+        --elemix-crop__corner-icon-size: 15px;
+        --elemix-crop__grid-size: 1px;
+    }
+
+    .crop__container {
+        position: relative;
+        user-select: none;
+        overflow: hidden;
+        perspective: 3000px;
+    }
+    .crop__container * {
+        box-sizing: border-box;
+    }
+
+    .crop__wrapper {
+        width: 100%;
+        height: 100%;
+        position: relative;
+    }
+
+    .crop__box {
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 1;
+        touch-action: none;
+        cursor: move;
+    }
+
+    .crop__box-border {
+        position: absolute;
+        width: calc(100% + (var(--elemix-crop__border-size) * 2));
+        height: calc(100% + (var(--elemix-crop__border-size) * 2));
+        top: calc(var(--elemix-crop__border-size) * -1);
+        left: calc(var(--elemix-crop__border-size) * -1);
+        border: var(--elemix-crop__border-size) solid var(--elemix-crop__border-color);
+        z-index: 1;
+        touch-action: none;
+        pointer-events: none;
+    }
+
+    .crop__image-wrapper {
+        position: absolute;
+        top: 0px;
+        left: 0px;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        backface-visibility: hidden;
+    }
+    .crop__image {
+        transform-origin: 0% 0%;
+        position: relative;
+    }
+
+    /* Grid Line */
+    .crop__box-grid {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: repeat(3, 1fr);
+        pointer-events: none;
+        touch-action: none;
+        mix-blend-mode: exclusion;
+    }
+    .crop__box-grid-item {
+        border-top: var(--elemix-crop__grid-size) solid var(--elemix-crop__border-color);
+        border-left: var(--elemix-crop__grid-size) solid var(--elemix-crop__border-color);
+    }
+    .crop__box-grid-item:nth-child(-n + 3) {
+        /* 3 is grid column length */
+        border-top: none;
+    }
+    .crop__box-grid-item:nth-child(3n + 1) {
+        /* 3 is grid column length */
+        border-left: none;
+    }
+
+    /* Handler */
+    .crop__draggable {
+        position: absolute;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .crop__draggable--top-left,
+    .crop__draggable--top-right,
+    .crop__draggable--bottom-left,
+    .crop__draggable--bottom-right {
+        width: var(--elemix-crop__corner-draagbel-size);
+        height: var(--elemix-crop__corner-draagbel-size);
+        z-index: 1;
+    }
+
+    .crop__draggable--top-left:before,
+    .crop__draggable--top-right:before,
+    .crop__draggable--bottom-left:before,
+    .crop__draggable--bottom-right:before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: var(--elemix-crop__corner-icon-size);
+        height: var(--elemix-crop__corner-icon-size);
+        background-color: var(--elemix-crop__border-color);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        backface-visibility: hidden;
+    }
+
+    .crop__draggable--top-left {
+        top: calc(var(--elemix-crop__corner-draagbel-size) / 2 * -1);
+        left: calc(var(--elemix-crop__corner-draagbel-size) / 2 * -1);
+        cursor: nw-resize;
+    }
+    .crop__draggable--top-right {
+        top: calc(var(--elemix-crop__corner-draagbel-size) / 2 * -1);
+        right: calc(var(--elemix-crop__corner-draagbel-size) / 2 * -1);
+        cursor: ne-resize;
+    }
+    .crop__draggable--bottom-right {
+        bottom: calc(var(--elemix-crop__corner-draagbel-size) / 2 * -1);
+        right: calc(var(--elemix-crop__corner-draagbel-size) / 2 * -1);
+        cursor: se-resize;
+    }
+    .crop__draggable--bottom-left {
+        bottom: calc(var(--elemix-crop__corner-draagbel-size) / 2 * -1);
+        left: calc(var(--elemix-crop__corner-draagbel-size) / 2 * -1);
+        cursor: sw-resize;
+    }
+
+    .crop__draggable--top:before,
+    .crop__draggable--right:before,
+    .crop__draggable--bottom:before,
+    .crop__draggable--left:before {
+        content: '';
+        position: absolute;
+        background-color: var(--elemix-crop__border-color);
+        backface-visibility: hidden;
+    }
+
+    .crop__draggable--top:before {
+        width: var(--elemix-crop__edge-icon-width);
+        height: var(--elemix-crop__edge-icon-height);
+        transform: translateY(-8px);
+    }
+    .crop__draggable--right:before {
+        width: var(--elemix-crop__edge-icon-height);
+        height: var(--elemix-crop__edge-icon-width);
+        transform: translateX(8px);
+    }
+    .crop__draggable--bottom:before {
+        width: var(--elemix-crop__edge-icon-width);
+        height: var(--elemix-crop__edge-icon-height);
+        transform: translateY(8px);
+    }
+    .crop__draggable--left:before {
+        width: var(--elemix-crop__edge-icon-height);
+        height: var(--elemix-crop__edge-icon-width);
+        transform: translateX(-8px);
+    }
+
+    .crop__draggable--top {
+        width: 100%;
+        height: var(--elemix-crop__edge-draagbel-size);
+        top: calc(var(--elemix-crop__edge-draagbel-size) / 2 * -1);
+        cursor: n-resize;
+    }
+    .crop__draggable--right {
+        width: var(--elemix-crop__edge-draagbel-size);
+        height: 100%;
+        right: calc(var(--elemix-crop__edge-draagbel-size) / 2 * -1);
+        cursor: e-resize;
+    }
+    .crop__draggable--bottom {
+        width: 100%;
+        height: var(--elemix-crop__edge-draagbel-size);
+        bottom: calc(var(--elemix-crop__edge-draagbel-size) / 2 * -1);
+        cursor: n-resize;
+    }
+    .crop__draggable--left {
+        width: var(--elemix-crop__edge-draagbel-size);
+        height: 100%;
+        left: calc(var(--elemix-crop__edge-draagbel-size) / 2 * -1);
+        cursor: e-resize;
+    }
+
+
+    .crop__back-drop-wrapper {
+        transform-origin: 0% 0%;
+        backface-visibility: hidden;
+    }
+    .crop__back-drop-image {
+        width: 100%;
+        height: 100%;
+        opacity: 0.5;
+        backface-visibility: hidden;
+    }
+    .crop__back-drop {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: #000;
+    }
+
+    .crop-debug__invisible-zone-wrapper {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+        touch-action: none;
+        pointer-events: none;
+    }
+
+    .crop-debug__invisible-zone--left,
+    .crop-debug__invisible-zone--top,
+    .crop-debug__invisible-zone--right,
+    .crop-debug__invisible-zone--bottom {
+        position: absolute;
+        opacity: 0.3;
+        border: 1px solid #fff;
+    }
+
+    .crop-debug__zone-boundary-x,
+    .crop-debug__zone-boundary-y,
+    .crop-debug__pointer-x,
+    .crop-debug__pointer-y {
+        position: absolute;
+        z-index: 100;
+    }
+
+    .crop-debug__zone-boundary-x,
+    .crop-debug__zone-boundary-y {
+        background-color: yellow;
+    }
+
+    .crop-debug__zone-boundary-x:before,
+    .crop-debug__zone-boundary-y:before,
+    .crop-debug__pointer-x:before,
+    .crop-debug__pointer-y:before {
+        position: absolute;
+        color: #fff;
+        background-color: rgba(0, 0, 0, 0.7);
+        padding: 4px 8px;
+        border-right: 4px;
+        white-space: nowrap;
+    }
+
+    .crop-debug__zone-boundary-x:before {
+        content: 'Boundary Single-Both';
+        writing-mode: vertical-rl;
+        padding: 8px 4px;
+    }
+
+    .crop-debug__zone-boundary-y:before {
+        content: 'Boundary Single-Both';
+    }
+
+    .crop-debug__pointer-x:before {
+        content: 'Mouse X';
+        right: 0;
+    }
+    .crop-debug__pointer-y:before {
+        content: 'Mouse Y';
+        bottom: 0;
+        writing-mode: vertical-rl;
+        padding: 8px 4px;
+    }
+
+    .crop-debug__pointer-x,
+    .crop-debug__pointer-y  {
+        background-color: blue;
+    }
+
+    .crop-debug__invisible-zone--left {
+        top: 0;
+        left: 0;
+        height: 100%;
+        background-color: blue;
+    }
+    .crop-debug__invisible-zone--top {
+        top: 0;
+        left: 0;
+        width: 100%;
+        background-color: red;
+    }
+    .crop-debug__invisible-zone--right {
+        top: 0;
+        right: 0;
+        height: 100%;
+        background-color: blue;
+    }
+    .crop-debug__invisible-zone--bottom {
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background-color: red;
+    }
+  </style>
+</head>
+<body>
+
+    <div class="container"></div>
+
+    <script type="module" src="/main.ts"></script>
+</body>
+</html>

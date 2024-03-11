@@ -19,3 +19,18 @@ export interface AnimationProperties {
   dimension: Dimension;
   opacity: number;
 }
+
+export interface AnimateResult {
+  state: AnimateState;
+  changes?: Partial<AnimationProperties>; // only `Animating` state has changes
+}
+
+export enum AnimateState {
+  Animating = 'animating',
+  Completed = 'completed',
+  Canceled = 'canceled',
+}
+
+export interface AnimationGroupConfig {
+  disableInstance: boolean;
+}

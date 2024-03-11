@@ -1,8 +1,8 @@
 import { ZoomAdjusterConfig, ZoomAdjusterResult } from '../zoom.model';
-import { ExcludeNullish, getBounceEffectValue, isNullish } from '@elemix/core';
+import { AllPropsNonNullable, getBounceEffectValue, isNullish } from '@elemix/core';
 import { getZoomTranslationDelta } from '../zoom.util';
 
-export function pinchZoomScaleAdjusters(next: ZoomAdjusterResult, config: ExcludeNullish<ZoomAdjusterConfig>): ZoomAdjusterResult {
+export function pinchZoomScaleAdjusters(next: ZoomAdjusterResult, config: AllPropsNonNullable<ZoomAdjusterConfig>): ZoomAdjusterResult {
   if (isNullish(config.event.scaleFactorFromStart)) {
     return next;
   }

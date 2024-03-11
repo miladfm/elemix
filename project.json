@@ -15,6 +15,18 @@
       "options": {
         "command": "nx run-many --all --target=test --parallel --maxParallel=4 --exclude=elemix"
       }
+    },
+    "e2e": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "nx run-many --all --target=e2e --parallel --maxParallel=4 --exclude=elemix"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "nx run-many --all --target=lint --parallel --maxParallel=4 --exclude=elemix"
+      }
     }
   }
 }

@@ -1,0 +1,55 @@
+{
+  "name": "crop",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/crop/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:swc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/crop",
+        "main": "packages/crop/src/index.ts",
+        "tsConfig": "packages/crop/tsconfig.lib.json",
+        "assets": ["packages/crop/*.md"]
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs crop {args.ver} {args.tag}",
+      "dependsOn": ["build"]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    },
+    "e2e": {
+      "executor": "@nx/cypress:cypress",
+      "options": {
+        "cypressConfig": "packages/crop/cypress.config.ts",
+        "testingType": "e2e",
+        "devServerTarget": "e2e-serve"
+      }
+    },
+    "e2e-ui": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx cypress open",
+        "cwd": "packages/crop"
+      }
+    },
+    "e2e-build": {
+      "executor": "@nx/vite:build",
+      "options": {
+        "outputPath": "dist/crop-e2e",
+        "configFile": "packages/crop/src/vite.config.ts"
+      }
+    },
+    "e2e-serve": {
+      "executor": "@nx/vite:dev-server",
+      "options": {
+        "buildTarget": "crop:e2e-build"
+      }
+    }
+  },
+  "tags": []
+}

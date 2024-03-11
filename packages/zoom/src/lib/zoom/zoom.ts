@@ -129,7 +129,7 @@ export class Zoom {
     const clampScale = clamp(scale, [this.options.minScale, this.options.maxScale]);
     const center = this.getCenterTranslate(config.center);
     const transitionDelta = getZoomTranslationDelta(clampScale, this.animation.value.transform.scale, center);
-    this.applyZoom(clampScale, transitionDelta);
+    return this.applyZoom(clampScale, transitionDelta);
   }
 
   public zoomOut(config: { scaleFactor?: number; center?: Partial<Coordinate> } = {}) {
@@ -142,7 +142,7 @@ export class Zoom {
     const clampScale = clamp(scale, [this.options.minScale, this.options.maxScale]);
     const center = this.getCenterTranslate(config.center);
     const transitionDelta = getZoomTranslationDelta(clampScale, this.animation.value.transform.scale, center);
-    this.applyZoom(clampScale, transitionDelta);
+    return this.applyZoom(clampScale, transitionDelta);
   }
 
   public zoomTo(scale: number, center?: Partial<Coordinate>) {
@@ -153,7 +153,7 @@ export class Zoom {
     const clampScale = clamp(scale, [this.options.minScale, this.options.maxScale]);
     const _center = this.getCenterTranslate(center);
     const transitionDelta = getZoomTranslationDelta(clampScale, this.animation.value.transform.scale, _center);
-    this.applyZoom(clampScale, transitionDelta);
+    return this.applyZoom(clampScale, transitionDelta);
   }
 
   private getCenterTranslate(center?: Partial<Coordinate>): Coordinate {
@@ -172,6 +172,6 @@ export class Zoom {
     const _scale = Number(scale.toFixed(2));
     const x = this.animation.value.transform.x + Number(translate.x.toFixed(2));
     const y = this.animation.value.transform.y + Number(translate.y.toFixed(2));
-    this.animation.setScale(_scale).setTranslate({ x, y }).animate();
+    return this.animation.setScale(_scale).setTranslate({ x, y }).animate();
   }
 }

@@ -1,4 +1,5 @@
 import { Dom } from '../../lib/dom/dom';
+import { Observable } from 'rxjs';
 
 describe('Dom Class - HTMLElement', () => {
   // Initialize a DOM element
@@ -117,6 +118,55 @@ describe('Dom Class - HTMLElement', () => {
     elem.setAttribute('data-test', 'value');
 
     expect(domInstance.getAttribute('data-test')).toBe('value');
+  });
+
+  describe('Dom Class - HTMLElement - observeResize$', () => {
+    let observeResize$: Observable<any>;
+    let mockObserve: jest.Mock;
+    let mockDisconnect: jest.Mock;
+
+    beforeEach(() => {
+      mockObserve = jest.fn();
+      mockDisconnect = jest.fn();
+
+      global.ResizeObserver = jest.fn().mockImplementation(() => ({
+        observe: mockObserve,
+        unobserve: jest.fn(),
+        disconnect: mockDisconnect,
+      }));
+
+      observeResize$ = new Dom(document.createElement('div')).observeResize$();
+    });
+
+    afterAll(() => {
+      jest.restoreAllMocks();
+    });
+
+    it('should not observe the element when there is no subscription', () => {
+      expect(mockObserve).not.toHaveBeenCalled();
+    });
+    it('should observe the element when there is a subscription', () => {
+      observeResize$.subscribe();
+      expect(mockObserve).toHaveBeenCalledTimes(1);
+    });
+    it('should observe the element only once when there is more than one subscription', () => {
+      observeResize$.subscribe();
+      observeResize$.subscribe();
+      expect(mockObserve).toHaveBeenCalledTimes(1);
+    });
+    it('should not disconnect the element when not all subscription has unsubscribed', () => {
+      observeResize$.subscribe();
+      const subscription = observeResize$.subscribe();
+      subscription.unsubscribe();
+      expect(mockDisconnect).not.toHaveBeenCalled();
+    });
+    it('should disconnect the element when there all subscription has unsubscribed', () => {
+      const subscription1 = observeResize$.subscribe();
+      const subscription2 = observeResize$.subscribe();
+      subscription1.unsubscribe();
+      subscription2.unsubscribe();
+      expect(mockDisconnect).toHaveBeenCalledTimes(1);
+    });
   });
 });
 

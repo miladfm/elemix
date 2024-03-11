@@ -1,4 +1,4 @@
-import { generateCustomEvent, mockEventListener, mockRequestAnimationFrame } from '@internal-lib/util-testing';
+import { generateCustomEvent, mockEventListener, mockRequestAnimationFrame, wait } from '@internal-lib/util-testing';
 import { ClickZoom } from '../../lib/click-zoom/click-zoom';
 import { ClickZoomType } from '../../lib/click-zoom/click-zoom.model';
 
@@ -9,10 +9,12 @@ describe('Feature - Click Zoom', () => {
   const dispatchClick = (offsetX: number, offsetY: number) => {
     const event = generateCustomEvent('click', { offsetX, offsetY });
     element.dispatchEvent(event);
+    return wait(0); // wait until the current event handler with mock animation be finished and then continue.
   };
   const dispatchDblclick = (offsetX: number, offsetY: number) => {
     const event = generateCustomEvent('dblclick', { offsetX, offsetY });
     element.dispatchEvent(event);
+    return wait(0); // wait until the current event handler with mock animation be finished and then continue.
   };
 
   beforeEach(() => {
@@ -87,49 +89,49 @@ describe('Feature - Click Zoom', () => {
   });
 
   describe('Zoom In Click Zoom', () => {
-    it(`should zoom in the element with animation on the mouse click coordinates based on the 'clickScaleFactor' when a click event is triggered once`, () => {
+    it(`should zoom in the element with animation on the mouse click coordinates based on the 'clickScaleFactor' when a click event is triggered once`, async () => {
       mockRequestAnimationFrame();
       clickZoom.setClickType(ClickZoomType.ZoomIn);
-      dispatchClick(10, 10);
+      await dispatchClick(10, 10);
 
       expect(element.style.transform).toContain('translate(-5px, -5px)');
       expect(element.style.transform).toContain('scale(1.5, 1.5)');
       expect(window.requestAnimationFrame).toHaveBeenCalled();
     });
-    it(`should zoom in the element with animation on the mouse click coordinates based on the 'clickScaleFactor' when a click event is triggered multiple times`, () => {
+    it(`should zoom in the element with animation on the mouse click coordinates based on the 'clickScaleFactor' when a click event is triggered multiple times`, async () => {
       mockRequestAnimationFrame();
       clickZoom.setClickType(ClickZoomType.ZoomIn);
-      dispatchClick(10, 10);
-      dispatchClick(20, 50);
-      dispatchClick(50, 20);
+      await dispatchClick(10, 10);
+      await dispatchClick(20, 50);
+      await dispatchClick(50, 20);
 
       expect(element.style.transform).toContain('translate(-76.5px, -65.1px)');
       expect(element.style.transform).toContain('scale(3.38, 3.38)');
       expect(window.requestAnimationFrame).toHaveBeenCalled();
     });
-    it(`should not zoom in beyond the maximum zoom level when a click event is triggered`, () => {
+    it(`should not zoom in beyond the maximum zoom level when a click event is triggered`, async () => {
       mockRequestAnimationFrame();
       clickZoom.setClickType(ClickZoomType.ZoomIn);
-      dispatchClick(10, 10);
-      dispatchClick(20, 50);
-      dispatchClick(50, 20);
-      dispatchClick(10, 10); // Last event
+      await dispatchClick(10, 10);
+      await dispatchClick(20, 50);
+      await dispatchClick(50, 20);
+      await dispatchClick(10, 10); // Last event
       jest.clearAllMocks();
-      dispatchClick(10, 10); // Should not do anything
+      await dispatchClick(10, 10); // Should not do anything
 
       expect(element.style.transform).toContain('translate(-82.7px, -71.3px)');
       expect(element.style.transform).toContain('scale(4, 4)');
       expect(window.requestAnimationFrame).not.toHaveBeenCalled();
     });
 
-    it(`should zoom in only the target element when multi click-zoom element exist`, () => {
+    it(`should zoom in only the target element when multi click-zoom element exist`, async () => {
       mockRequestAnimationFrame({ frames: 2 });
       clickZoom.setClickType(ClickZoomType.ZoomIn);
 
       const secondElement = document.createElement('div');
       new ClickZoom(secondElement);
 
-      dispatchClick(10, 10);
+      await dispatchClick(10, 10);
 
       expect(element.style.transform).toContain('translate(-5px, -5px)');
       expect(element.style.transform).toContain('scale(1.5, 1.5)');
@@ -137,11 +139,11 @@ describe('Feature - Click Zoom', () => {
 
       expect(secondElement.style.transform).toBe('');
     });
-    it(`should not zoom in when the click zoom feature is disabled`, () => {
+    it(`should not zoom in when the click zoom feature is disabled`, async () => {
       mockRequestAnimationFrame();
       clickZoom.setClickType(ClickZoomType.ZoomIn);
       clickZoom.disable();
-      dispatchClick(10, 10);
+      await dispatchClick(10, 10);
 
       expect(element.style.transform).toContain('');
       expect(window.requestAnimationFrame).not.toHaveBeenCalled();
@@ -150,14 +152,14 @@ describe('Feature - Click Zoom', () => {
       clickZoom.setClickType(ClickZoomType.ZoomIn);
       expect(element.style.cursor).toBe('zoom-in');
     });
-    it(`should use zoom-in type and correct mouse cursor when zoom-in type is selected and disable then enable method has called`, () => {
+    it(`should use zoom-in type and correct mouse cursor when zoom-in type is selected and disable then enable method has called`, async () => {
       mockRequestAnimationFrame();
 
       clickZoom.setClickType(ClickZoomType.ZoomIn);
       clickZoom.disable();
       clickZoom.enable();
 
-      dispatchClick(10, 10);
+      await dispatchClick(10, 10);
 
       expect(element.style.cursor).toBe('zoom-in');
       expect(element.style.transform).toContain('translate(-5px, -5px)');
@@ -167,49 +169,49 @@ describe('Feature - Click Zoom', () => {
   });
 
   describe('Zoom Out Click Zoom', () => {
-    it(`should zoom out the element with animation on the mouse click coordinates based on the 'clickScaleFactor' when a click event is triggered once`, () => {
+    it(`should zoom out the element with animation on the mouse click coordinates based on the 'clickScaleFactor' when a click event is triggered once`, async () => {
       mockRequestAnimationFrame();
       clickZoom.setClickType(ClickZoomType.ZoomOut);
-      dispatchClick(10, 10);
+      await dispatchClick(10, 10);
 
       expect(element.style.transform).toContain('translate(3.3px, 3.3px)');
       expect(element.style.transform).toContain('scale(0.67, 0.67)');
       expect(window.requestAnimationFrame).toHaveBeenCalled();
     });
-    it(`should zoom out the element with animation on the mouse click coordinates based on the 'clickScaleFactor' when a click event is triggered multiple times`, () => {
+    it(`should zoom out the element with animation on the mouse click coordinates based on the 'clickScaleFactor' when a click event is triggered multiple times`, async () => {
       mockRequestAnimationFrame();
       clickZoom.setClickType(ClickZoomType.ZoomOut);
-      dispatchClick(10, 10);
-      dispatchClick(20, 50);
-      dispatchClick(50, 20);
+      await dispatchClick(10, 10);
+      await dispatchClick(20, 50);
+      await dispatchClick(50, 20);
 
       expect(element.style.transform).toContain('15.2px, 17.3p');
       expect(element.style.transform).toContain('scale(0.3, 0.3)');
       expect(window.requestAnimationFrame).toHaveBeenCalled();
     });
-    it(`should not zoom out beyond the minimum zoom level when a click event is triggered`, () => {
+    it(`should not zoom out beyond the minimum zoom level when a click event is triggered`, async () => {
       mockRequestAnimationFrame();
       clickZoom.setClickType(ClickZoomType.ZoomOut);
-      dispatchClick(10, 10);
-      dispatchClick(20, 50);
-      dispatchClick(50, 20);
-      dispatchClick(10, 10); // Last event
+      await dispatchClick(10, 10);
+      await dispatchClick(20, 50);
+      await dispatchClick(50, 20);
+      await dispatchClick(10, 10); // Last event
       jest.clearAllMocks();
-      dispatchClick(10, 10); // Should not do anything
+      await dispatchClick(10, 10); // Should not do anything
 
       expect(element.style.transform).toContain('translate(16.2px, 18.3px)');
       expect(element.style.transform).toContain('scale(0.2, 0.2)');
       expect(window.requestAnimationFrame).not.toHaveBeenCalled();
     });
 
-    it(`should zoom out only the target element when multi click-zoom element exist`, () => {
+    it(`should zoom out only the target element when multi click-zoom element exist`, async () => {
       mockRequestAnimationFrame({ frames: 2 });
       clickZoom.setClickType(ClickZoomType.ZoomOut);
 
       const secondElement = document.createElement('div');
       new ClickZoom(secondElement);
 
-      dispatchClick(10, 10);
+      await dispatchClick(10, 10);
 
       expect(element.style.transform).toContain('translate(3.3px, 3.3px)');
       expect(element.style.transform).toContain('scale(0.67, 0.67)');
@@ -217,11 +219,11 @@ describe('Feature - Click Zoom', () => {
 
       expect(secondElement.style.transform).toBe('');
     });
-    it(`should not zoom out when the click zoom feature is disabled`, () => {
+    it(`should not zoom out when the click zoom feature is disabled`, async () => {
       mockRequestAnimationFrame();
       clickZoom.setClickType(ClickZoomType.ZoomOut);
       clickZoom.disable();
-      dispatchClick(10, 10);
+      await dispatchClick(10, 10);
 
       expect(element.style.transform).toContain('');
       expect(window.requestAnimationFrame).not.toHaveBeenCalled();
@@ -230,14 +232,14 @@ describe('Feature - Click Zoom', () => {
       clickZoom.setClickType(ClickZoomType.ZoomOut);
       expect(element.style.cursor).toBe('zoom-out');
     });
-    it(`should use zoom-out type and correct mouse cursor when zoom-out type is selected and disable then enable method has called`, () => {
+    it(`should use zoom-out type and correct mouse cursor when zoom-out type is selected and disable then enable method has called`, async () => {
       mockRequestAnimationFrame();
 
       clickZoom.setClickType(ClickZoomType.ZoomOut);
       clickZoom.disable();
       clickZoom.enable();
 
-      dispatchClick(10, 10);
+      await dispatchClick(10, 10);
 
       expect(element.style.cursor).toBe('zoom-out');
       expect(element.style.transform).toContain('translate(3.3px, 3.3px)');
@@ -256,11 +258,11 @@ describe('Feature - Click Zoom', () => {
       expect(element.style.transform).toContain('scale(3, 3)');
       expect(window.requestAnimationFrame).toHaveBeenCalled();
     });
-    it(`should zoom out the element with animation based on 'dblclickScaleFactor' at the dblclick coordinates when a dblclick event is triggered and the element is not at the original zoom level`, () => {
+    it(`should zoom out the element with animation based on 'dblclickScaleFactor' at the dblclick coordinates when a dblclick event is triggered and the element is not at the original zoom level`, async () => {
       mockRequestAnimationFrame({ frames: 2 });
       clickZoom.setClickType(ClickZoomType.Dblclick);
-      dispatchDblclick(10, 10);
-      dispatchDblclick(50, 50);
+      await dispatchDblclick(10, 10);
+      await dispatchDblclick(50, 50);
 
       expect(element.style.transform).toContain('translate(80px, 80px)');
       expect(element.style.transform).toContain('scale(1, 1)');
@@ -283,7 +285,7 @@ describe('Feature - Click Zoom', () => {
 
       expect(secondElement.style.transform).toBe('');
     });
-    it(`should zoom out only the target element when multi click-zoom element exist`, () => {
+    it(`should zoom out only the target element when multi click-zoom element exist`, async () => {
       mockRequestAnimationFrame({ frames: 2 });
       clickZoom.setClickType(ClickZoomType.Dblclick);
 
@@ -291,9 +293,9 @@ describe('Feature - Click Zoom', () => {
       const secondClickZoom = new ClickZoom(secondElement);
       secondClickZoom.setClickType(ClickZoomType.Dblclick);
 
-      dispatchDblclick(10, 10);
+      await dispatchDblclick(10, 10);
       jest.clearAllMocks();
-      dispatchDblclick(50, 50);
+      await dispatchDblclick(50, 50);
 
       expect(element.style.transform).toContain('translate(80px, 80px)');
       expect(element.style.transform).toContain('scale(1, 1)');
