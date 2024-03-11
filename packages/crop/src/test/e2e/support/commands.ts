@@ -132,7 +132,7 @@ Cypress.Commands.add('waitForAnimationFrame', () => {
 
 Cypress.Commands.add('setupCrop', (options, initStyle) => {
   cy.viewport(700, 700);
-  cy.visit('http://127.0.0.1:4300/');
+  cy.visit('http://127.0.0.1:4300');
   cy.window().then((canvasWindows) => {
     (canvasWindows as any).__INIT_CROP__(options, initStyle);
   });

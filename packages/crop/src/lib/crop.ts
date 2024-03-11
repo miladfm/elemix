@@ -19,7 +19,8 @@ import { getCropElementsEvent } from './crop-elements-event';
 import { CropAnimation } from './crop-animation';
 import { captureTransformOnPress } from './crop-image-drag';
 import { getCropBaseConfig } from './crop-resize-base-config';
-import { CropBaseConfig, CropElements, CropElementsEventData } from './crop.internal-model';
+import { CropBaseConfig, CropElements, CropElementsEventData, CropElementsEventDataOnDrag } from './crop.internal-model';
+import { isCropResizeDragEventData } from './crop.utils';
 
 const DEFAULT_OPTIONS: CropOptions = {
   verticalGap: 150,
@@ -85,7 +86,9 @@ export class Crop {
           break;
 
         case GesturesEventType.Drag:
-          this.onCropResize(eventData as unknown as NonNullableProps<CropElementsEventData, 'event'>);
+          if (isCropResizeDragEventData(eventData)) {
+            this.onCropResize(eventData);
+          }
           break;
 
         case GesturesEventType.DragEnd:
@@ -104,7 +107,7 @@ export class Crop {
     this.baseConfig = getCropBaseConfig(this.elements, this.options, eventData);
   }
 
-  private onCropResize(eventData: NonNullableProps<CropElementsEventData, 'event'>) {
+  private onCropResize(eventData: CropElementsEventDataOnDrag) {
     if (!this.baseConfig) {
       return;
     }

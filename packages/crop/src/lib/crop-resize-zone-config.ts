@@ -5,7 +5,7 @@ import {
   CropBaseConfig,
   CropConfigBoundaryZone,
   CropElements,
-  CropElementsEventData,
+  CropElementsEventDataDirection,
   CropHDirection,
   CropVDirection,
   CropZoneConfig,
@@ -23,16 +23,16 @@ export function getCropZoneConfig(
   baseConfig: CropBaseConfig,
   elements: CropElements,
   options: CropOptions,
-  eventData: CropElementsEventData
+  eventDataDirection: CropElementsEventDataDirection
 ): CropZoneConfig {
   const zoneBorder: CropZoneBorder = {
     x: getSingleBothSizeZoneBorderX(baseConfig, elements),
     y: getSingleBothSizeZoneBorderY(baseConfig, elements),
   };
 
-  const singleSideZone = getSingleSideZone(baseConfig, options, eventData, zoneBorder);
-  const bothSideZone = getBothSideZone(baseConfig, options, eventData, zoneBorder);
-  const scaleZone = getScaleZone(baseConfig, options, eventData);
+  const singleSideZone = getSingleSideZone(baseConfig, options, eventDataDirection, zoneBorder);
+  const bothSideZone = getBothSideZone(baseConfig, options, eventDataDirection, zoneBorder);
+  const scaleZone = getScaleZone(baseConfig, options, eventDataDirection);
 
   return { singleSideZone, bothSideZone, scaleZone };
 }
@@ -106,27 +106,27 @@ function getSingleBothSizeZoneBorderY(baseConfig: CropBaseConfig, elements: Crop
 function getSingleSideZone(
   baseConfig: CropBaseConfig,
   options: CropOptions,
-  eventData: CropElementsEventData,
+  eventDataDirection: CropElementsEventDataDirection,
   zoneBorder: CropZoneBorder
 ): CropConfigBoundaryZone {
   const singleSideZone = {} as CropConfigBoundaryZone;
 
-  if (eventData.hDirection === CropHDirection.Left) {
+  if (eventDataDirection.hDirection === CropHDirection.Left) {
     singleSideZone.minMovementX = zoneBorder.x;
     singleSideZone.maxMovementX = baseConfig.react.cropBox.width - options.minWidth;
   }
 
-  if (eventData.hDirection === CropHDirection.Right) {
+  if (eventDataDirection.hDirection === CropHDirection.Right) {
     singleSideZone.minMovementX = -(baseConfig.react.cropBox.width - options.minWidth);
     singleSideZone.maxMovementX = zoneBorder.x;
   }
 
-  if (eventData.vDirection === CropVDirection.Top) {
+  if (eventDataDirection.vDirection === CropVDirection.Top) {
     singleSideZone.minMovementY = zoneBorder.y;
     singleSideZone.maxMovementY = baseConfig.react.cropBox.height - options.minHeight;
   }
 
-  if (eventData.vDirection === CropVDirection.Bottom) {
+  if (eventDataDirection.vDirection === CropVDirection.Bottom) {
     singleSideZone.minMovementY = -(baseConfig.react.cropBox.height - options.minHeight);
     singleSideZone.maxMovementY = zoneBorder.y;
   }
@@ -137,12 +137,12 @@ function getSingleSideZone(
 function getBothSideZone(
   baseConfig: CropBaseConfig,
   options: CropOptions,
-  eventData: CropElementsEventData,
+  eventDataDirection: CropElementsEventDataDirection,
   zoneBorder: CropZoneBorder
 ): CropConfigBoundaryZone {
   const bothSideZone = {} as CropConfigBoundaryZone;
 
-  if (eventData.hDirection === CropHDirection.Left) {
+  if (eventDataDirection.hDirection === CropHDirection.Left) {
     const imageOutsideLeft = -baseConfig.transform.image.x;
     const untilScaleZone = baseConfig.react.cropBox.left - (baseConfig.react.container.left + options.horizontalGap);
 
@@ -150,7 +150,7 @@ function getBothSideZone(
     bothSideZone.maxMovementX = zoneBorder.x;
   }
 
-  if (eventData.hDirection === CropHDirection.Right) {
+  if (eventDataDirection.hDirection === CropHDirection.Right) {
     const imageOutsideRight = baseConfig.react.image.width - -baseConfig.transform.image.x - baseConfig.react.cropBox.width;
     const untilScaleZone = baseConfig.react.container.right - options.horizontalGap - baseConfig.react.cropBox.right;
 
@@ -158,7 +158,7 @@ function getBothSideZone(
     bothSideZone.maxMovementX = Math.min(untilScaleZone, imageOutsideRight / 2);
   }
 
-  if (eventData.vDirection === CropVDirection.Top) {
+  if (eventDataDirection.vDirection === CropVDirection.Top) {
     const imageOutsideTop = -baseConfig.transform.image.y;
     const untilScaleZone = baseConfig.react.cropBox.top - (baseConfig.react.container.top + options.verticalGap);
 
@@ -166,7 +166,7 @@ function getBothSideZone(
     bothSideZone.maxMovementY = zoneBorder.y;
   }
 
-  if (eventData.vDirection === CropVDirection.Bottom) {
+  if (eventDataDirection.vDirection === CropVDirection.Bottom) {
     const imageOutsideBottom = baseConfig.react.image.height - -baseConfig.transform.image.y - baseConfig.react.cropBox.height;
     const untilScaleZone = baseConfig.react.container.bottom - options.verticalGap - baseConfig.react.cropBox.bottom;
 
@@ -177,7 +177,11 @@ function getBothSideZone(
   return bothSideZone;
 }
 
-function getScaleZone(baseConfig: CropBaseConfig, options: CropOptions, eventData: CropElementsEventData): CropConfigBoundaryZone {
+function getScaleZone(
+  baseConfig: CropBaseConfig,
+  options: CropOptions,
+  eventDataDirection: CropElementsEventDataDirection
+): CropConfigBoundaryZone {
   const scaleZone: CropConfigBoundaryZone = {
     maxMovementX: 0,
     minMovementX: 0,
@@ -185,22 +189,22 @@ function getScaleZone(baseConfig: CropBaseConfig, options: CropOptions, eventDat
     minMovementY: 0,
   };
 
-  if (eventData.hDirection === CropHDirection.Left) {
+  if (eventDataDirection.hDirection === CropHDirection.Left) {
     scaleZone.maxMovementX = baseConfig.react.container.left + options.horizontalGap - baseConfig.react.cropBox.left;
     scaleZone.minMovementX = scaleZone.maxMovementX - options.horizontalGap;
   }
 
-  if (eventData.hDirection === CropHDirection.Right) {
+  if (eventDataDirection.hDirection === CropHDirection.Right) {
     scaleZone.minMovementX = baseConfig.react.container.right - options.horizontalGap - baseConfig.react.cropBox.right;
     scaleZone.maxMovementX = scaleZone.minMovementX + options.horizontalGap;
   }
 
-  if (eventData.vDirection === CropVDirection.Top) {
+  if (eventDataDirection.vDirection === CropVDirection.Top) {
     scaleZone.maxMovementY = baseConfig.react.container.top + options.verticalGap - baseConfig.react.cropBox.top;
     scaleZone.minMovementY = scaleZone.maxMovementY - options.verticalGap;
   }
 
-  if (eventData.vDirection === CropVDirection.Bottom) {
+  if (eventDataDirection.vDirection === CropVDirection.Bottom) {
     scaleZone.minMovementY = baseConfig.react.container.bottom - options.verticalGap - baseConfig.react.cropBox.bottom;
     scaleZone.maxMovementY = scaleZone.minMovementY + options.verticalGap;
   }

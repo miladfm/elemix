@@ -1,5 +1,5 @@
 import { DragEvent } from '@elemix/drag';
-import { Dom, DragGesturesEvent, TransformProperty } from '@elemix/core';
+import { Dom, DragGesturesEvent, NonNullableProps, TransformProperty } from '@elemix/core';
 
 export interface CropElements {
   container: Dom;
@@ -98,8 +98,13 @@ export interface CropDomChanges {
   backdropWrapperY: number;
 }
 
-export interface CropElementsEventData {
+export interface CropElementsEventData extends CropElementsEventDataDirection {
   event: DragGesturesEvent;
+}
+
+export type CropElementsEventDataOnDrag = NonNullableProps<CropElementsEventData, 'event'>;
+
+export interface CropElementsEventDataDirection {
   vDirection: CropVDirection | null;
   hDirection: CropHDirection | null;
 }

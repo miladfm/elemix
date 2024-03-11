@@ -1,8 +1,8 @@
-import { clamp, NonNullableProps } from '@elemix/core';
+import { clamp } from '@elemix/core';
 import {
   CropBaseConfig,
   CropDragMovementConfig,
-  CropElementsEventData,
+  CropElementsEventDataOnDrag,
   CropHDirection,
   CropVDirection,
   CropZone,
@@ -13,7 +13,7 @@ import {
 export function getCropDragMovements(
   baseConfig: CropBaseConfig,
   zoneConfig: CropZoneConfig,
-  eventData: NonNullableProps<CropElementsEventData, 'event'>
+  eventData: CropElementsEventDataOnDrag
 ): CropDragMovementConfig {
   const xZone = getXZone(baseConfig, zoneConfig, eventData);
   const yZone = getYZone(baseConfig, zoneConfig, eventData);
@@ -32,11 +32,7 @@ export function getCropDragMovements(
 // endregion
 
 // region HELPERS
-function getXZone(
-  baseConfig: CropBaseConfig,
-  zoneConfig: CropZoneConfig,
-  eventData: NonNullableProps<CropElementsEventData, 'event'>
-): CropZone | null {
+function getXZone(baseConfig: CropBaseConfig, zoneConfig: CropZoneConfig, eventData: CropElementsEventDataOnDrag): CropZone | null {
   if (baseConfig.hDirection === null) {
     return null;
   }
@@ -68,11 +64,7 @@ function getXZone(
   return null;
 }
 
-function getYZone(
-  baseConfig: CropBaseConfig,
-  zoneConfig: CropZoneConfig,
-  eventData: NonNullableProps<CropElementsEventData, 'event'>
-): CropZone | null {
+function getYZone(baseConfig: CropBaseConfig, zoneConfig: CropZoneConfig, eventData: CropElementsEventDataOnDrag): CropZone | null {
   if (baseConfig.vDirection === null) {
     return null;
   }

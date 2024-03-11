@@ -7,6 +7,7 @@ import {
   CropConfigTransform,
   CropElements,
   CropElementsEventData,
+  CropElementsEventDataOnDrag,
   CropHDirection,
   CropVDirection,
   CropZoneConfig,
