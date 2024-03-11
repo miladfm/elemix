@@ -82,11 +82,12 @@
       "rules": {}
     },
     {
-      "files": ["*.spec.ts", "*.spec.tsx", "*.spec.js", "*.spec.jsx", "*.cases.ts", "*.cy.{ts,js,tsx,jsx}"],
+      "files": ["*.spec.ts", "*.spec.tsx", "*.spec.js", "*.spec.jsx", "*.cases.ts", "*.cy.{ts,js,tsx,jsx}", "**/e2e/**/*.ts"],
       "env": {
         "jest": true
       },
       "rules": {
+        "complexity": "off",
         "dot-notation": "off",
         "max-lines-per-function": ["off"],
         "no-empty-function": ["off"],

@@ -44,7 +44,8 @@ declare namespace Cypress {
      */
     checkStyle(
       selector: string,
-      style: Partial<{ w: number; h: number; x: number; y: number; s: number }> | Record<string, string | number>
+      style: Partial<{ w: number; h: number; x: number; y: number; s: number }> | Record<string, string | number>,
+      message?: string
     ): void;
 
     /**
@@ -57,11 +58,14 @@ declare namespace Cypress {
      * Checks the styles of crop box, image, and backdrop elements against specified values.
      * This is used to ensure that these elements are correctly styled during cropping operations.
      */
-    checkCropStyle(elements: {
-      cropBox: { w: number; h: number; x: number; y: number };
-      image: { x: number; y: number; s: number };
-      backdrop: { x: number; y: number; s: number };
-    }): void;
+    checkCropStyle(
+      elements: {
+        cropBox: { w: number; h: number; x: number; y: number };
+        image: { x: number; y: number; s: number };
+        backdrop: { x: number; y: number; s: number };
+      },
+      message?: string
+    ): void;
 
     /**
      * Waits for the next animation frame before proceeding.
@@ -140,41 +144,41 @@ Cypress.Commands.add('setupCrop', (options, initStyle) => {
   cy.wait(300); // Wait for image load and init styles
 });
 
-Cypress.Commands.add('checkCropStyle', ({ cropBox, image, backdrop }) => {
-  cy.checkStyle('.crop__box', cropBox);
-  cy.checkStyle('.crop__image', image);
-  cy.checkStyle('.crop__back-drop-wrapper', backdrop);
+Cypress.Commands.add('checkCropStyle', ({ cropBox, image, backdrop }, message) => {
+  cy.checkStyle('.crop__box', cropBox, message);
+  cy.checkStyle('.crop__image', image, message);
+  cy.checkStyle('.crop__back-drop-wrapper', backdrop, message);
 });
 
-Cypress.Commands.add('checkStyle', (selector, styles) => {
+Cypress.Commands.add('checkStyle', (selector, styles, message) => {
   cy.get(selector).should(($el) => {
     const style = $el[0].style;
 
     if (styles.w) {
-      expect(toFloor(style.width), 'Check Width').to.be.closeTo(toFloor(styles.w), 1);
+      expect(toFloor(style.width), `Check Width ${message ? '(' + message + ')' : ''}`).to.be.closeTo(toFloor(styles.w), 1);
     }
 
     if (styles.h) {
-      expect(toFloor(style.height), 'Check Height').to.be.closeTo(toFloor(styles.h), 1);
+      expect(toFloor(style.height), `Check Height ${message ? '(' + message + ')' : ''}`).to.be.closeTo(toFloor(styles.h), 1);
     }
 
     const transformValue = getTransformValues(style.transform) ?? ({} as { x: string; y: string; s: string });
     if (styles.x) {
-      expect(toFloor(transformValue.x), 'Check X').to.be.closeTo(toFloor(styles.x), 1);
+      expect(toFloor(transformValue.x), `Check X ${message ? '(' + message + ')' : ''}`).to.be.closeTo(toFloor(styles.x), 1);
     }
 
     if (styles.y) {
-      expect(toFloor(transformValue.y), 'Check Y').to.be.closeTo(toFloor(styles.y), 1);
+      expect(toFloor(transformValue.y), `Check Y ${message ? '(' + message + ')' : ''}`).to.be.closeTo(toFloor(styles.y), 1);
     }
 
     if (styles.s) {
-      expect(parseFloat(transformValue.s), 'Check Scale').to.be.closeTo(styles.s as number, 0.00005);
+      expect(parseFloat(transformValue.s), `Check Scale ${message ? '(' + message + ')' : ''}`).to.be.closeTo(styles.s as number, 0.00005);
     }
 
     const otherStyles = Object.entries(styles).filter(([key, _value]) => !['w', 'h', 'x', 'y', 's'].includes(key));
     if (otherStyles.length > 0) {
       otherStyles.forEach(([key, value]) => {
-        expect(style[key as any], `Check ${key}`).to.be.equal(value.toString());
+        expect(style[key as any], `Check ${key} ${message ? '(' + message + ')' : ''}`).to.be.equal(value.toString());
       });
     }
   });
